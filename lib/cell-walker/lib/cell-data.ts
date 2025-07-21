@@ -1,13 +1,7 @@
 import { generateGridPositions } from 'lib/grid';
 import { Cell } from 'lib/grid/types';
 
-import {
-  CellData,
-  EnrichedCellData,
-  ProgramConfig,
-  ProgramState,
-  UnwalkedCellData,
-} from '../types';
+import { CellData, EnrichedCellData, ProgramConfig, ProgramState, UnwalkedCellData } from '../types';
 
 export function generateUnwalkedCellData(positions: Cell[]) {
   // create a map of all the unwalked cell data
@@ -49,10 +43,8 @@ export function enrichWalkedCellData(state: ProgramState) {
       },
       relative: {
         ...firstPassCellData.relative,
-        totalStepCount:
-          state.relativeStepCount[firstPassCellData.currentPathCount],
-        totalLegCount:
-          state.relativeLegCount[firstPassCellData.currentPathCount],
+        totalStepCount: state.relativeStepCount[firstPassCellData.currentPathCount],
+        totalLegCount: state.relativeLegCount[firstPassCellData.currentPathCount],
       },
     };
 
@@ -62,9 +54,7 @@ export function enrichWalkedCellData(state: ProgramState) {
   // once we have enriched the walked cell data
   // we can link the previous and next cell data
   enrichedCellData.forEach((cellData) => {
-    const previousCellData = enrichedCellData.get(
-      cellData.previousCell?.join() ?? ''
-    );
+    const previousCellData = enrichedCellData.get(cellData.previousCell?.join() ?? '');
     if (previousCellData) {
       cellData.previousCellData = previousCellData;
       previousCellData.nextCellData = cellData;
@@ -82,10 +72,7 @@ export function enrichWalkedCellData(state: ProgramState) {
 
 // enrich the walked cell data and flatten into a simpler
 // array of cell data which we can used in the grid design
-export function enrichAndFlattenCellData(
-  state: ProgramState,
-  config: Required<ProgramConfig>
-) {
+export function enrichAndFlattenCellData(state: ProgramState, config: Required<ProgramConfig>) {
   // enrich the walked cell data with additional metadata
   const enrichedCellData = enrichWalkedCellData(state);
 
@@ -99,8 +86,7 @@ export function enrichAndFlattenCellData(
     const cellKey = [x, y].join();
     // get the cell data from the enriched cell data
     // or the unwalked cell data if it doesn't exist
-    const cellData =
-      enrichedCellData.get(cellKey) ?? state.unwalkedCellData.get(cellKey);
+    const cellData = enrichedCellData.get(cellKey) ?? state.unwalkedCellData.get(cellKey);
 
     if (cellData) {
       flattenedCellData.push(cellData);
@@ -110,9 +96,7 @@ export function enrichAndFlattenCellData(
   // if the flattened cell data length does not match the grid cell positions
   // then we have an issue and we should bail
   if (flattenedCellData.length !== gridCellPositions.length) {
-    throw new Error(
-      'Flattened walked cell data length does not match total cell count'
-    );
+    throw new Error('Flattened walked cell data length does not match total cell count');
   }
 
   return flattenedCellData;

@@ -1,9 +1,4 @@
-import {
-  Cell,
-  Direction,
-  GetNextDirectionHandler,
-  GetNextCellHandler,
-} from './types';
+import { Cell, Direction, GetNextDirectionHandler, GetNextCellHandler } from './types';
 
 export function generateGridPositions(size: Cell): Cell[] {
   const [x, y] = size;
@@ -13,10 +8,7 @@ export function generateGridPositions(size: Cell): Cell[] {
     .map((_, i) => [i % x, Math.floor(i / x)]);
 }
 
-export const getNextCell: GetNextCellHandler = (
-  { currentCell, currentDirection },
-  stepSize = 1
-) => {
+export const getNextCell: GetNextCellHandler = ({ currentCell, currentDirection }, stepSize = 1) => {
   const [x, y] = currentCell;
   switch (currentDirection) {
     case 'up':
@@ -51,10 +43,7 @@ export const directions: Direction[] = [
   'up-left',
 ];
 
-export const getNextDirection: GetNextDirectionHandler = (
-  { currentDirection },
-  stepSize = 2
-) => {
+export const getNextDirection: GetNextDirectionHandler = ({ currentDirection }, stepSize = 2) => {
   const currentIndex = directions.indexOf(currentDirection);
   return directions[(currentIndex + stepSize) % directions.length];
 };

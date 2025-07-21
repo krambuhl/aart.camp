@@ -10,12 +10,7 @@
 // we are in before moving to the `detect` state.
 // In the case of `exit` let the program know that we have exited
 
-import {
-  Cell,
-  Direction,
-  GetNextCellHandler,
-  GetNextDirectionHandler,
-} from 'lib/grid/types';
+import { Cell, Direction, GetNextCellHandler, GetNextDirectionHandler } from 'lib/grid/types';
 
 // and it can either stop or re-`enter` depending on the config.
 export type State =
@@ -156,10 +151,7 @@ export interface ProgramState {
   walkedCellData: Map<string, WalkedCellData>;
 }
 
-export type StateTransitionHandler = (
-  state: ProgramState,
-  config: Required<ProgramConfig>
-) => void;
+export type StateTransitionHandler = (state: ProgramState, config: Required<ProgramConfig>) => void;
 
 /**
  * the program conig is used to congigure the state machine
@@ -204,9 +196,6 @@ export interface ProgramConfig {
   handleExitState?: StateTransitionHandler;
 }
 
-export type InternalCellData =
-  | UnwalkedCellData
-  | WalkedCellData
-  | EnrichedCellData;
+export type InternalCellData = UnwalkedCellData | WalkedCellData | EnrichedCellData;
 
 export type CellData = UnwalkedCellData | EnrichedCellData;
