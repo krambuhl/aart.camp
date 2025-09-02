@@ -37,13 +37,10 @@ const canvasSizeY = 1280 * ratio;
 const padding = 40;
 const gutter = -0.5;
 
-const stepsX = 41;
-const stepsY = 41;
+const stepsX = 61;
+const stepsY = 61;
 const sizeX = (canvasSizeX - padding * 2) / stepsX;
 const sizeY = (canvasSizeY - padding * 2) / stepsY;
-
-const halfStepsX = stepsX / 2;
-const halfStepsY = stepsY / 2;
 
 const spiralGrid = createRandomWalkerGrid({
   gridSize: [stepsX, stepsY],
@@ -67,7 +64,7 @@ export default function Output() {
               // reset
               p.clear(...bgColor);
 
-              const start = p.frameCount / 100 + 0.05;
+              const start = p.frameCount / 500 + 0.05;
 
               for (const cellData of spiralGrid) {
                 const {
