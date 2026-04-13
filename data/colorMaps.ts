@@ -19,13 +19,4 @@ export const paint = {
   Black: '#000',
 };
 
-export const rainbow = [
-  paint.Lavender,
-  paint.Viola,
-  paint.BloodOrange,
-  paint.Orangina,
-  paint.YellowCab,
-  paint.LawnGreen,
-  paint.Malachite,
-  paint.SkyBlue,
-];
+export const rainbow = [paint.Lavender, paint.Viola, paint.BloodOrange, paint.Orangina, paint.YellowCab, paint.LawnGreen, paint.Malachite, paint.SkyBlue];

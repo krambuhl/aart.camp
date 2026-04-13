@@ -1,7 +1,7 @@
 import { generateGridPositions } from '@/lib/grid';
-import { Cell } from '@/lib/grid/types';
+import type { Cell } from '@/lib/grid/types';
 
-import { CellData, ProgramConfig, ProgramState, UnwalkedCellData } from '../types';
+import type { CellData, ProgramConfig, ProgramState, UnwalkedCellData } from '../types';
 
 export function generateUnwalkedCellData(positions: Cell[]) {
   // create a map of all the unwalked cell data

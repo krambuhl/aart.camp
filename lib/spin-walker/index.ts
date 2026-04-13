@@ -1,24 +1,10 @@
 import { generateGridPositions, getNextCell, getNextDirection } from '@/lib/grid';
 
-import {
-  enrichAndFlattenCellData,
-  generateUnwalkedCellData,
-} from './lib/cell-data';
-import {
-  handleEnterState,
-  handleDetectState,
-  handleFillState,
-  handleWalkState,
-  handleTurnState,
-  handleExitState,
-} from './lib/state-transitions';
-import { WalkedCellData, ProgramConfig, ProgramState, CellData } from './types';
+import { enrichAndFlattenCellData, generateUnwalkedCellData } from './lib/cell-data';
+import { handleDetectState, handleEnterState, handleExitState, handleFillState, handleTurnState, handleWalkState } from './lib/state-transitions';
+import type { CellData, ProgramConfig, ProgramState, WalkedCellData } from './types';
 
-function initProgramState({
-  initialCell,
-  initialDirection,
-  gridSize,
-}: Required<ProgramConfig>): ProgramState {
+function initProgramState({ initialCell, initialDirection, gridSize }: Required<ProgramConfig>): ProgramState {
   const gridCellPositions = generateGridPositions(gridSize);
   const unwalkedCellData = generateUnwalkedCellData(gridCellPositions);
 

@@ -1,14 +1,7 @@
+import { Sketch } from '@/components/app/Sketch';
 import type { GridSketchProps } from './types';
 
-import { Sketch } from '@/components/app/Sketch';
-
-export function GridSketch({
-  bg,
-  canvasSize,
-  sides,
-  padding,
-  fill,
-}: GridSketchProps) {
+export function GridSketch({ bg, canvasSize, sides, padding, fill }: GridSketchProps) {
   const size = (canvasSize - padding * 2) / sides;
 
   return (
@@ -18,7 +11,7 @@ export function GridSketch({
         p.colorMode(p.HSL);
         p.clear(...bg);
 
-        const cells = Array(Math.pow(sides, 2))
+        const cells = Array(sides ** 2)
           .fill(null)
           .map((_, i) => ({
             x: i % sides,
@@ -40,12 +33,7 @@ export function GridSketch({
           const color = fill(pos, p.frameCount);
 
           p.fill(p.color(color));
-          p.rect(
-            (pos.x - sides / 2) * size,
-            (pos.y - sides / 2) * size,
-            size,
-            size
-          );
+          p.rect((pos.x - sides / 2) * size, (pos.y - sides / 2) * size, size, size);
         }
       }}
     />

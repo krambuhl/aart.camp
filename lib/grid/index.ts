@@ -1,4 +1,4 @@
-import { Cell, Direction, GetNextDirectionHandler, GetNextCellHandler } from './types';
+import type { Cell, Direction, GetNextCellHandler, GetNextDirectionHandler } from './types';
 
 export function generateGridPositions(size: Cell): Cell[] {
   const [x, y] = size;
@@ -32,16 +32,7 @@ export const getNextCell: GetNextCellHandler = ({ currentCell, currentDirection 
   }
 };
 
-export const directions: Direction[] = [
-  'up',
-  'up-right',
-  'right',
-  'down-right',
-  'down',
-  'down-left',
-  'left',
-  'up-left',
-];
+export const directions: Direction[] = ['up', 'up-right', 'right', 'down-right', 'down', 'down-left', 'left', 'up-left'];
 
 export const getNextDirection: GetNextDirectionHandler = ({ currentDirection }, stepSize = 2) => {
   const currentIndex = directions.indexOf(currentDirection);

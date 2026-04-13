@@ -1,6 +1,5 @@
-import type { Formula } from './types';
-
 import { useMemo } from 'react';
+import type { Formula } from './types';
 
 const min = (list: number[]) => {
   return list.reduce((cur, num) => (num < cur ? num : cur), Infinity);

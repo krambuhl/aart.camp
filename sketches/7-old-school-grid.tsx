@@ -1,11 +1,10 @@
 'use client';
 
-import type { P5Color } from '@/types/p5';
-
 import { Sketch } from '@/components/app/Sketch';
 import { Area } from '@/components/shared/Area';
 import { rainbow } from '@/data/colorMaps';
 import { tokens } from '@/tokens';
+import type { P5Color } from '@/types/p5';
 
 const baseBg: P5Color = [0 / 255, 0 / 255, 0 / 255, 255];
 const canvasSize = 512;
@@ -29,40 +28,40 @@ export const meta = {
 export default function Output() {
   return (
     <Area width={tokens.size.x768}>
-    <Sketch
-      setup={(p, store) => {
-        p.createCanvas(canvasSize, canvasSize);
-        p.colorMode(p.HSL);
+      <Sketch
+        setup={(p, store) => {
+          p.createCanvas(canvasSize, canvasSize);
+          p.colorMode(p.HSL);
 
-        store.frames = Array(Math.pow(sides, 2))
-          .fill(null)
-          .map((_, i) => ({
-            x: i % sides,
-            y: Math.floor(i / sides),
-          }));
-      }}
-      draw={(p, store) => {
-        // reset
-        p.clear(...baseBg);
-        p.noStroke();
+          store.frames = Array(sides ** 2)
+            .fill(null)
+            .map((_, i) => ({
+              x: i % sides,
+              y: Math.floor(i / sides),
+            }));
+        }}
+        draw={(p, store) => {
+          // reset
+          p.clear(...baseBg);
+          p.noStroke();
 
-        const start = p.frameCount;
-        const length = store.frames.length;
+          const start = p.frameCount;
+          const length = store.frames.length;
 
-        for (let i = 0; i < length; i++) {
-          const pos = store.frames[i];
-          const time = start * 0.1;
+          for (let i = 0; i < length; i++) {
+            const pos = store.frames[i];
+            const time = start * 0.1;
 
-          const x = pos.x * size;
-          const y = pos.y * size;
+            const x = pos.x * size;
+            const y = pos.y * size;
 
-          const color = (x + offset) * (y + offset) + time;
+            const color = (x + offset) * (y + offset) + time;
 
-          p.fill(p.color(rainbow[Math.floor(color % rainbow.length)]));
-          p.rect(x + padding, y + padding, size - gutter, size - gutter);
-        }
-      }}
-    />
-  </Area>
+            p.fill(p.color(rainbow[Math.floor(color % rainbow.length)]));
+            p.rect(x + padding, y + padding, size - gutter, size - gutter);
+          }
+        }}
+      />
+    </Area>
   );
 }

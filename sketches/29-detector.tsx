@@ -1,10 +1,9 @@
 'use client';
 
-import type { P5Color } from '@/types/p5';
-
 import { Sketch } from '@/components/app/Sketch';
 import { Area } from '@/components/shared/Area';
 import { tokens } from '@/tokens';
+import type { P5Color } from '@/types/p5';
 
 const bgColor: P5Color = [0 / 255, 0 / 255, 0 / 255, 255];
 const canvasSizeX = 960;
@@ -29,12 +28,7 @@ type Cell = [number, number];
 type Translate = (c: Cell) => Cell;
 
 const stepSize = 1;
-const directions = [
-  ([x, y]) => [x + stepSize, y],
-  ([x, y]) => [x, y + stepSize],
-  ([x, y]) => [x - stepSize, y],
-  ([x, y]) => [x, y - stepSize],
-] as Translate[];
+const directions = [([x, y]) => [x + stepSize, y], ([x, y]) => [x, y + stepSize], ([x, y]) => [x - stepSize, y], ([x, y]) => [x, y - stepSize]] as Translate[];
 const getNextCell = (i: number) => directions[i % directions.length];
 
 const detectorSize = bandSize;
@@ -46,19 +40,14 @@ const detectorTranslates = [
 ] as Translate[];
 const getDetectorCell = (i: number) => detectorTranslates[i % detectorTranslates.length];
 
-const rotationTranslates = [
-  ([x, y]) => [x, y + 1],
-  ([x, y]) => [x - 1, y],
-  ([x, y]) => [x, y - 1],
-  ([x, y]) => [x + 1, y],
-] as Translate[];
+const rotationTranslates = [([x, y]) => [x, y + 1], ([x, y]) => [x - 1, y], ([x, y]) => [x, y - 1], ([x, y]) => [x + 1, y]] as Translate[];
 const getRotationCell = (i: number) => rotationTranslates[i % rotationTranslates.length];
 
 function spiralGrid(cells: Cell[]) {
   const unwalkedCells = [...cells] as Cell[];
   const walkedCells = [] as Cell[];
-  let size = 1; // eslint-disable-line prefer-const
-  let isFirstPass = true; // eslint-disable-line prefer-const
+  const _size = 1;
+  let _isFirstPass = true;
 
   function getUnwalkedCellIndex([x, y]: Cell) {
     return unwalkedCells.findIndex(([cx, cy]) => cx === x && cy === y);
@@ -113,7 +102,7 @@ function spiralGrid(cells: Cell[]) {
           if (currentDirIndex % 30 === 0) {
             nextCell = unwalkedCells[0];
             currentDirIndex = 0;
-            isFirstPass = false;
+            _isFirstPass = false;
           } else if (bandNextIndex >= 0) {
             nextCell = unwalkedCells[bandNextIndex];
           }
@@ -139,42 +128,42 @@ function spiralGrid(cells: Cell[]) {
 export default function Output() {
   return (
     <Area width={tokens.size.x768}>
-    <Sketch
-      aspectRatio={aspectRatio}
-      setup={(p, store) => {
-        p.createCanvas(canvasSizeX, canvasSizeY);
-        p.colorMode(p.HSL);
+      <Sketch
+        aspectRatio={aspectRatio}
+        setup={(p, store) => {
+          p.createCanvas(canvasSizeX, canvasSizeY);
+          p.colorMode(p.HSL);
 
-        const grid = Array(sidesX * sidesY)
-          .fill(null)
-          .map((_, i) => [i % sidesX, Math.floor(i / sidesX)]) as Cell[];
+          const grid = Array(sidesX * sidesY)
+            .fill(null)
+            .map((_, i) => [i % sidesX, Math.floor(i / sidesX)]) as Cell[];
 
-        store.frames = spiralGrid(grid);
-      }}
-      draw={(p, store) => {
-        // reset
-        p.clear(...bgColor);
-        p.noStroke();
+          store.frames = spiralGrid(grid);
+        }}
+        draw={(p, store) => {
+          // reset
+          p.clear(...bgColor);
+          p.noStroke();
 
-        const start = p.frameCount + 600;
-        const length = store.frames.length;
+          const start = p.frameCount + 600;
+          const length = store.frames.length;
 
-        for (let i = 0; i < length; i++) {
-          const [fx, fy] = store.frames[i];
-          const time = start * 0.00009;
+          for (let i = 0; i < length; i++) {
+            const [fx, fy] = store.frames[i];
+            const time = start * 0.00009;
 
-          const x = fx * sizeX;
-          const y = fy * sizeY;
+            const x = fx * sizeX;
+            const y = fy * sizeY;
 
-          const colorIndex0 = ((i + time * (i * y) * 0.9) % length) / length;
-          const colorIndex1 = ((i + time * (x * i)) % length) / length;
+            const colorIndex0 = ((i + time * (i * y) * 0.9) % length) / length;
+            const colorIndex1 = ((i + time * (x * i)) % length) / length;
 
-          p.colorMode(p.RGB, 1);
-          p.fill(1, colorIndex1, colorIndex0);
-          p.rect(x + padding, y + padding, sizeX - gutter, sizeY - gutter);
-        }
-      }}
-    />
-  </Area>
+            p.colorMode(p.RGB, 1);
+            p.fill(1, colorIndex1, colorIndex0);
+            p.rect(x + padding, y + padding, sizeX - gutter, sizeY - gutter);
+          }
+        }}
+      />
+    </Area>
   );
 }

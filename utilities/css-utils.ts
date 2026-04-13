@@ -1,16 +1,13 @@
-import { AnyToken } from '@/types/tokens';
-import { Breakpoint, OpaqueResponsive, reduceResponsive } from '@/utilities/opaque-responsive';
+import type { AnyToken } from '@/types/tokens';
+import { type Breakpoint, type OpaqueResponsive, reduceResponsive } from '@/utilities/opaque-responsive';
 
-export function responsiveStyleList<T>(
-  responsiveValues: OpaqueResponsive<T>,
-  transform: (value: T, breakpoint: Breakpoint) => string,
-) {
+export function responsiveStyleList<T>(responsiveValues: OpaqueResponsive<T>, transform: (value: T, breakpoint: Breakpoint) => string) {
   return reduceResponsive(
     responsiveValues,
     (acc, value, breakpoint) => {
       const transformedValue = transform(value, breakpoint);
       if (transformedValue) {
-        return acc + ' ' + transformedValue;
+        return `${acc} ${transformedValue}`;
       }
       return acc;
     },

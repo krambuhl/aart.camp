@@ -1,19 +1,9 @@
 'use client';
 
-import type { P5Color } from '@/types/p5';
-
 import { Sketch } from '@/components/app/Sketch';
 import { Area } from '@/components/shared/Area';
 import {
   Black,
-  White,
-  Viola,
-  Lavender,
-  Orangina,
-  SkyBlue,
-  LawnGreen,
-  Malachite,
-  YellowCab,
   BloodOrange,
   Gray00,
   Gray01,
@@ -31,10 +21,18 @@ import {
   Gray13,
   Gray14,
   Gray15,
+  Lavender,
+  LawnGreen,
+  Malachite,
+  Orangina,
+  SkyBlue,
+  Viola,
+  White,
+  YellowCab,
 } from '@/data/paint';
-import { tokens } from '@/tokens';
-
 import { walkGrid } from '@/lib/cell-walker';
+import { tokens } from '@/tokens';
+import type { P5Color } from '@/types/p5';
 
 export const meta = {
   title: 'Walker Ranger',
@@ -94,48 +92,44 @@ const spiralGrid = walkGrid({
 export default function Output() {
   return (
     <Area width={tokens.size.x640}>
-    <Sketch
-      aspectRatio={4 / 5}
-      setup={(p) => {
-        p.createCanvas(canvasSizeX, canvasSizeY);
-        p.colorMode(p.HSL);
-      }}
-      draw={(p, store) => {
-        // reset
-        p.clear(...bgColor);
-        p.noStroke();
-        p.colorMode(p.RGB, 1);
+      <Sketch
+        aspectRatio={4 / 5}
+        setup={(p) => {
+          p.createCanvas(canvasSizeX, canvasSizeY);
+          p.colorMode(p.HSL);
+        }}
+        draw={(p, _store) => {
+          // reset
+          p.clear(...bgColor);
+          p.noStroke();
+          p.colorMode(p.RGB, 1);
 
-        const start = p.frameCount / 200000 + 0.021;
+          const start = p.frameCount / 200000 + 0.021;
 
-        for (const cellData of spiralGrid) {
-          const {
-            walked,
-            cell: [fx, fy],
-          } = cellData;
+          for (const cellData of spiralGrid) {
+            const {
+              walked,
+              cell: [fx, fy],
+            } = cellData;
 
-          // const x = fx - stepsX / 2 + Math.sin(start * fx * fy * 0.01);
-          // const y = fy + stepsY / 2 + Math.cos(start * fx * fy * 0.01);
-          const posX = fx * sizeX;
-          const posY = fy * sizeY;
+            // const x = fx - stepsX / 2 + Math.sin(start * fx * fy * 0.01);
+            // const y = fy + stepsY / 2 + Math.cos(start * fx * fy * 0.01);
+            const posX = fx * sizeX;
+            const posY = fy * sizeY;
 
-          // fill the unwalked cells with b/w checkerboard
-          const progress = cellData.index / cellData.totalCellCount;
-          const intensity = progress * Math.PI * 2;
+            // fill the unwalked cells with b/w checkerboard
+            const progress = cellData.index / cellData.totalCellCount;
+            const intensity = progress * Math.PI * 2;
 
-          const x = fx - stepsX / 2;
-          const y = fy + stepsY / 2;
+            const x = fx - stepsX / 2;
+            const y = fy + stepsY / 2;
 
-          p.fill([
-            Math.sin(intensity * start * x * y * 1.01),
-            Math.sin(intensity * start * x * y * 1.02),
-            Math.sin(intensity * start * x * y * 1.03),
-          ]);
+            p.fill([Math.sin(intensity * start * x * y * 1.01), Math.sin(intensity * start * x * y * 1.02), Math.sin(intensity * start * x * y * 1.03)]);
 
-          p.rect(posX + padding, posY + padding, sizeX - gutter, sizeY - gutter);
-        }
-      }}
-    />
-  </Area>
+            p.rect(posX + padding, posY + padding, sizeX - gutter, sizeY - gutter);
+          }
+        }}
+      />
+    </Area>
   );
 }

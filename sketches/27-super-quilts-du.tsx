@@ -1,10 +1,9 @@
 'use client';
 
-import type { P5Color } from '@/types/p5';
-
 import { Sketch } from '@/components/app/Sketch';
 import { Area } from '@/components/shared/Area';
 import { tokens } from '@/tokens';
+import type { P5Color } from '@/types/p5';
 
 const bgColor: P5Color = [0 / 255, 0 / 255, 0 / 255, 255];
 const canvasSizeX = 720;
@@ -56,12 +55,7 @@ const bandTranslates = [
   ({ x, y, size }) => [x + 1, y + size],
 ] as BandTranslate[];
 
-const rotationTranslates = [
-  ({ x, y }) => [x, y + 1],
-  ({ x, y }) => [x - 1, y],
-  ({ x, y }) => [x, y - 1],
-  ({ x, y }) => [x + 1, y],
-] as BandTranslate[];
+const rotationTranslates = [({ x, y }) => [x, y + 1], ({ x, y }) => [x - 1, y], ({ x, y }) => [x, y - 1], ({ x, y }) => [x + 1, y]] as BandTranslate[];
 
 function spiralGrid(cells: Cell[]) {
   const unwalkedCells = [...cells] as Cell[];
@@ -173,46 +167,46 @@ function spiralGrid(cells: Cell[]) {
 export default function Output() {
   return (
     <Area width={tokens.size.x512}>
-    <Sketch
-      aspectRatio={aspectRatio}
-      setup={(p, store) => {
-        p.createCanvas(canvasSizeX, canvasSizeY);
-        p.colorMode(p.HSL);
+      <Sketch
+        aspectRatio={aspectRatio}
+        setup={(p, store) => {
+          p.createCanvas(canvasSizeX, canvasSizeY);
+          p.colorMode(p.HSL);
 
-        const grid = Array(sidesX * sidesY)
-          .fill(null)
-          .map((_, i) => ({
-            x: i % sidesX,
-            y: Math.floor(i / sidesX),
-            meta: {},
-          }));
+          const grid = Array(sidesX * sidesY)
+            .fill(null)
+            .map((_, i) => ({
+              x: i % sidesX,
+              y: Math.floor(i / sidesX),
+              meta: {},
+            }));
 
-        store.frames = spiralGrid(grid);
-      }}
-      draw={(p, store) => {
-        // reset
-        p.clear(...bgColor);
-        p.noStroke();
+          store.frames = spiralGrid(grid);
+        }}
+        draw={(p, store) => {
+          // reset
+          p.clear(...bgColor);
+          p.noStroke();
 
-        const start = p.frameCount + 0;
-        const length = store.frames.length;
+          const start = p.frameCount + 0;
+          const length = store.frames.length;
 
-        for (let i = 0; i < length; i++) {
-          const frame = store.frames[i];
-          const time = start * 0.02;
+          for (let i = 0; i < length; i++) {
+            const frame = store.frames[i];
+            const time = start * 0.02;
 
-          const x = frame.x * sizeX;
-          const y = frame.y * sizeY;
+            const x = frame.x * sizeX;
+            const y = frame.y * sizeY;
 
-          const colorIndex0 = ((i * time * 0.2) % length) / length;
-          const colorIndex1 = ((i * time * 0.9 + y) % length) / length;
+            const colorIndex0 = ((i * time * 0.2) % length) / length;
+            const colorIndex1 = ((i * time * 0.9 + y) % length) / length;
 
-          p.colorMode(p.RGB, 1);
-          p.fill(1, colorIndex0, colorIndex1);
-          p.rect(x + padding, y + padding, sizeX - gutter, sizeY - gutter);
-        }
-      }}
-    />
-  </Area>
+            p.colorMode(p.RGB, 1);
+            p.fill(1, colorIndex0, colorIndex1);
+            p.rect(x + padding, y + padding, sizeX - gutter, sizeY - gutter);
+          }
+        }}
+      />
+    </Area>
   );
 }

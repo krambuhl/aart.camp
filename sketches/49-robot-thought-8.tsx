@@ -1,12 +1,11 @@
 'use client';
 
-import type { P5Color } from '@/types/p5';
-
 import { Sketch } from '@/components/app/Sketch';
 import { Area } from '@/components/shared/Area';
-import { BlueVelvet, Lavender, SkyBlue, Malachite, YellowCab, Orangina, BloodOrange } from '@/data/paint';
+import { BloodOrange, BlueVelvet, Lavender, Malachite, Orangina, SkyBlue, YellowCab } from '@/data/paint';
 import { createRandomWalkerGrid } from '@/lib/random-walker';
 import { tokens } from '@/tokens';
+import type { P5Color } from '@/types/p5';
 
 export const meta = {
   title: 'Robot Thought 8 — Cardinal Drift',
@@ -45,49 +44,50 @@ function lerpPalette(p: any, palette: string[], t: number) {
 export default function Output() {
   return (
     <Area width={tokens.size.x640}>
-    <Sketch
-      aspectRatio={1}
-      setup={(p) => {
-        p.createCanvas(canvasSizeX, canvasSizeY);
-        p.noStroke();
-        p.colorMode(p.HSL, 360, 100, 100, 1);
-      }}
-      draw={(p) => {
-        p.clear(...bgColor);
-        const time = p.frameCount / 24;
-        const palette = [BlueVelvet, Lavender, SkyBlue, Malachite, YellowCab, Orangina, BloodOrange];
-        const cx = stepsX / 2;
-        const cy = stepsY / 2;
+      <Sketch
+        aspectRatio={1}
+        setup={(p) => {
+          p.createCanvas(canvasSizeX, canvasSizeY);
+          p.noStroke();
+          p.colorMode(p.HSL, 360, 100, 100, 1);
+        }}
+        draw={(p) => {
+          p.clear(...bgColor);
+          const time = p.frameCount / 24;
+          const palette = [BlueVelvet, Lavender, SkyBlue, Malachite, YellowCab, Orangina, BloodOrange];
+          const cx = stepsX / 2;
+          const cy = stepsY / 2;
 
-        for (const cellData of grid) {
-          const { cell: [fx, fy] } = cellData;
-          const x = fx - cx;
-          const y = fy - cy;
-          const posX = fx * sizeX;
-          const posY = fy * sizeY;
+          for (const cellData of grid) {
+            const {
+              cell: [fx, fy],
+            } = cellData;
+            const x = fx - cx;
+            const y = fy - cy;
+            const posX = fx * sizeX;
+            const posY = fy * sizeY;
 
-          const theta = Math.atan2(y, x) + time * 0.25; // drifting cardinals
-          const cardinal = Math.pow(0.5 + 0.5 * Math.cos(2 * theta), 1.6); // 4-fold symmetry
+            const theta = Math.atan2(y, x) + time * 0.25; // drifting cardinals
+            const cardinal = (0.5 + 0.5 * Math.cos(2 * theta)) ** 1.6; // 4-fold symmetry
 
-          // manhattan rings as gentle chevrons
-          const md = Math.abs(x) + Math.abs(y);
-          const rings = 0.5 + 0.5 * Math.cos(md * 0.4 - time * 1.2);
+            // manhattan rings as gentle chevrons
+            const md = Math.abs(x) + Math.abs(y);
+            const rings = 0.5 + 0.5 * Math.cos(md * 0.4 - time * 1.2);
 
-          const cadence = ((fx % 3) + (fy % 3)) / 6; // soft grid cadence
-          const field = p.noise(fx * 0.055 + time * 0.22, fy * 0.055 - time * 0.2) * 0.08;
+            const cadence = ((fx % 3) + (fy % 3)) / 6; // soft grid cadence
+            const field = p.noise(fx * 0.055 + time * 0.22, fy * 0.055 - time * 0.2) * 0.08;
 
-          const base = 0.5 * cardinal + 0.3 * rings + 0.2 * cadence;
-          const walkedBias = cellData.walked ? 0.08 : -0.02;
-          const t = Math.max(0, Math.min(1, base + field + walkedBias));
+            const base = 0.5 * cardinal + 0.3 * rings + 0.2 * cadence;
+            const walkedBias = cellData.walked ? 0.08 : -0.02;
+            const t = Math.max(0, Math.min(1, base + field + walkedBias));
 
-          const c = lerpPalette(p, palette, t);
-          p.fill(c);
+            const c = lerpPalette(p, palette, t);
+            p.fill(c);
 
-          p.rect(posX + padding, posY + padding, sizeX - gutter, sizeY - gutter);
-        }
-      }}
-    />
-  </Area>
+            p.rect(posX + padding, posY + padding, sizeX - gutter, sizeY - gutter);
+          }
+        }}
+      />
+    </Area>
   );
 }
-

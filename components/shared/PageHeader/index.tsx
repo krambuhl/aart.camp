@@ -1,8 +1,7 @@
-import type { PageHeaderProps } from './types';
-
 import { Stack } from '@/components/shared/Stack';
 import { DataText, HeadingText } from '@/components/shared/Text';
 import { tokens } from '@/tokens';
+import type { PageHeaderProps } from './types';
 
 export function PageHeader({ title, subtitle, date, ...props }: PageHeaderProps) {
   return (

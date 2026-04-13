@@ -1,22 +1,12 @@
 'use client';
 
-import type { P5Color } from '@/types/p5';
-
 import { Sketch } from '@/components/app/Sketch';
 import { Area } from '@/components/shared/Area';
 import { paint, rainbow } from '@/data/colorMaps';
 import { tokens } from '@/tokens';
+import type { P5Color } from '@/types/p5';
 
-const rainbow2 = [
-  paint.Lavender,
-  paint.Orangina,
-  paint.Viola,
-  paint.SkyBlue,
-  paint.LawnGreen,
-  paint.Malachite,
-  paint.YellowCab,
-  paint.BloodOrange,
-];
+const rainbow2 = [paint.Lavender, paint.Orangina, paint.Viola, paint.SkyBlue, paint.LawnGreen, paint.Malachite, paint.YellowCab, paint.BloodOrange];
 
 type Cell = [number, number];
 type Translation = (config: Config) => Cell;
@@ -98,10 +88,7 @@ const rotations = [
   ({ cell: [x, y] }) => [x + 1, y],
 ] as Translation[];
 
-const restarts = [
-  ({ firstCell: [x, y], bandCount }) => [x, y + bandCount + 2],
-  ({ firstCell: [x, y], bandCount }) => [x, y + bandCount + 1],
-] as Translation[];
+const restarts = [({ firstCell: [x, y], bandCount }) => [x, y + bandCount + 2], ({ firstCell: [x, y], bandCount }) => [x, y + bandCount + 1]] as Translation[];
 
 const getCell = (translationList: Translation[], config: Config) => {
   const { currentDirection } = config;
@@ -134,7 +121,7 @@ function spiralGrid(cells: Cell[]) {
           currentArmLength: 0,
           isFirstPass: false,
           bandCount: config.bandCount + 1,
-        })
+        }),
       );
     }
   };
@@ -158,7 +145,7 @@ function spiralGrid(cells: Cell[]) {
           ...config,
           currentSnakeLength: currentSnakeLength + 1,
           currentArmLength: currentArmLength + 1,
-        })
+        }),
       );
     }
   };
@@ -193,7 +180,7 @@ function spiralGrid(cells: Cell[]) {
         pop({
           ...config,
           cell: [nx, ny],
-        })
+        }),
       );
     } else if (isFirstPass && currentArmLength < computedDetectorSize) {
       instructions.push(restart(config));
@@ -219,7 +206,7 @@ function spiralGrid(cells: Cell[]) {
           currentTurnCount: currentTurnCount + 1,
           cell: [rx, ry],
           maxTurnCount: isFirstPass ? maxTurnCount + 1 : maxTurnCount,
-        })
+        }),
       );
     } else {
       // instructions.push(
@@ -244,80 +231,80 @@ function spiralGrid(cells: Cell[]) {
 export default function Output() {
   return (
     <Area width={tokens.size.x640}>
-    <Sketch
-      aspectRatio={4 / 5}
-      setup={(p, store) => {
-        p.createCanvas(canvasSizeX, canvasSizeY);
-        p.colorMode(p.HSL);
+      <Sketch
+        aspectRatio={4 / 5}
+        setup={(p, store) => {
+          p.createCanvas(canvasSizeX, canvasSizeY);
+          p.colorMode(p.HSL);
 
-        const grid = Array(stepsX * stepsY)
-          .fill(null)
-          .map((_, i) => [i % stepsX, Math.floor(i / stepsX)]) as Cell[];
+          const grid = Array(stepsX * stepsY)
+            .fill(null)
+            .map((_, i) => [i % stepsX, Math.floor(i / stepsX)]) as Cell[];
 
-        const [spiral, checkers, walkedConfigs] = spiralGrid(grid);
-        store.frames = spiral;
-        store.frameConfigs = walkedConfigs;
-        store.checkers = checkers;
-      }}
-      draw={(p, store) => {
-        // reset
-        p.clear(...bgColor);
-        p.noStroke();
+          const [spiral, checkers, walkedConfigs] = spiralGrid(grid);
+          store.frames = spiral;
+          store.frameConfigs = walkedConfigs;
+          store.checkers = checkers;
+        }}
+        draw={(p, store) => {
+          // reset
+          p.clear(...bgColor);
+          p.noStroke();
 
-        // const offset = 1.61803398875
-        const offset = 5.384;
+          // const offset = 1.61803398875
+          const offset = 5.384;
 
-        const start = p.frameCount + 10000;
-        const frameLength = store.frameConfigs.length;
-        const time = start * -0.0002;
-        // const time = 1112 //31113
+          const start = p.frameCount + 10000;
+          const frameLength = store.frameConfigs.length;
+          const time = start * -0.0002;
+          // const time = 1112 //31113
 
-        for (let i = 0; i < frameLength; i++) {
-          const {
-            cell: [fx, fy],
-            bandCount,
-            bandSize,
-            currentSnakeLength,
-            currentTurnCount,
-          } = store.frameConfigs[i];
+          for (let i = 0; i < frameLength; i++) {
+            const {
+              cell: [fx, fy],
+              bandCount,
+              bandSize,
+              currentSnakeLength,
+              currentTurnCount,
+            } = store.frameConfigs[i];
 
-          const x = fx * sizeX + 1;
-          const y = fy * sizeY + 1;
+            const x = fx * sizeX + 1;
+            const y = fy * sizeY + 1;
 
-          // const colorIndex0 = (((i + (bandCount * 10)) + (x * 0.05) + (y * 5)) * time)
+            // const colorIndex0 = (((i + (bandCount * 10)) + (x * 0.05) + (y * 5)) * time)
 
-          const res =
-            ((time +
-              time * ((bandSize + 1) * 8 + (currentTurnCount + x / time) * 2) +
-              (currentTurnCount + 1) * 0.1 * (time * 0.29) +
-              // x * (currentTurnCount + 1) +
-              // y * currentTurnCount +
-              time * 0.1 * currentSnakeLength +
-              // ((bandSize - bandCount) * ((currentTurnCount + 1) * (time * 0.1))) +
-              0) *
-              offset) %
-            rainbow.length;
+            const res =
+              ((time +
+                time * ((bandSize + 1) * 8 + (currentTurnCount + x / time) * 2) +
+                (currentTurnCount + 1) * 0.1 * (time * 0.29) +
+                // x * (currentTurnCount + 1) +
+                // y * currentTurnCount +
+                time * 0.1 * currentSnakeLength +
+                // ((bandSize - bandCount) * ((currentTurnCount + 1) * (time * 0.1))) +
+                0) *
+                offset) %
+              rainbow.length;
 
-          const color = rainbow2[Math.floor(Math.abs(res) % rainbow.length)];
+            const color = rainbow2[Math.floor(Math.abs(res) % rainbow.length)];
 
-          p.colorMode(p.RGB, 1);
-          p.fill(color);
-          p.rect(x + padding, y + padding, sizeX - gutter, sizeY - gutter);
-        }
+            p.colorMode(p.RGB, 1);
+            p.fill(color);
+            p.rect(x + padding, y + padding, sizeX - gutter, sizeY - gutter);
+          }
 
-        const checkersLength = store.checkers.length;
-        for (let i = 0; i < checkersLength; i++) {
-          const [fx, fy] = store.checkers[i];
+          const checkersLength = store.checkers.length;
+          for (let i = 0; i < checkersLength; i++) {
+            const [fx, fy] = store.checkers[i];
 
-          const x = fx * sizeX;
-          const y = fy * sizeY;
+            const x = fx * sizeX;
+            const y = fy * sizeY;
 
-          p.colorMode(p.RGB, 1);
-          p.fill((fy % 2 ? fx % 2 : (fx + 1) % 2) ? 'white' : 'black');
-          p.rect(x + padding, y + padding, sizeX - gutter, sizeY - gutter);
-        }
-      }}
-    />
-  </Area>
+            p.colorMode(p.RGB, 1);
+            p.fill((fy % 2 ? fx % 2 : (fx + 1) % 2) ? 'white' : 'black');
+            p.rect(x + padding, y + padding, sizeX - gutter, sizeY - gutter);
+          }
+        }}
+      />
+    </Area>
   );
 }

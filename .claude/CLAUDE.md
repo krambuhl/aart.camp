@@ -8,7 +8,9 @@ not production software. Good enough is good enough.
 
 - `npm run dev` — dev server on port 3000
 - `npm run build` — production build (SSG)
-- `npm run lint` — ESLint
+- `npm run lint` — Biome (linting)
+- `npm run check` — Biome (lint + format, auto-fix)
+- `npm run format` — Biome (format only, auto-fix)
 - `npm run generate:tokens` — regenerate design tokens from `tokens/design-tokens.json`
 
 ## Stack

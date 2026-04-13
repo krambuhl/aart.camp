@@ -1,12 +1,11 @@
 'use client';
 
-import type { P5Color } from '@/types/p5';
-
 import { Sketch } from '@/components/app/Sketch';
 import { Area } from '@/components/shared/Area';
-import { BlueVelvet, Lavender, SkyBlue, Malachite, YellowCab, Orangina, BloodOrange } from '@/data/paint';
+import { BloodOrange, BlueVelvet, Lavender, Malachite, Orangina, SkyBlue, YellowCab } from '@/data/paint';
 import { createRandomWalkerGrid } from '@/lib/random-walker';
 import { tokens } from '@/tokens';
+import type { P5Color } from '@/types/p5';
 
 export const meta = {
   title: 'Robot Thought 10 — Cardinal Weave',
@@ -45,53 +44,54 @@ function lerpPalette(p: any, palette: string[], t: number) {
 export default function Output() {
   return (
     <Area width={tokens.size.x640}>
-    <Sketch
-      aspectRatio={1}
-      setup={(p) => {
-        p.createCanvas(canvasSizeX, canvasSizeY);
-        p.noStroke();
-        p.colorMode(p.HSL, 360, 100, 100, 1);
-      }}
-      draw={(p) => {
-        p.clear(...bgColor);
-        const time = p.frameCount / 24;
-        const palette = [BlueVelvet, Lavender, SkyBlue, Malachite, YellowCab, Orangina, BloodOrange];
-        const cx = stepsX / 2;
-        const cy = stepsY / 2;
+      <Sketch
+        aspectRatio={1}
+        setup={(p) => {
+          p.createCanvas(canvasSizeX, canvasSizeY);
+          p.noStroke();
+          p.colorMode(p.HSL, 360, 100, 100, 1);
+        }}
+        draw={(p) => {
+          p.clear(...bgColor);
+          const time = p.frameCount / 24;
+          const palette = [BlueVelvet, Lavender, SkyBlue, Malachite, YellowCab, Orangina, BloodOrange];
+          const cx = stepsX / 2;
+          const cy = stepsY / 2;
 
-        for (const cellData of grid) {
-          const { cell: [fx, fy] } = cellData;
-          const x = fx - cx;
-          const y = fy - cy;
-          const posX = fx * sizeX;
-          const posY = fy * sizeY;
+          for (const cellData of grid) {
+            const {
+              cell: [fx, fy],
+            } = cellData;
+            const x = fx - cx;
+            const y = fy - cy;
+            const posX = fx * sizeX;
+            const posY = fy * sizeY;
 
-          const theta = Math.atan2(y, x);
+            const theta = Math.atan2(y, x);
 
-          // weave: two diagonal bands crossing, animated
-          const diagA = 0.5 + 0.5 * Math.sin((x + y) * 0.4 + time * 1.6);
-          const diagB = 0.5 + 0.5 * Math.cos((x - y) * 0.4 - time * 1.3);
-          const weave = 0.55 * diagA + 0.45 * diagB;
+            // weave: two diagonal bands crossing, animated
+            const diagA = 0.5 + 0.5 * Math.sin((x + y) * 0.4 + time * 1.6);
+            const diagB = 0.5 + 0.5 * Math.cos((x - y) * 0.4 - time * 1.3);
+            const weave = 0.55 * diagA + 0.45 * diagB;
 
-          // cardinal emphasis (4-fold) to echo Thought 4
-          const cardinal = Math.pow(0.5 + 0.5 * Math.cos(2 * theta - time * 0.4), 1.8);
+            // cardinal emphasis (4-fold) to echo Thought 4
+            const cardinal = (0.5 + 0.5 * Math.cos(2 * theta - time * 0.4)) ** 1.8;
 
-          // grid cadence for structure + light noise for texture
-          const cadence = ((fx % 4) + (fy % 4)) / 8;
-          const field = p.noise(fx * 0.05 + time * 0.26, fy * 0.05 - time * 0.22) * 0.06;
+            // grid cadence for structure + light noise for texture
+            const cadence = ((fx % 4) + (fy % 4)) / 8;
+            const field = p.noise(fx * 0.05 + time * 0.26, fy * 0.05 - time * 0.22) * 0.06;
 
-          const base = 0.5 * weave + 0.3 * cardinal + 0.2 * cadence;
-          const walkedBias = cellData.walked ? 0.08 : -0.02;
-          const t = Math.max(0, Math.min(1, base + field + walkedBias));
+            const base = 0.5 * weave + 0.3 * cardinal + 0.2 * cadence;
+            const walkedBias = cellData.walked ? 0.08 : -0.02;
+            const t = Math.max(0, Math.min(1, base + field + walkedBias));
 
-          const c = lerpPalette(p, palette, t);
-          p.fill(c);
+            const c = lerpPalette(p, palette, t);
+            p.fill(c);
 
-          p.rect(posX + padding, posY + padding, sizeX - gutter, sizeY - gutter);
-        }
-      }}
-    />
-  </Area>
+            p.rect(posX + padding, posY + padding, sizeX - gutter, sizeY - gutter);
+          }
+        }}
+      />
+    </Area>
   );
 }
-

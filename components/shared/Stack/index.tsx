@@ -1,13 +1,9 @@
-import type { StackProps } from './types';
-
 import cx from 'classnames';
-import React from 'react';
-
 import { tokens } from '@/tokens';
 import { buildTokenKeyMap, responsiveStyleList } from '@/utilities/css-utils';
 import { wrapResponsive } from '@/utilities/opaque-responsive';
-
 import * as styles from './Stack.module.css';
+import type { StackProps } from './types';
 
 const spaceTokenMap = buildTokenKeyMap(tokens.space);
 

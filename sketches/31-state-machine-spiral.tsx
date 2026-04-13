@@ -1,10 +1,9 @@
 'use client';
 
-import type { P5Color } from '@/types/p5';
-
 import { Sketch } from '@/components/app/Sketch';
 import { Area } from '@/components/shared/Area';
 import { tokens } from '@/tokens';
+import type { P5Color } from '@/types/p5';
 
 type Cell = [number, number];
 type Translation = (config: Config) => Cell;
@@ -28,7 +27,7 @@ type Instruction = () => void;
 const bgColor: P5Color = [0 / 255, 0 / 255, 0 / 255, 255];
 const canvasSizeX = 960;
 const canvasSizeY = 960 * (5 / 4);
-const aspectRatio = canvasSizeX / canvasSizeY;
+const _aspectRatio = canvasSizeX / canvasSizeY;
 
 const sidesX = 4 * 24;
 const sidesY = 5 * 24;
@@ -104,7 +103,7 @@ function spiralGrid(cells: Cell[]) {
           currentTurnCount: 0,
           isFirstPass: false,
           bandCount: config.bandCount + 1,
-        })
+        }),
       );
     }
   };
@@ -126,7 +125,7 @@ function spiralGrid(cells: Cell[]) {
         detect({
           ...config,
           currentLength: currentLength + 1,
-        })
+        }),
       );
     }
   };
@@ -148,7 +147,7 @@ function spiralGrid(cells: Cell[]) {
         pop({
           ...config,
           cell: [nx, ny],
-        })
+        }),
       );
     } else if (isFirstPass && currentLength < detectorSize) {
       instructions.push(restart(config));
@@ -174,7 +173,7 @@ function spiralGrid(cells: Cell[]) {
           currentTurnCount: currentTurnCount + 1,
           cell: [rx, ry],
           maxTurnCount: isFirstPass ? maxTurnCount + 1 : maxTurnCount,
-        })
+        }),
       );
     }
   };
@@ -195,44 +194,44 @@ function spiralGrid(cells: Cell[]) {
 export default function Output() {
   return (
     <Area width={tokens.size.x512}>
-    <Sketch
-      aspectRatio={9 / 16}
-      setup={(p, store) => {
-        p.createCanvas(canvasSizeX, canvasSizeY);
-        p.colorMode(p.HSL);
+      <Sketch
+        aspectRatio={9 / 16}
+        setup={(p, store) => {
+          p.createCanvas(canvasSizeX, canvasSizeY);
+          p.colorMode(p.HSL);
 
-        const grid = Array(sidesX * sidesY)
-          .fill(null)
-          .map((_, i) => [i % sidesX, Math.floor(i / sidesX)]) as Cell[];
+          const grid = Array(sidesX * sidesY)
+            .fill(null)
+            .map((_, i) => [i % sidesX, Math.floor(i / sidesX)]) as Cell[];
 
-        store.frames = spiralGrid(grid);
-      }}
-      draw={(p, store) => {
-        // reset
-        p.clear(...bgColor);
-        p.noStroke();
+          store.frames = spiralGrid(grid);
+        }}
+        draw={(p, store) => {
+          // reset
+          p.clear(...bgColor);
+          p.noStroke();
 
-        const start = p.frameCount + 3000;
-        const length = store.frames.length;
+          const start = p.frameCount + 3000;
+          const length = store.frames.length;
 
-        for (let i = 0; i < length; i++) {
-          const [fx, fy] = store.frames[i];
-          const time = start * 0.1;
+          for (let i = 0; i < length; i++) {
+            const [fx, fy] = store.frames[i];
+            const time = start * 0.1;
 
-          const x = fx * sizeX;
-          const y = fy * sizeY;
+            const x = fx * sizeX;
+            const y = fy * sizeY;
 
-          const linearColor1 = ((i * time * 0.3 + time * x * 0.01) % length) / length;
-          const linearColor2 = ((i * time) % length) / length;
-          const colorIndex0 = (((i * 7 + x) * time) % length) / length;
-          const colorIndex1 = (((i * 8 + y) * time) % length) / length;
+            const linearColor1 = ((i * time * 0.3 + time * x * 0.01) % length) / length;
+            const linearColor2 = ((i * time) % length) / length;
+            const _colorIndex0 = (((i * 7 + x) * time) % length) / length;
+            const _colorIndex1 = (((i * 8 + y) * time) % length) / length;
 
-          p.colorMode(p.RGB, 1);
-          p.fill(1, linearColor1, linearColor2);
-          p.rect(x + padding, y + padding, sizeX - gutter, sizeY - gutter);
-        }
-      }}
-    />
-  </Area>
+            p.colorMode(p.RGB, 1);
+            p.fill(1, linearColor1, linearColor2);
+            p.rect(x + padding, y + padding, sizeX - gutter, sizeY - gutter);
+          }
+        }}
+      />
+    </Area>
   );
 }

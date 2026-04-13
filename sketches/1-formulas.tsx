@@ -1,10 +1,8 @@
 'use client';
 
-import type { FormulaSketchProps } from '@/components/app/FormulaSketch/types';
-
 import { useMemo } from 'react';
-
 import { FormulaSketch } from '@/components/app/FormulaSketch';
+import type { FormulaSketchProps } from '@/components/app/FormulaSketch/types';
 import { Area } from '@/components/shared/Area';
 import { Grid } from '@/components/shared/Grid';
 import { tokens } from '@/tokens';
@@ -19,12 +17,12 @@ export default function FormulaList() {
 
   return (
     <Area width={tokens.size.x768}>
-    <Grid>
-      {formulaList.map((config, i) => (
-        <FormulaSketch key={i} {...config} />
-      ))}
-    </Grid>
-  </Area>
+      <Grid>
+        {formulaList.map((config, i) => (
+          <FormulaSketch key={i} {...config} />
+        ))}
+      </Grid>
+    </Area>
   );
 }
 

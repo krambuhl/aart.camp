@@ -1,12 +1,11 @@
 'use client';
 
-import type { P5Color } from '@/types/p5';
-
 import { Sketch } from '@/components/app/Sketch';
 import { Area } from '@/components/shared/Area';
-import { BlueVelvet, Lavender, SkyBlue, Malachite, YellowCab, Orangina, BloodOrange } from '@/data/paint';
+import { BloodOrange, BlueVelvet, Lavender, Malachite, Orangina, SkyBlue, YellowCab } from '@/data/paint';
 import { createRandomWalkerGrid } from '@/lib/random-walker';
 import { tokens } from '@/tokens';
+import type { P5Color } from '@/types/p5';
 
 export const meta = {
   title: 'Robot Thought 4 — Cardinal',
@@ -45,49 +44,51 @@ function lerpPalette(p: any, palette: string[], t: number) {
 export default function Output() {
   return (
     <Area width={tokens.size.x640}>
-    <Sketch
-      aspectRatio={1}
-      setup={(p) => {
-        p.createCanvas(canvasSizeX, canvasSizeY);
-        p.noStroke();
-        p.colorMode(p.HSL, 360, 100, 100, 1);
-      }}
-      draw={(p) => {
-        p.clear(...bgColor);
-        const time = p.frameCount / 24;
-        const palette = [BlueVelvet, Lavender, SkyBlue, Malachite, YellowCab, Orangina, BloodOrange];
-        const cx = stepsX / 2;
-        const cy = stepsY / 2;
+      <Sketch
+        aspectRatio={1}
+        setup={(p) => {
+          p.createCanvas(canvasSizeX, canvasSizeY);
+          p.noStroke();
+          p.colorMode(p.HSL, 360, 100, 100, 1);
+        }}
+        draw={(p) => {
+          p.clear(...bgColor);
+          const time = p.frameCount / 24;
+          const palette = [BlueVelvet, Lavender, SkyBlue, Malachite, YellowCab, Orangina, BloodOrange];
+          const cx = stepsX / 2;
+          const cy = stepsY / 2;
 
-        for (const cellData of grid) {
-          const { cell: [fx, fy] } = cellData;
-          const x = fx - cx;
-          const y = fy - cy;
-          const posX = fx * sizeX;
-          const posY = fy * sizeY;
+          for (const cellData of grid) {
+            const {
+              cell: [fx, fy],
+            } = cellData;
+            const x = fx - cx;
+            const y = fy - cy;
+            const posX = fx * sizeX;
+            const posY = fy * sizeY;
 
-          // directionality by angle and quadrant
-          const theta = Math.atan2(y, x); // -PI..PI
-          const normA = (theta + Math.PI) / (Math.PI * 2); // 0..1
-          const quad = ((Math.floor(((theta + Math.PI) / (Math.PI / 2))) % 4) + 4) % 4;
+            // directionality by angle and quadrant
+            const theta = Math.atan2(y, x); // -PI..PI
+            const normA = (theta + Math.PI) / (Math.PI * 2); // 0..1
+            const quad = ((Math.floor((theta + Math.PI) / (Math.PI / 2)) % 4) + 4) % 4;
 
-          // grid cadence
-          const cadence = ((fx % 4) + (fy % 4)) / 8;
-          const field = p.noise(fx * 0.06 + time * 0.25, fy * 0.06 - time * 0.2) * 0.2;
+            // grid cadence
+            const cadence = ((fx % 4) + (fy % 4)) / 8;
+            const field = p.noise(fx * 0.06 + time * 0.25, fy * 0.06 - time * 0.2) * 0.2;
 
-          // vivid contrast by quadrant weighting
-          const base = 0.55 * normA + 0.25 * cadence + field + (quad % 2 === 0 ? 0.1 : -0.05);
-          const walkedBias = cellData.walked ? 0.1 : -0.02;
-          const t = Math.max(0, Math.min(1, base + walkedBias));
+            // vivid contrast by quadrant weighting
+            const base = 0.55 * normA + 0.25 * cadence + field + (quad % 2 === 0 ? 0.1 : -0.05);
+            const walkedBias = cellData.walked ? 0.1 : -0.02;
+            const t = Math.max(0, Math.min(1, base + walkedBias));
 
-          let c = lerpPalette(p, palette, t);
-          c = p.lerpColor(c, p.color('#000'), 0.02);
-          p.fill(c);
+            let c = lerpPalette(p, palette, t);
+            c = p.lerpColor(c, p.color('#000'), 0.02);
+            p.fill(c);
 
-          p.rect(posX + padding, posY + padding, sizeX - gutter, sizeY - gutter);
-        }
-      }}
-    />
-  </Area>
+            p.rect(posX + padding, posY + padding, sizeX - gutter, sizeY - gutter);
+          }
+        }}
+      />
+    </Area>
   );
 }

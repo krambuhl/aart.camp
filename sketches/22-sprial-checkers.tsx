@@ -1,14 +1,12 @@
 'use client';
 
-import type { P5Color } from '@/types/p5';
-
 import { Sketch } from '@/components/app/Sketch';
 import { Area } from '@/components/shared/Area';
-import { rainbow } from '@/data/colorMaps';
 import { tokens } from '@/tokens';
+import type { P5Color } from '@/types/p5';
 
 const black: P5Color = [0 / 255, 0 / 255, 0 / 255, 255];
-const white: P5Color = [255 / 255, 255 / 255, 255 / 255, 255];
+const _white: P5Color = [255 / 255, 255 / 255, 255 / 255, 255];
 const canvasSize = 512;
 
 const sides = 22 + 8;
@@ -104,45 +102,45 @@ function spiralGrid(cells: Cell[]) {
 export default function Output() {
   return (
     <Area width={tokens.size.x768}>
-    <Sketch
-      setup={(p, store) => {
-        p.createCanvas(canvasSize, canvasSize);
-        p.colorMode(p.HSL);
+      <Sketch
+        setup={(p, store) => {
+          p.createCanvas(canvasSize, canvasSize);
+          p.colorMode(p.HSL);
 
-        const grid = Array(Math.pow(sides, 2))
-          .fill(null)
-          .map((_, i) => ({
-            x: i % sides,
-            y: Math.floor(i / sides),
-            meta: {},
-          }));
+          const grid = Array(sides ** 2)
+            .fill(null)
+            .map((_, i) => ({
+              x: i % sides,
+              y: Math.floor(i / sides),
+              meta: {},
+            }));
 
-        store.frames = spiralGrid(grid);
-      }}
-      draw={(p, store) => {
-        // reset
-        p.clear(...black);
-        p.noStroke();
+          store.frames = spiralGrid(grid);
+        }}
+        draw={(p, store) => {
+          // reset
+          p.clear(...black);
+          p.noStroke();
 
-        const start = p.frameCount + 1200;
-        const length = store.frames.length;
+          const start = p.frameCount + 1200;
+          const length = store.frames.length;
 
-        for (let i = 0; i < length; i++) {
-          const frame = store.frames[i];
-          const time = start * 0.3;
+          for (let i = 0; i < length; i++) {
+            const frame = store.frames[i];
+            const time = start * 0.3;
 
-          const x = frame.x * size;
-          const y = frame.y * size;
+            const x = frame.x * size;
+            const y = frame.y * size;
 
-          const colorIndex1 = ((i * time + y * (time * 0.2)) / length) % 3.6;
-          const colorIndex2 = ((i * time + x * (time * 0.4)) / length) % 3.6;
+            const colorIndex1 = ((i * time + y * (time * 0.2)) / length) % 3.6;
+            const colorIndex2 = ((i * time + x * (time * 0.4)) / length) % 3.6;
 
-          p.colorMode(p.RGB, 1);
-          p.fill(colorIndex1 / 4, colorIndex2 / 4, 1);
-          p.rect(x + padding, y + padding, size - gutter, size - gutter);
-        }
-      }}
-    />
-  </Area>
+            p.colorMode(p.RGB, 1);
+            p.fill(colorIndex1 / 4, colorIndex2 / 4, 1);
+            p.rect(x + padding, y + padding, size - gutter, size - gutter);
+          }
+        }}
+      />
+    </Area>
   );
 }

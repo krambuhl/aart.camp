@@ -13,22 +13,22 @@ export const meta = {
 export default function Output() {
   return (
     <Area width={tokens.size.x768}>
-    <GridSketch
-      bg={[0 / 255, 0 / 255, 0 / 255, 255]}
-      canvasSize={512}
-      sides={29}
-      padding={32}
-      fill={(pos, frame) => {
-        const time = frame / 250;
+      <GridSketch
+        bg={[0 / 255, 0 / 255, 0 / 255, 255]}
+        canvasSize={512}
+        sides={29}
+        padding={32}
+        fill={(pos, frame) => {
+          const time = frame / 250;
 
-        const x = pos.x + time;
-        const y = pos.y;
+          const x = pos.x + time;
+          const y = pos.y;
 
-        const colorIndex = x ^ (y - x * time);
+          const colorIndex = x ^ (y - x * time);
 
-        return rainbow[Math.floor(Math.abs(colorIndex) % rainbow.length)];
-      }}
-    />
-  </Area>
+          return rainbow[Math.floor(Math.abs(colorIndex) % rainbow.length)];
+        }}
+      />
+    </Area>
   );
 }

@@ -1,5 +1,5 @@
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 import setValue from 'set-value';
 
 import designTokens from '../tokens/design-tokens.json' with { type: 'json' };
@@ -80,7 +80,7 @@ function generateTokensObjectString(tokenVariables: TokenOutput) {
 
 function generateBreakpointsInPixelsObject(tokenVariables: TokenOutput) {
   return Object.entries(tokenVariables.breakpoint).reduce<Record<string, number>>((acc, [key, value]) => {
-    acc[key] = parseInt(value);
+    acc[key] = parseInt(value, 10);
     return acc;
   }, {});
 }
@@ -152,16 +152,14 @@ function generateCssTokenString(tokenPairs: TokenPair[]) {
 }
 
 function addGeneratedHeader(value: string) {
-  return (
-    '/* DO NOT EDIT */\n' + `/* This file was automatically generated at ${new Date().toLocaleString()} */\n\n` + value
-  );
+  return `/* DO NOT EDIT */\n/* This file was automatically generated at ${new Date().toLocaleString()} */\n\n${value}`;
 }
 
 function writeFile(filepath: string, content: string) {
   const directory = path.dirname(filepath);
   fs.mkdirSync(directory, { recursive: true });
 
-  console.log('writing ' + path.relative(process.cwd(), filepath));
+  console.log(`writing ${path.relative(process.cwd(), filepath)}`);
   fs.writeFileSync(filepath, content);
 }
 
@@ -192,8 +190,5 @@ function writeFile(filepath: string, content: string) {
   writeFile(path.join(OUTPUT_UTILS_DIR, 'breakpoints.ts'), addGeneratedHeader(breakpointsUtility));
   writeFile(path.join(OUTPUT_POSTCSS_FUNCTIONS_DIR, 'token-reference.json'), JSON.stringify(tokenReference, null, 2));
   writeFile(path.join(OUTPUT_POSTCSS_FUNCTIONS_DIR, 'token-values-object.json'), JSON.stringify(tokenValues, null, 2));
-  writeFile(
-    path.join(OUTPUT_POSTCSS_FUNCTIONS_DIR, 'token-reference-object.json'),
-    JSON.stringify(tokenVariables, null, 2),
-  );
+  writeFile(path.join(OUTPUT_POSTCSS_FUNCTIONS_DIR, 'token-reference-object.json'), JSON.stringify(tokenVariables, null, 2));
 })();

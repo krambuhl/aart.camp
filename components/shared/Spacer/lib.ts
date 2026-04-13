@@ -1,5 +1,5 @@
-import { SpaceToken } from '@/types/tokens';
-import { mergeResponsive, ValueOrResponsive, wrapResponsive } from '@/utilities/opaque-responsive';
+import type { SpaceToken } from '@/types/tokens';
+import { mergeResponsive, type ValueOrResponsive, wrapResponsive } from '@/utilities/opaque-responsive';
 
 interface SpacingProps {
   a?: ValueOrResponsive<SpaceToken>;

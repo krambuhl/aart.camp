@@ -1,4 +1,4 @@
-import { tokens } from '@/tokens';
+import type { tokens } from '@/tokens';
 
 export type SpaceToken = (typeof tokens.space)[keyof typeof tokens.space];
 export type SizeToken = (typeof tokens.size)[keyof typeof tokens.size];

@@ -1,20 +1,9 @@
 'use client';
 
-import type { P5Color } from '@/types/p5';
-
 import { Sketch } from '@/components/app/Sketch';
 import { Area } from '@/components/shared/Area';
 import {
   Black,
-  White,
-  Viola,
-  Lavender,
-  Orangina,
-  SkyBlue,
-  LawnGreen,
-  Malachite,
-  YellowCab,
-  BloodOrange,
   Gray00,
   Gray01,
   Gray02,
@@ -31,10 +20,11 @@ import {
   Gray13,
   Gray14,
   Gray15,
+  White,
 } from '@/data/paint';
-import { tokens } from '@/tokens';
-
 import { walkGrid } from '@/lib/cell-walker';
+import { tokens } from '@/tokens';
+import type { P5Color } from '@/types/p5';
 
 export const meta = {
   title: 'Reignite',
@@ -107,48 +97,48 @@ const spiralGrid = walkGrid({
 export default function Output() {
   return (
     <Area width={tokens.size.x640}>
-    <Sketch
-      aspectRatio={4 / 5}
-      setup={(p) => {
-        p.createCanvas(canvasSizeX, canvasSizeY);
-        p.colorMode(p.HSL);
-      }}
-      draw={(p, store) => {
-        // reset
-        p.clear(...bgColor);
-        p.noStroke();
-        p.colorMode(p.RGB, 1);
+      <Sketch
+        aspectRatio={4 / 5}
+        setup={(p) => {
+          p.createCanvas(canvasSizeX, canvasSizeY);
+          p.colorMode(p.HSL);
+        }}
+        draw={(p, _store) => {
+          // reset
+          p.clear(...bgColor);
+          p.noStroke();
+          p.colorMode(p.RGB, 1);
 
-        const start = p.frameCount + 1000;
-        const startSin = Math.sin(start / 79);
-        const startCos = Math.cos(start / 191);
-        const time = startSin * startCos * 0.00005 + start / 10000000;
+          const start = p.frameCount + 1000;
+          const startSin = Math.sin(start / 79);
+          const startCos = Math.cos(start / 191);
+          const time = startSin * startCos * 0.00005 + start / 10000000;
 
-        for (const cellData of spiralGrid) {
-          const {
-            walked,
-            cell: [fx, fy],
-          } = cellData;
-          const x = (fx + 0) * sizeX + 1;
-          const y = (fy + 0) * sizeY + 1;
+          for (const cellData of spiralGrid) {
+            const {
+              walked,
+              cell: [fx, fy],
+            } = cellData;
+            const x = (fx + 0) * sizeX + 1;
+            const y = (fy + 0) * sizeY + 1;
 
-          const xo = x - stepsX / 2;
-          const yo = y - stepsY / 2;
+            const xo = x - stepsX / 2;
+            const yo = y - stepsY / 2;
 
-          // eslint-disable-next-line no-constant-condition
-          if (true) {
-            const res = Math.tan(time * yo + 10) * Math.tan(time * xo + 8) * rainbow.length * 8;
-            const color = rainbow[Math.floor(Math.abs(res) % rainbow.length)];
-            p.fill(color);
-          } else {
-            // fill the unwalked cells with b/w checkerboard
-            p.fill((fy % 2 ? fx % 2 : (fx + 1) % 2) ? Black : White);
+            // biome-ignore lint/correctness/noConstantCondition: sketch toggle
+            if (true) {
+              const res = Math.tan(time * yo + 10) * Math.tan(time * xo + 8) * rainbow.length * 8;
+              const color = rainbow[Math.floor(Math.abs(res) % rainbow.length)];
+              p.fill(color);
+            } else {
+              // fill the unwalked cells with b/w checkerboard
+              p.fill((fy % 2 ? fx % 2 : (fx + 1) % 2) ? Black : White);
+            }
+
+            p.rect(x + padding, y + padding, sizeX - gutter, sizeY - gutter);
           }
-
-          p.rect(x + padding, y + padding, sizeX - gutter, sizeY - gutter);
-        }
-      }}
-    />
-  </Area>
+        }}
+      />
+    </Area>
   );
 }

@@ -1,6 +1,5 @@
-import type { Formula } from './types';
-
 import { useMemo } from 'react';
+import type { Formula } from './types';
 
 const lerp = (x: number, y: number, a: number) => x * (1 - a) + y * a;
 
@@ -10,10 +9,7 @@ interface FindLimitsOptions {
   limit?: number;
 }
 
-export function useLimits(
-  fn: Formula,
-  { start, end, limit = 10000 }: FindLimitsOptions
-) {
+export function useLimits(fn: Formula, { start, end, limit = 10000 }: FindLimitsOptions) {
   return useMemo(() => {
     let min = Infinity;
     let max = -Infinity;

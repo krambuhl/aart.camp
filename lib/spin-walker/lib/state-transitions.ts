@@ -1,4 +1,4 @@
-import { StateTransitionHandler, WalkedCellData } from '../types';
+import type { StateTransitionHandler, WalkedCellData } from '../types';
 
 // the `enter` state is the start of a path
 // there can be multiple paths that we can take
@@ -25,10 +25,7 @@ export const handleEnterState: StateTransitionHandler = (state, config) => {
 export const handleDetectState: StateTransitionHandler = (state, config) => {
   // if we have walked the maximum number of steps
   // or legs we can exit the current path
-  if (
-    state.relativeLegCount[state.totalPathCount] > config.maxLegCount ||
-    state.relativeStepCount[state.totalPathCount] > config.maxPathSteps
-  ) {
+  if (state.relativeLegCount[state.totalPathCount] > config.maxLegCount || state.relativeStepCount[state.totalPathCount] > config.maxPathSteps) {
     state.currentState = 'exit';
     return;
   }
@@ -44,15 +41,13 @@ export const handleDetectState: StateTransitionHandler = (state, config) => {
   // check if we have walked the detector cell already
   const hasWalkedDetectorCell = state.walkedCellData.has(detectorCellKey);
   if (hasWalkedDetectorCell) {
-    state.currentState =
-      state.failCount++ > config.maxFailCount ? 'exit' : 'turn';
+    state.currentState = state.failCount++ > config.maxFailCount ? 'exit' : 'turn';
     return;
   }
 
   const hasUnwalkedDetectorCell = state.unwalkedCellData.has(detectorCellKey);
   if (!hasUnwalkedDetectorCell) {
-    state.currentState =
-      state.failCount++ > config.maxFailCount ? 'exit' : 'turn';
+    state.currentState = state.failCount++ > config.maxFailCount ? 'exit' : 'turn';
     return;
   }
 
@@ -63,16 +58,12 @@ export const handleDetectState: StateTransitionHandler = (state, config) => {
 // for the cell we are currently observing
 export const handleFillState: StateTransitionHandler = (state, config) => {
   // check if we have a current unwalked cell data
-  const currentUnwalkedCellData = state.unwalkedCellData.get(
-    state.currentCell.join()
-  );
+  const currentUnwalkedCellData = state.unwalkedCellData.get(state.currentCell.join());
 
   // if we don't have a current unwalked cell data
   // something is wrong and we should bail
   if (!currentUnwalkedCellData) {
-    throw new Error(
-      `No unwalked cell data found for cell: ${state.currentCell}`
-    );
+    throw new Error(`No unwalked cell data found for cell: ${state.currentCell}`);
   }
 
   const cellKey = state.currentCell.join();
@@ -125,11 +116,7 @@ export const handleFillState: StateTransitionHandler = (state, config) => {
 // the `walk` state represents walking to the next cell
 // on the current path in the current direction
 export const handleWalkState: StateTransitionHandler = (state, config) => {
-  if (
-    state.maxLegCount &&
-    state.relativeLegCount[state.totalPathCount] > state.maxLegCount &&
-    state.currentLegStepCount < state.lastLegStepCount - 2
-  ) {
+  if (state.maxLegCount && state.relativeLegCount[state.totalPathCount] > state.maxLegCount && state.currentLegStepCount < state.lastLegStepCount - 2) {
     state.currentState = 'exit';
     return;
   }

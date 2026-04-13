@@ -1,13 +1,12 @@
 'use client';
 
-import type { P5Color } from '@/types/p5';
-
 import { Sketch } from '@/components/app/Sketch';
 import { Area } from '@/components/shared/Area';
 import { tokens } from '@/tokens';
+import type { P5Color } from '@/types/p5';
 
 const black: P5Color = [0 / 255, 0 / 255, 0 / 255, 255];
-const white: P5Color = [255 / 255, 255 / 255, 255 / 255, 255];
+const _white: P5Color = [255 / 255, 255 / 255, 255 / 255, 255];
 const canvasSize = 512;
 
 const bandSize = 8;
@@ -146,46 +145,46 @@ function spiralGrid(cells: Cell[]) {
 export default function Output() {
   return (
     <Area width={tokens.size.x768}>
-    <Sketch
-      setup={(p, store) => {
-        p.createCanvas(canvasSize, canvasSize);
-        p.colorMode(p.HSL);
+      <Sketch
+        setup={(p, store) => {
+          p.createCanvas(canvasSize, canvasSize);
+          p.colorMode(p.HSL);
 
-        const grid = Array(Math.pow(sides, 2))
-          .fill(null)
-          .map((_, i) => ({
-            x: i % sides,
-            y: Math.floor(i / sides),
-            meta: {},
-          }));
+          const grid = Array(sides ** 2)
+            .fill(null)
+            .map((_, i) => ({
+              x: i % sides,
+              y: Math.floor(i / sides),
+              meta: {},
+            }));
 
-        store.frames = spiralGrid(grid);
-      }}
-      draw={(p, store) => {
-        // reset
-        p.clear(...black);
-        p.noStroke();
+          store.frames = spiralGrid(grid);
+        }}
+        draw={(p, store) => {
+          // reset
+          p.clear(...black);
+          p.noStroke();
 
-        const start = p.frameCount + 0;
-        const length = store.frames.length;
+          const start = p.frameCount + 0;
+          const length = store.frames.length;
 
-        for (let i = 0; i < length; i++) {
-          const frame = store.frames[i];
-          const time = start * speed;
+          for (let i = 0; i < length; i++) {
+            const frame = store.frames[i];
+            const time = start * speed;
 
-          const x = frame.x * size;
-          const y = frame.y * size;
+            const x = frame.x * size;
+            const y = frame.y * size;
 
-          const colorIndex0 = ((i + time) % length) / length;
-          const colorIndex1 = ((i + time * 1 * ((x / length) * (i / 7))) % length) / length;
-          const colorIndex2 = ((i + time * 1 * ((y / length) * (i / 10))) % length) / length;
+            const _colorIndex0 = ((i + time) % length) / length;
+            const colorIndex1 = ((i + time * 1 * ((x / length) * (i / 7))) % length) / length;
+            const colorIndex2 = ((i + time * 1 * ((y / length) * (i / 10))) % length) / length;
 
-          p.colorMode(p.RGB, 1);
-          p.fill(colorIndex1, colorIndex2, 1);
-          p.rect(x + padding, y + padding, size - gutter, size - gutter);
-        }
-      }}
-    />
-  </Area>
+            p.colorMode(p.RGB, 1);
+            p.fill(colorIndex1, colorIndex2, 1);
+            p.rect(x + padding, y + padding, size - gutter, size - gutter);
+          }
+        }}
+      />
+    </Area>
   );
 }

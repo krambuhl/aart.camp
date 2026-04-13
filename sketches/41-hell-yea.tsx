@@ -1,30 +1,18 @@
 'use client';
 
-import type { P5Color } from '@/types/p5';
-
 import { Sketch } from '@/components/app/Sketch';
 import { Area } from '@/components/shared/Area';
-import {
-  Black,
-  White,
-  Viola,
-  Lavender,
-  Orangina,
-  SkyBlue,
-  LawnGreen,
-  Malachite,
-  YellowCab,
-  BloodOrange,
-} from '@/data/paint';
+import { Black, BloodOrange, Lavender, LawnGreen, Malachite, Orangina, SkyBlue, Viola, White, YellowCab } from '@/data/paint';
 import { createRandomWalkerGrid } from '@/lib/random-walker';
 import { tokens } from '@/tokens';
+import type { P5Color } from '@/types/p5';
 
 export const meta = {
   title: 'Hell Yea',
   date: '2025-07-09T01:00:00',
 };
 
-const bw = [Black, White];
+const _bw = [Black, White];
 const rainbow = [Lavender, Orangina, Viola, SkyBlue, LawnGreen, Malachite, YellowCab, BloodOrange];
 
 const bgColor: P5Color = [0 / 255, 0 / 255, 0 / 255, 255];
@@ -48,46 +36,46 @@ const spiralGrid = createRandomWalkerGrid({
 export default function Output() {
   return (
     <Area width={tokens.size.x640}>
-    <Sketch
-      aspectRatio={4 / 5}
-      setup={(p) => {
-        p.createCanvas(canvasSizeX, canvasSizeY);
-        p.noStroke();
-      }}
-      draw={(p, store) => {
-        // reset
-        p.clear(...bgColor);
+      <Sketch
+        aspectRatio={4 / 5}
+        setup={(p) => {
+          p.createCanvas(canvasSizeX, canvasSizeY);
+          p.noStroke();
+        }}
+        draw={(p, _store) => {
+          // reset
+          p.clear(...bgColor);
 
-        const start = p.frameCount / 500 + 0.05;
+          const start = p.frameCount / 500 + 0.05;
 
-        for (const cellData of spiralGrid) {
-          const {
-            cell: [fx, fy],
-          } = cellData;
+          for (const cellData of spiralGrid) {
+            const {
+              cell: [fx, fy],
+            } = cellData;
 
-          const x = fx - stepsX / 2;
-          const y = fy + stepsY / 2;
-          const posX = fx * sizeX;
-          const posY = fy * sizeY;
+            const x = fx - stepsX / 2;
+            const y = fy + stepsY / 2;
+            const posX = fx * sizeX;
+            const posY = fy * sizeY;
 
-          const timeSin = p.norm(Math.sin(start * x * 0.51), -1, 1);
-          const timeCos = p.norm(Math.cos(start * y * 0.83), -1, 1);
+            const timeSin = p.norm(Math.sin(start * x * 0.51), -1, 1);
+            const timeCos = p.norm(Math.cos(start * y * 0.83), -1, 1);
 
-          if (cellData.walked) {
-            const value = timeSin * timeCos;
-            const color = rainbow[Math.floor(value * rainbow.length)];
+            if (cellData.walked) {
+              const value = timeSin * timeCos;
+              const color = rainbow[Math.floor(value * rainbow.length)];
 
-            p.fill(color);
-          } else {
-            const res = cellData.index / cellData.totalCellCount;
-            p.colorMode(p.HSL);
-            p.fill([0, 0, res * 100]);
+              p.fill(color);
+            } else {
+              const res = cellData.index / cellData.totalCellCount;
+              p.colorMode(p.HSL);
+              p.fill([0, 0, res * 100]);
+            }
+
+            p.rect(posX + padding, posY + padding, sizeX - gutter, sizeY - gutter);
           }
-
-          p.rect(posX + padding, posY + padding, sizeX - gutter, sizeY - gutter);
-        }
-      }}
-    />
-  </Area>
+        }}
+      />
+    </Area>
   );
 }

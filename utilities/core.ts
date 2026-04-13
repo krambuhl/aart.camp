@@ -1,6 +1,6 @@
 import classNames from 'classnames';
-import React, { AriaAttributes } from 'react';
-import { CoreComponent } from '@/types/core';
+import React from 'react';
+import type { CoreComponent } from '@/types/core';
 
 interface ComponentOptions {
   tagName: string;
@@ -10,15 +10,8 @@ interface ComponentOptions {
   };
 }
 
-export function createComponent<
-  T extends HTMLElement,
-  PropType extends CoreComponent<T>
->({ tagName, className }: ComponentOptions) {
-  return ({
-    className: userClassName,
-    children,
-    ...throughUserProps
-  }: PropType) => {
+export function createComponent<T extends HTMLElement, PropType extends CoreComponent<T>>({ tagName, className }: ComponentOptions) {
+  return ({ className: userClassName, children, ...throughUserProps }: PropType) => {
     const classList = classNames(className, className);
     const props = {
       className: classList,

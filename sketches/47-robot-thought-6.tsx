@@ -1,12 +1,11 @@
 'use client';
 
-import type { P5Color } from '@/types/p5';
-
 import { Sketch } from '@/components/app/Sketch';
 import { Area } from '@/components/shared/Area';
-import { BlueVelvet, Lavender, SkyBlue, Malachite, YellowCab, Orangina, BloodOrange } from '@/data/paint';
+import { BloodOrange, BlueVelvet, Lavender, Malachite, Orangina, SkyBlue, YellowCab } from '@/data/paint';
 import { createRandomWalkerGrid } from '@/lib/random-walker';
 import { tokens } from '@/tokens';
+import type { P5Color } from '@/types/p5';
 
 export const meta = {
   title: 'Robot Thought 6 — Dahlia Sun',
@@ -42,59 +41,61 @@ function lerpPalette(p: any, palette: string[], t: number) {
   return p.lerpColor(c0, c1, frac);
 }
 
-const ns = (x: number) => 0.5 + 0.5 * Math.sin(x);
+const _ns = (x: number) => 0.5 + 0.5 * Math.sin(x);
 
 export default function Output() {
   return (
     <Area width={tokens.size.x640}>
-    <Sketch
-      aspectRatio={1}
-      setup={(p) => {
-        p.createCanvas(canvasSizeX, canvasSizeY);
-        p.noStroke();
-        p.colorMode(p.HSL, 360, 100, 100, 1);
-      }}
-      draw={(p) => {
-        p.clear(...bgColor);
-        const time = p.frameCount / 24;
-        const palette = [BlueVelvet, Lavender, SkyBlue, Malachite, YellowCab, Orangina, BloodOrange];
-        const cx = stepsX / 2;
-        const cy = stepsY / 2;
-        const maxDist = Math.hypot(cx, cy);
+      <Sketch
+        aspectRatio={1}
+        setup={(p) => {
+          p.createCanvas(canvasSizeX, canvasSizeY);
+          p.noStroke();
+          p.colorMode(p.HSL, 360, 100, 100, 1);
+        }}
+        draw={(p) => {
+          p.clear(...bgColor);
+          const time = p.frameCount / 24;
+          const palette = [BlueVelvet, Lavender, SkyBlue, Malachite, YellowCab, Orangina, BloodOrange];
+          const cx = stepsX / 2;
+          const cy = stepsY / 2;
+          const maxDist = Math.hypot(cx, cy);
 
-        for (const cellData of grid) {
-          const { cell: [fx, fy] } = cellData;
-          const x = fx - cx;
-          const y = fy - cy;
-          const posX = fx * sizeX;
-          const posY = fy * sizeY;
+          for (const cellData of grid) {
+            const {
+              cell: [fx, fy],
+            } = cellData;
+            const x = fx - cx;
+            const y = fy - cy;
+            const posX = fx * sizeX;
+            const posY = fy * sizeY;
 
-          const r = Math.hypot(x, y);
-          const rn = Math.min(1, r / maxDist);
-          const theta = Math.atan2(y, x);
+            const r = Math.hypot(x, y);
+            const rn = Math.min(1, r / maxDist);
+            const theta = Math.atan2(y, x);
 
-          // Smooth sunburst: bright core + soft petals with slight spiral drift
-          const core = Math.pow(1 - rn, 0.8); // bright center
-          const k = 14; // petal count
-          const twist = 0.6; // gentle spiral
-          const phase = k * (theta + rn * twist) - time * 0.6;
-          const petals = Math.pow(0.5 + 0.5 * Math.cos(phase), 2.2);
-          const base = 0.55 * core + 0.45 * petals;
+            // Smooth sunburst: bright core + soft petals with slight spiral drift
+            const core = (1 - rn) ** 0.8; // bright center
+            const k = 14; // petal count
+            const twist = 0.6; // gentle spiral
+            const phase = k * (theta + rn * twist) - time * 0.6;
+            const petals = (0.5 + 0.5 * Math.cos(phase)) ** 2.2;
+            const base = 0.55 * core + 0.45 * petals;
 
-          // subtle field to avoid banding
-          const field = p.noise(fx * 0.045 + time * 0.25, fy * 0.045 - time * 0.22) * 0.04;
-          const walkedBias = cellData.walked ? 0.06 : -0.02;
-          const t = Math.max(0, Math.min(1, base + field + walkedBias));
+            // subtle field to avoid banding
+            const field = p.noise(fx * 0.045 + time * 0.25, fy * 0.045 - time * 0.22) * 0.04;
+            const walkedBias = cellData.walked ? 0.06 : -0.02;
+            const t = Math.max(0, Math.min(1, base + field + walkedBias));
 
-          let c = lerpPalette(p, palette, t);
-          // tiny warmth toward center
-          c = p.lerpColor(c, p.color('#fffcf0'), 0.02 * (1 - rn));
-          p.fill(c);
+            let c = lerpPalette(p, palette, t);
+            // tiny warmth toward center
+            c = p.lerpColor(c, p.color('#fffcf0'), 0.02 * (1 - rn));
+            p.fill(c);
 
-          p.rect(posX + padding, posY + padding, sizeX - gutter, sizeY - gutter);
-        }
-      }}
-    />
-  </Area>
+            p.rect(posX + padding, posY + padding, sizeX - gutter, sizeY - gutter);
+          }
+        }}
+      />
+    </Area>
   );
 }

@@ -1,7 +1,7 @@
 /* DO NOT EDIT */
 /* This file was automatically generated at 2/2/2025, 12:39:37 AM */
 
-import { Breakpoint, Responsive } from './opaque-responsive';
+import type { Breakpoint, Responsive } from './opaque-responsive';
 
 /**
  * This is a helper object that contains the pixel values for each breakpoint.

@@ -1,19 +1,9 @@
 'use client';
 
-import type { P5Color } from '@/types/p5';
-
 import { Sketch } from '@/components/app/Sketch';
 import { Area } from '@/components/shared/Area';
 import {
   Black,
-  White,
-  Viola,
-  Lavender,
-  Orangina,
-  SkyBlue,
-  LawnGreen,
-  Malachite,
-  YellowCab,
   BloodOrange,
   Gray00,
   Gray01,
@@ -31,9 +21,18 @@ import {
   Gray13,
   Gray14,
   Gray15,
+  Lavender,
+  LawnGreen,
+  Malachite,
+  Orangina,
+  SkyBlue,
+  Viola,
+  White,
+  YellowCab,
 } from '@/data/paint';
 import { walkGrid } from '@/lib/spin-walker';
 import { tokens } from '@/tokens';
+import type { P5Color } from '@/types/p5';
 
 export const meta = {
   title: 'The Spins',
@@ -93,43 +92,43 @@ const spiralGrid = walkGrid({
 export default function Output() {
   return (
     <Area width={tokens.size.x640}>
-    <Sketch
-      aspectRatio={4 / 5}
-      setup={(p) => {
-        p.createCanvas(canvasSizeX, canvasSizeY);
-        p.noStroke();
-      }}
-      draw={(p, store) => {
-        // reset
-        p.clear(...bgColor);
+      <Sketch
+        aspectRatio={4 / 5}
+        setup={(p) => {
+          p.createCanvas(canvasSizeX, canvasSizeY);
+          p.noStroke();
+        }}
+        draw={(p, _store) => {
+          // reset
+          p.clear(...bgColor);
 
-        const start = p.frameCount / 10 + 0.05;
+          const _start = p.frameCount / 10 + 0.05;
 
-        for (const cellData of spiralGrid) {
-          const {
-            cell: [fx, fy],
-          } = cellData;
+          for (const cellData of spiralGrid) {
+            const {
+              cell: [fx, fy],
+            } = cellData;
 
-          const x = fx - stepsX / 2;
-          const y = fy + stepsY / 2;
-          const posX = fx * sizeX;
-          const posY = fy * sizeY;
+            const _x = fx - stepsX / 2;
+            const _y = fy + stepsY / 2;
+            const posX = fx * sizeX;
+            const posY = fy * sizeY;
 
-          if (cellData.walked) {
-            const res = (cellData.relative.stepCount + 1) / cellData.relative.totalStepCount;
+            if (cellData.walked) {
+              const res = (cellData.relative.stepCount + 1) / cellData.relative.totalStepCount;
 
-            p.colorMode(p.HSL);
-            p.fill([0, 100, res * 100]);
-          } else {
-            const res = cellData.index / cellData.totalCellCount;
-            p.colorMode(p.HSL);
-            p.fill([0, 0, res * 100]);
+              p.colorMode(p.HSL);
+              p.fill([0, 100, res * 100]);
+            } else {
+              const res = cellData.index / cellData.totalCellCount;
+              p.colorMode(p.HSL);
+              p.fill([0, 0, res * 100]);
+            }
+
+            p.rect(posX + padding, posY + padding, sizeX - gutter, sizeY - gutter);
           }
-
-          p.rect(posX + padding, posY + padding, sizeX - gutter, sizeY - gutter);
-        }
-      }}
-    />
-  </Area>
+        }}
+      />
+    </Area>
   );
 }

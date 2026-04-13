@@ -10,7 +10,7 @@
 // we are in before moving to the `detect` state.
 // In the case of `exit` let the program know that we have exited
 
-import { Cell, Direction, GetNextCellHandler, GetNextDirectionHandler } from '@/lib/grid/types';
+import type { Cell, Direction, GetNextCellHandler, GetNextDirectionHandler } from '@/lib/grid/types';
 
 // and it can either stop or re-`enter` depending on the config.
 export type State =

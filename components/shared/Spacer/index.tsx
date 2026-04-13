@@ -1,36 +1,14 @@
-import type { SpacerProps } from './types';
-
 import cx from 'classnames';
-import React from 'react';
-
 import { tokens } from '@/tokens';
 import { buildTokenKeyMap, responsiveStyleList } from '@/utilities/css-utils';
+import { wrapAndMergeResponsiveSides } from './lib';
 
 import * as styles from './Spacer.module.css';
-import { wrapAndMergeResponsiveSides } from './lib';
+import type { SpacerProps } from './types';
 
 const spaceTokenMap = buildTokenKeyMap(tokens.space);
 
-export function Spacer({
-  as: Component = 'div',
-  ma,
-  mh,
-  mv,
-  mt,
-  mr,
-  mb,
-  ml,
-  pa,
-  ph,
-  pv,
-  pt,
-  pr,
-  pb,
-  pl,
-  className,
-  children,
-  ...props
-}: SpacerProps) {
+export function Spacer({ as: Component = 'div', ma, mh, mv, mt, mr, mb, ml, pa, ph, pv, pt, pr, pb, pl, className, children, ...props }: SpacerProps) {
   const padding = wrapAndMergeResponsiveSides({
     a: pa,
     v: pv,

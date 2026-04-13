@@ -1,4 +1,4 @@
-import { tokens } from '@/tokens';
+import type { tokens } from '@/tokens';
 
 import { breakpointNames } from './breakpoints';
 
@@ -79,11 +79,7 @@ export function mapResponsive<T, U>(value: OpaqueResponsive<T>, fn: (value: T) =
   return mapped;
 }
 
-export function reduceResponsive<T, U>(
-  value: OpaqueResponsive<T>,
-  fn: (acc: U, value: T, breakpointName: Breakpoint) => U,
-  initialValue: U,
-): U {
+export function reduceResponsive<T, U>(value: OpaqueResponsive<T>, fn: (acc: U, value: T, breakpointName: Breakpoint) => U, initialValue: U): U {
   const unwrapped = unwrapResponsive(value);
   let acc = initialValue;
 
@@ -120,9 +116,11 @@ export function mergeResponsive<T>(values: Array<OpaqueResponsive<T>>): OpaqueRe
  * Merge multiple responsive values into a unified responsive value
  * with keys that are merged together
  */
-export function mergeNamedResponsive<T>(values: {
-  [K in keyof T]: OpaqueResponsive<T[K]>;
-}): OpaqueResponsive<Partial<T>> {
+export function mergeNamedResponsive<T>(
+  values: {
+    [K in keyof T]: OpaqueResponsive<T[K]>;
+  },
+): OpaqueResponsive<Partial<T>> {
   // build up a new object with the merged values
   const merged: Responsive<Partial<T>> = {};
 
@@ -131,8 +129,6 @@ export function mergeNamedResponsive<T>(values: {
 
   // keep track of the latest values so we can cascade them later
   const latestValues: Partial<T> = {};
-
-  // eslint-disable-next-line guard-for-in
   for (const key in values) {
     allValues[key] = unwrapResponsive(values[key]);
     latestValues[key] = allValues[key]?.xs;
@@ -140,8 +136,6 @@ export function mergeNamedResponsive<T>(values: {
 
   for (const breakpointName of breakpointNames) {
     let usesBreakpoint = false;
-
-    // eslint-disable-next-line guard-for-in
     for (const key in allValues) {
       const unwrappedValue = allValues[key];
 
@@ -214,12 +208,6 @@ export function isResponsive<T>(value: ValueOrResponsive<T>) {
   return (
     value &&
     typeof value === 'object' &&
-    ('xs' in value ||
-      'sm' in value ||
-      'md' in value ||
-      'lg' in value ||
-      'xl' in value ||
-      'xxl' in value ||
-      Object.keys(value).length === 0)
+    ('xs' in value || 'sm' in value || 'md' in value || 'lg' in value || 'xl' in value || 'xxl' in value || Object.keys(value).length === 0)
   );
 }

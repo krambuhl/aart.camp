@@ -1,7 +1,7 @@
 import { generateGridPositions } from '@/lib/grid';
 
 import { flattenCellData, generateUnwalkedCellData } from './lib/cell-data';
-import { CellData, ProgramConfig, ProgramState, WalkedCellData } from './types';
+import type { CellData, ProgramConfig, ProgramState, WalkedCellData } from './types';
 
 function initProgramState({ initialCell, gridSize }: Required<ProgramConfig>): ProgramState {
   const gridCellPositions = generateGridPositions(gridSize);

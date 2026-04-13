@@ -1,12 +1,8 @@
-import type { HeadingTextProps, BodyTextProps, DataTextProps } from './types';
-
 import cx from 'classnames';
-import React from 'react';
-
 import { responsiveStyleList } from '@/utilities/css-utils';
 import { wrapResponsive } from '@/utilities/opaque-responsive';
-
 import * as styles from './Text.module.css';
+import type { BodyTextProps, DataTextProps, HeadingTextProps } from './types';
 
 export function HeadingText({ as: Component = 'h3', size = 'md', className, children, ...props }: HeadingTextProps) {
   const responsiveSize = wrapResponsive(size);

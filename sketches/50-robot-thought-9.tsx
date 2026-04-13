@@ -1,12 +1,11 @@
 'use client';
 
-import type { P5Color } from '@/types/p5';
-
 import { Sketch } from '@/components/app/Sketch';
 import { Area } from '@/components/shared/Area';
-import { BlueVelvet, Lavender, SkyBlue, Malachite, YellowCab, Orangina, BloodOrange } from '@/data/paint';
+import { BloodOrange, BlueVelvet, Lavender, Malachite, Orangina, SkyBlue, YellowCab } from '@/data/paint';
 import { createRandomWalkerGrid } from '@/lib/random-walker';
 import { tokens } from '@/tokens';
+import type { P5Color } from '@/types/p5';
 
 export const meta = {
   title: 'Robot Thought 9 — Polar Dance',
@@ -45,55 +44,56 @@ function lerpPalette(p: any, palette: string[], t: number) {
 export default function Output() {
   return (
     <Area width={tokens.size.x640}>
-    <Sketch
-      aspectRatio={1}
-      setup={(p) => {
-        p.createCanvas(canvasSizeX, canvasSizeY);
-        p.noStroke();
-        p.colorMode(p.HSL, 360, 100, 100, 1);
-      }}
-      draw={(p) => {
-        p.clear(...bgColor);
-        const time = p.frameCount / 24;
-        const palette = [BlueVelvet, Lavender, SkyBlue, Malachite, YellowCab, Orangina, BloodOrange];
-        const cx = stepsX / 2;
-        const cy = stepsY / 2;
-        const maxDist = Math.hypot(cx, cy);
+      <Sketch
+        aspectRatio={1}
+        setup={(p) => {
+          p.createCanvas(canvasSizeX, canvasSizeY);
+          p.noStroke();
+          p.colorMode(p.HSL, 360, 100, 100, 1);
+        }}
+        draw={(p) => {
+          p.clear(...bgColor);
+          const time = p.frameCount / 24;
+          const palette = [BlueVelvet, Lavender, SkyBlue, Malachite, YellowCab, Orangina, BloodOrange];
+          const cx = stepsX / 2;
+          const cy = stepsY / 2;
+          const maxDist = Math.hypot(cx, cy);
 
-        for (const cellData of grid) {
-          const { cell: [fx, fy] } = cellData;
-          const x = fx - cx;
-          const y = fy - cy;
-          const posX = fx * sizeX;
-          const posY = fy * sizeY;
+          for (const cellData of grid) {
+            const {
+              cell: [fx, fy],
+            } = cellData;
+            const x = fx - cx;
+            const y = fy - cy;
+            const posX = fx * sizeX;
+            const posY = fy * sizeY;
 
-          const r = Math.hypot(x, y);
-          const rn = Math.min(1, r / maxDist);
-          const theta = Math.atan2(y, x);
+            const r = Math.hypot(x, y);
+            const rn = Math.min(1, r / maxDist);
+            const theta = Math.atan2(y, x);
 
-          // rotating polar sectors (8-direction) with swirl
-          const phase = 4 * (theta + rn * 0.8 + time * 0.4);
-          const sectors = Math.pow(0.5 + 0.5 * Math.cos(phase), 2.0);
+            // rotating polar sectors (8-direction) with swirl
+            const phase = 4 * (theta + rn * 0.8 + time * 0.4);
+            const sectors = (0.5 + 0.5 * Math.cos(phase)) ** 2.0;
 
-          // radial spin pulse
-          const spin = 0.5 + 0.5 * Math.sin(r * 0.3 - time * 2.0);
+            // radial spin pulse
+            const spin = 0.5 + 0.5 * Math.sin(r * 0.3 - time * 2.0);
 
-          // gentle cadence to anchor to the grid
-          const cadence = ((fx % 4) + (fy % 4)) / 8;
-          const field = p.noise(fx * 0.05 + time * 0.28, fy * 0.05 - time * 0.23) * 0.06;
+            // gentle cadence to anchor to the grid
+            const cadence = ((fx % 4) + (fy % 4)) / 8;
+            const field = p.noise(fx * 0.05 + time * 0.28, fy * 0.05 - time * 0.23) * 0.06;
 
-          const base = 0.5 * sectors + 0.3 * spin + 0.2 * cadence;
-          const walkedBias = cellData.walked ? 0.07 : -0.02;
-          const t = Math.max(0, Math.min(1, base + field + walkedBias));
+            const base = 0.5 * sectors + 0.3 * spin + 0.2 * cadence;
+            const walkedBias = cellData.walked ? 0.07 : -0.02;
+            const t = Math.max(0, Math.min(1, base + field + walkedBias));
 
-          const c = lerpPalette(p, palette, t);
-          p.fill(c);
+            const c = lerpPalette(p, palette, t);
+            p.fill(c);
 
-          p.rect(posX + padding, posY + padding, sizeX - gutter, sizeY - gutter);
-        }
-      }}
-    />
-  </Area>
+            p.rect(posX + padding, posY + padding, sizeX - gutter, sizeY - gutter);
+          }
+        }}
+      />
+    </Area>
   );
 }
-

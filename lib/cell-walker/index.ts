@@ -1,28 +1,17 @@
-import {
-  generateGridPositions,
-  getNextCell as defaultGetNextCell,
-  getNextDirection as defaultGetNextDirection,
-} from '@/lib/grid';
+import { getNextCell as defaultGetNextCell, getNextDirection as defaultGetNextDirection, generateGridPositions } from '@/lib/grid';
 
+import { enrichAndFlattenCellData, generateUnwalkedCellData } from './lib/cell-data';
 import {
-  enrichAndFlattenCellData,
-  generateUnwalkedCellData,
-} from './lib/cell-data';
-import {
-  handleEnterState as defaultHandleEnterState,
   handleDetectState as defaultHandleDetectState,
-  handleFillState as defaultHandleFillState,
-  handleWalkState as defaultHandleWalkState,
-  handleTurnState as defaultHandleTurnState,
+  handleEnterState as defaultHandleEnterState,
   handleExitState as defaultHandleExitState,
+  handleFillState as defaultHandleFillState,
+  handleTurnState as defaultHandleTurnState,
+  handleWalkState as defaultHandleWalkState,
 } from './lib/state-transitions';
-import { WalkedCellData, ProgramConfig, ProgramState, CellData } from './types';
+import type { CellData, ProgramConfig, ProgramState, WalkedCellData } from './types';
 
-function initProgramState({
-  initialCell,
-  initialDirection,
-  gridSize,
-}: Required<ProgramConfig>): ProgramState {
+function initProgramState({ initialCell, initialDirection, gridSize }: Required<ProgramConfig>): ProgramState {
   const gridCellPositions = generateGridPositions(gridSize);
   const unwalkedCellData = generateUnwalkedCellData(gridCellPositions);
 

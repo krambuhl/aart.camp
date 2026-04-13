@@ -1,7 +1,7 @@
 import cx from 'classnames';
 
 import * as styles from './Card.module.css';
-import { CardProps } from './types';
+import type { CardProps } from './types';
 
 export function Card({ padding, className, children, ...props }: CardProps) {
   const classList = cx(
@@ -10,7 +10,7 @@ export function Card({ padding, className, children, ...props }: CardProps) {
       [styles.paddingNone]: padding === 'none',
       [styles.paddingDefault]: padding === 'default',
     },
-    className
+    className,
   );
   return (
     <div {...props} className={classList}>
@@ -19,18 +19,13 @@ export function Card({ padding, className, children, ...props }: CardProps) {
   );
 }
 
-export function CardPadding({
-  padding,
-  className,
-  children,
-  ...props
-}: CardProps) {
+export function CardPadding({ padding, className, children, ...props }: CardProps) {
   const classList = cx(
     {
       [styles.paddingNone]: padding === 'none',
       [styles.paddingDefault]: padding === 'default',
     },
-    className
+    className,
   );
   return (
     <div {...props} className={classList}>

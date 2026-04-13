@@ -1,15 +1,10 @@
 'use client';
 // @ts-nocheck
-
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { P5CanvasInstance } from 'react-p5-wrapper';
-import type { P5Color } from '@/types/p5';
-
 import { Sketch } from '@/components/app/Sketch';
 import { Area } from '@/components/shared/Area';
 import { tokens } from '@/tokens';
+import type { P5Color } from '@/types/p5';
 
 const frag = (a: TemplateStringsArray) => a[0];
 const vert = (a: TemplateStringsArray) => a[0];
@@ -28,68 +23,66 @@ export const meta = {
   title: 'Shading',
   date: '2022-11-08T00:00:00',
 };
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let shader: any;
 export default function Output() {
   return (
     <Area width={tokens.size.x768}>
-    <Sketch
-      setup={(p: P5CanvasInstance, store) => {
-        p.createCanvas(canvasSize, canvasSize, p.WEBGL);
-        p.colorMode(p.HSL);
+      <Sketch
+        setup={(p: P5CanvasInstance, store) => {
+          p.createCanvas(canvasSize, canvasSize, p.WEBGL);
+          p.colorMode(p.HSL);
 
-        shader = p.createShader(vs, fs);
+          shader = p.createShader(vs, fs);
 
-        store.frames = Array(Math.pow(nodes, 2))
-          .fill(null)
-          .map((_, i) => ({
-            x: i % nodes,
-            y: Math.floor(i / nodes),
-          }));
-      }}
-      draw={(p, store) => {
-        p.clear(...baseBg);
-        p.noStroke();
-        // p.orbitControl()
-        p.normalMaterial();
+          store.frames = Array(nodes ** 2)
+            .fill(null)
+            .map((_, i) => ({
+              x: i % nodes,
+              y: Math.floor(i / nodes),
+            }));
+        }}
+        draw={(p, store) => {
+          p.clear(...baseBg);
+          p.noStroke();
+          // p.orbitControl()
+          p.normalMaterial();
 
-        const start = p.frameCount;
-        const length = store.frames.length;
+          const start = p.frameCount;
+          const length = store.frames.length;
 
-        p.shader(shader);
-        shader.setUniform('frame', start);
+          p.shader(shader);
+          shader.setUniform('frame', start);
 
-        for (let i = 0; i < length; i++) {
-          const pos = store.frames[i];
-          const time = start / 5;
+          for (let i = 0; i < length; i++) {
+            const pos = store.frames[i];
+            const time = start / 5;
 
-          // const color = (pos.x + offset) * (pos.y + offset) + time
-          // const fill = p.color(rainbow[Math.floor(color % rainbow.length)])
+            // const color = (pos.x + offset) * (pos.y + offset) + time
+            // const fill = p.color(rainbow[Math.floor(color % rainbow.length)])
 
-          const x = offset + (pos.x - nodes / 2) * size;
-          const y = offset + (pos.y - nodes / 2) * size;
-          const scale = size - gutter;
+            const x = offset + (pos.x - nodes / 2) * size;
+            const y = offset + (pos.y - nodes / 2) * size;
+            const scale = size - gutter;
 
-          p.push();
+            p.push();
 
-          shader.setUniform('x', x);
-          shader.setUniform('y', y);
+            shader.setUniform('x', x);
+            shader.setUniform('y', y);
 
-          p.translate(x, y);
-          p.rotateX(p.sin((x * size) / 4) + p.cos(time / 12));
-          p.rotateY(p.sin((y * size) / 8) + p.cos(time / 16));
-          p.rotateZ(p.sin(x * y + time / 10));
+            p.translate(x, y);
+            p.rotateX(p.sin((x * size) / 4) + p.cos(time / 12));
+            p.rotateY(p.sin((y * size) / 8) + p.cos(time / 16));
+            p.rotateZ(p.sin(x * y + time / 10));
 
-          // p.torus(scale * 0.5, scale * 0.4)
-          // p.box(scale * 1.8, scale * 1.8, scale * 1.8, 420, 420)
-          p.sphere(scale * 0.4);
+            // p.torus(scale * 0.5, scale * 0.4)
+            // p.box(scale * 1.8, scale * 1.8, scale * 1.8, 420, 420)
+            p.sphere(scale * 0.4);
 
-          p.pop();
-        }
-      }}
-    />
-  </Area>
+            p.pop();
+          }
+        }}
+      />
+    </Area>
   );
 }
 

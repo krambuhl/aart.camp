@@ -1,12 +1,11 @@
 'use client';
 
-import type { P5Color } from '@/types/p5';
-
 import { Sketch } from '@/components/app/Sketch';
 import { Area } from '@/components/shared/Area';
-import { BlueVelvet, Lavender, SkyBlue, Malachite, YellowCab, Orangina, BloodOrange } from '@/data/paint';
+import { BloodOrange, BlueVelvet, Lavender, Malachite, Orangina, SkyBlue, YellowCab } from '@/data/paint';
 import { createRandomWalkerGrid } from '@/lib/random-walker';
 import { tokens } from '@/tokens';
+import type { P5Color } from '@/types/p5';
 
 export const meta = {
   title: 'Robot Thought',
@@ -45,59 +44,59 @@ function lerpPalette(p: any, palette: string[], t: number) {
 export default function Output() {
   return (
     <Area width={tokens.size.x640}>
-    <Sketch
-      aspectRatio={1}
-      setup={(p) => {
-        p.createCanvas(canvasSizeX, canvasSizeY);
-        p.noStroke();
-        p.colorMode(p.HSL, 360, 100, 100, 1);
-      }}
-      draw={(p) => {
-        // reset
-        p.clear(...bgColor);
+      <Sketch
+        aspectRatio={1}
+        setup={(p) => {
+          p.createCanvas(canvasSizeX, canvasSizeY);
+          p.noStroke();
+          p.colorMode(p.HSL, 360, 100, 100, 1);
+        }}
+        draw={(p) => {
+          // reset
+          p.clear(...bgColor);
 
-        const time = p.frameCount / 24;
+          const time = p.frameCount / 24;
 
-        // unified heat-map palette
-        const palette = [BlueVelvet, Lavender, SkyBlue, Malachite, YellowCab, Orangina, BloodOrange];
+          // unified heat-map palette
+          const palette = [BlueVelvet, Lavender, SkyBlue, Malachite, YellowCab, Orangina, BloodOrange];
 
-        const cx = stepsX / 2;
-        const cy = stepsY / 2;
-        const maxDist = Math.hypot(cx, cy);
+          const cx = stepsX / 2;
+          const cy = stepsY / 2;
+          const maxDist = Math.hypot(cx, cy);
 
-        for (const cellData of grid) {
-          const {
-            cell: [fx, fy],
-          } = cellData;
+          for (const cellData of grid) {
+            const {
+              cell: [fx, fy],
+            } = cellData;
 
-          const x = fx - cx;
-          const y = fy - cy;
-          const posX = fx * sizeX;
-          const posY = fy * sizeY;
+            const x = fx - cx;
+            const y = fy - cy;
+            const posX = fx * sizeX;
+            const posY = fy * sizeY;
 
-          // components for color selection
-          const radial = 1 - Math.min(1, Math.hypot(x, y) / maxDist);
-          const wave = 0.5 + 0.5 * Math.sin(x * 0.45 - y * 0.35 + time * 2.2);
-          const field = p.noise(fx * 0.08 + time * 0.3, fy * 0.08 - time * 0.25);
+            // components for color selection
+            const radial = 1 - Math.min(1, Math.hypot(x, y) / maxDist);
+            const wave = 0.5 + 0.5 * Math.sin(x * 0.45 - y * 0.35 + time * 2.2);
+            const field = p.noise(fx * 0.08 + time * 0.3, fy * 0.08 - time * 0.25);
 
-          // combine with slight bias toward walked cells
-          const walkedBias = cellData.walked ? 0.15 : -0.05;
-          const t = Math.max(0, Math.min(1, 0.45 * field + 0.35 * wave + 0.2 * radial + walkedBias));
+            // combine with slight bias toward walked cells
+            const walkedBias = cellData.walked ? 0.15 : -0.05;
+            const t = Math.max(0, Math.min(1, 0.45 * field + 0.35 * wave + 0.2 * radial + walkedBias));
 
-          const c = lerpPalette(p, palette, t);
-          const h = p.hue(c);
-          const s = p.saturation(c);
-          const l = p.lightness(c);
+            const c = lerpPalette(p, palette, t);
+            const h = p.hue(c);
+            const s = p.saturation(c);
+            const l = p.lightness(c);
 
-          // adjust luminance subtly for depth
-          const lAdj = cellData.walked ? l * 1.08 : l * 0.85;
-          const sAdj = cellData.walked ? s * 1.05 : s * 0.9;
-          p.fill(h, Math.min(100, sAdj), Math.min(100, lAdj), 1);
+            // adjust luminance subtly for depth
+            const lAdj = cellData.walked ? l * 1.08 : l * 0.85;
+            const sAdj = cellData.walked ? s * 1.05 : s * 0.9;
+            p.fill(h, Math.min(100, sAdj), Math.min(100, lAdj), 1);
 
-          p.rect(posX + padding, posY + padding, sizeX - gutter, sizeY - gutter);
-        }
-      }}
-    />
-  </Area>
+            p.rect(posX + padding, posY + padding, sizeX - gutter, sizeY - gutter);
+          }
+        }}
+      />
+    </Area>
   );
 }

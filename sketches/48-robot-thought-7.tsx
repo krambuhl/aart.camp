@@ -1,12 +1,11 @@
 'use client';
 
-import type { P5Color } from '@/types/p5';
-
 import { Sketch } from '@/components/app/Sketch';
 import { Area } from '@/components/shared/Area';
-import { BlueVelvet, Lavender, SkyBlue, Malachite, YellowCab, Orangina, BloodOrange } from '@/data/paint';
+import { BloodOrange, BlueVelvet, Lavender, Malachite, Orangina, SkyBlue, YellowCab } from '@/data/paint';
 import { createRandomWalkerGrid } from '@/lib/random-walker';
 import { tokens } from '@/tokens';
+import type { P5Color } from '@/types/p5';
 
 export const meta = {
   title: 'Robot Thought 7 — Soft Family',
@@ -45,46 +44,48 @@ function lerpPalette(p: any, palette: string[], t: number) {
 export default function Output() {
   return (
     <Area width={tokens.size.x640}>
-    <Sketch
-      aspectRatio={1}
-      setup={(p) => {
-        p.createCanvas(canvasSizeX, canvasSizeY);
-        p.noStroke();
-        p.colorMode(p.HSL, 360, 100, 100, 1);
-      }}
-      draw={(p) => {
-        p.clear(...bgColor);
-        const time = p.frameCount / 24;
-        const palette = [BlueVelvet, Lavender, SkyBlue, Malachite, YellowCab, Orangina, BloodOrange];
-        const cx = stepsX / 2;
-        const cy = stepsY / 2;
+      <Sketch
+        aspectRatio={1}
+        setup={(p) => {
+          p.createCanvas(canvasSizeX, canvasSizeY);
+          p.noStroke();
+          p.colorMode(p.HSL, 360, 100, 100, 1);
+        }}
+        draw={(p) => {
+          p.clear(...bgColor);
+          const time = p.frameCount / 24;
+          const palette = [BlueVelvet, Lavender, SkyBlue, Malachite, YellowCab, Orangina, BloodOrange];
+          const cx = stepsX / 2;
+          const cy = stepsY / 2;
 
-        for (const cellData of grid) {
-          const { cell: [fx, fy] } = cellData;
-          const x = fx - cx;
-          const y = fy - cy;
-          const posX = fx * sizeX;
-          const posY = fy * sizeY;
+          for (const cellData of grid) {
+            const {
+              cell: [fx, fy],
+            } = cellData;
+            const x = fx - cx;
+            const y = fy - cy;
+            const posX = fx * sizeX;
+            const posY = fy * sizeY;
 
-          // slow breathing waves + gentle radial comfort
-          const waveA = 0.5 + 0.5 * Math.sin(x * 0.24 + time * 0.9);
-          const waveB = 0.5 + 0.5 * Math.cos(y * 0.23 - time * 0.8);
-          const radial = 1 - Math.min(1, Math.hypot(x, y) / Math.hypot(cx, cy));
-          const base = 0.4 * waveA + 0.4 * waveB + 0.2 * radial;
+            // slow breathing waves + gentle radial comfort
+            const waveA = 0.5 + 0.5 * Math.sin(x * 0.24 + time * 0.9);
+            const waveB = 0.5 + 0.5 * Math.cos(y * 0.23 - time * 0.8);
+            const radial = 1 - Math.min(1, Math.hypot(x, y) / Math.hypot(cx, cy));
+            const base = 0.4 * waveA + 0.4 * waveB + 0.2 * radial;
 
-          const field = p.noise(fx * 0.06 + time * 0.2, fy * 0.06 - time * 0.18) * 0.06;
-          const walkedBias = cellData.walked ? 0.05 : -0.02;
-          const t = Math.max(0, Math.min(1, base + field + walkedBias));
+            const field = p.noise(fx * 0.06 + time * 0.2, fy * 0.06 - time * 0.18) * 0.06;
+            const walkedBias = cellData.walked ? 0.05 : -0.02;
+            const t = Math.max(0, Math.min(1, base + field + walkedBias));
 
-          let c = lerpPalette(p, palette, t);
-          // slightly desaturate and lift for calm
-          c = p.lerpColor(c, p.color('#ffffff'), 0.06);
-          p.fill(c);
+            let c = lerpPalette(p, palette, t);
+            // slightly desaturate and lift for calm
+            c = p.lerpColor(c, p.color('#ffffff'), 0.06);
+            p.fill(c);
 
-          p.rect(posX + padding, posY + padding, sizeX - gutter, sizeY - gutter);
-        }
-      }}
-    />
-  </Area>
+            p.rect(posX + padding, posY + padding, sizeX - gutter, sizeY - gutter);
+          }
+        }}
+      />
+    </Area>
   );
 }

@@ -1,14 +1,11 @@
-import type { FileListingProps } from './types';
-
 import NextLink from 'next/link';
 import { useMemo } from 'react';
-
 import { Area } from '@/components/shared/Area';
 import { Stack } from '@/components/shared/Stack';
 import { BodyText, HeadingText } from '@/components/shared/Text';
 import { tokens } from '@/tokens';
-
 import * as styles from './FileListing.module.css';
+import type { FileListingProps } from './types';
 
 export function FileListing({ files, ...props }: FileListingProps) {
   const fileList = useMemo(() => {
@@ -35,11 +32,7 @@ export function FileListing({ files, ...props }: FileListingProps) {
             .sort((a, b) => (a.date < b.date ? 1 : -1))
             .map(({ title, date, url }) => (
               <NextLink key={title} href={url} className={styles.fileLink}>
-                <Stack
-                  gap={tokens.space.x16}
-                  direction={{ xs: 'vertical', sm: 'horizontal' }}
-                  className={styles.fileStack}
-                >
+                <Stack gap={tokens.space.x16} direction={{ xs: 'vertical', sm: 'horizontal' }} className={styles.fileStack}>
                   <HeadingText as="h3" size="xs">
                     {title}
                   </HeadingText>
