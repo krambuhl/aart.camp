@@ -1,16 +1,15 @@
+import type { P5CanvasInstance, Sketch as SketchType } from '@p5-wrapper/react';
 import dynamic from 'next/dynamic';
-import type P5 from 'p5';
 import { type CSSProperties, useCallback, useState } from 'react';
-import type { Sketch as SketchType } from 'react-p5-wrapper';
 import { BodyText } from '@/components/shared/Text';
 import * as styles from './Sketch.module.css';
 import type { SketchProps } from './types';
 
 const SketchWrapper = dynamic(
   async () => {
-    const mod = await import('react-p5-wrapper');
+    const mod = await import('@p5-wrapper/react');
 
-    return mod.ReactP5Wrapper;
+    return mod.P5Canvas;
   },
   {
     ssr: false,
@@ -26,7 +25,7 @@ export function Sketch({ setup, draw, aspectRatio, ...props }: SketchProps) {
   const [isStarted, setStarted] = useState(false);
 
   const sketch: SketchType = useCallback(
-    (p: P5) => {
+    (p: P5CanvasInstance) => {
       const store = new Map();
 
       p.setup = () => {

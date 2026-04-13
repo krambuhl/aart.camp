@@ -1,4 +1,4 @@
-import type { P5CanvasInstance } from 'react-p5-wrapper';
+import type { P5CanvasInstance } from '@p5-wrapper/react';
 import type { CoreComponent } from '@/types/core';
 
 export interface SketchProps extends Omit<CoreComponent, 'children'> {

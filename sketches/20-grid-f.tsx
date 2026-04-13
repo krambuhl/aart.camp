@@ -1,5 +1,5 @@
 'use client';
-import type { P5CanvasInstance } from 'react-p5-wrapper';
+import type { P5CanvasInstance } from '@p5-wrapper/react';
 import { Sketch } from '@/components/app/Sketch';
 import { Area } from '@/components/shared/Area';
 import { tokens } from '@/tokens';

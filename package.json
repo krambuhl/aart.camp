@@ -12,18 +12,17 @@
     "generate:tokens": "tsx ./scripts/generate-tokens.ts"
   },
   "dependencies": {
+    "@p5-wrapper/react": "^5.0.2",
     "classnames": "^2.3.1",
     "next": "^16.2.3",
-    "p5": "^1.11.2",
+    "p5": "^2.2.3",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
-    "react-p5-wrapper": "^3.4.0",
     "the-new-css-reset": "^1.6.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.11",
     "@types/node": "^25.6.0",
-    "@types/p5": "^1.7.6",
     "@types/react": "^19.2.14",
     "@types/set-value": "^4.0.3",
     "postcss": ">=8.4.6 <9.0.0",

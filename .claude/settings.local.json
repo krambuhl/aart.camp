@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)",
+      "Bash(gt submit:*)",
+      "Bash(git push:*)",
+      "Bash(npm info:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(git rm:*)",
+      "Bash(grep -l \"'use client'\" /Users/ekrambuhl/Sites/ev/aart.camp/pages/sketch/*.tsx)",
+      "Bash(ls /Users/ekrambuhl/Sites/ev/aart.camp/pages/sketch/*.tsx)",
+      "Bash(grep \"\\\\.tsx$\")",
+      "Bash(grep -l \"^import.*\\\\.\\\\./\\\\.\\\\./lib\" /Users/ekrambuhl/Sites/ev/aart.camp/pages/sketch/*.tsx)",
+      "Bash(bash /tmp/analyze_sketches.sh)",
+      "Bash(grep \"from 'lib/\" /Users/ekrambuhl/Sites/ev/aart.camp/pages/sketch/*.tsx)",
+      "Bash(node:*)",
+      "Bash(git commit:*)",
+      "Bash(npx biome:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(git reset:*)",
+      "Bash(git checkout:*)",
+      "Bash(npx stylelint:*)",
+      "WebSearch",
+      "Bash(grep -rh \"p\\\\.\\\\\\(createCanvas\\\\|colorMode\\\\|fill\\\\|circle\\\\|rect\\\\|noStroke\\\\|clear\\\\|lerpColor\\\\|lerp\\\\|norm\\\\|color\\\\|frameCount\\\\|frameRate\\\\|noise\\\\|WEBGL\\\\|HSL\\\\|RGB\\\\\\)\" /Users/ekrambuhl/Sites/ev/aart.camp/sketches/*.tsx)",
+      "Bash(grep -l \"p\\\\.box\\\\|p\\\\.sphere\\\\|p\\\\.torus\\\\|p\\\\.normalMaterial\\\\|p\\\\.orbitControl\\\\|p\\\\.shader\\\\|p\\\\.push\\\\|p\\\\.pop\\\\|p\\\\.translate\\\\|p\\\\.rotateX\\\\|p\\\\.rotateY\\\\|p\\\\.rotateZ\" /Users/ekrambuhl/Sites/ev/aart.camp/sketches/*.tsx)",
+      "Bash(ls node_modules/p5/*.d.ts)"
+    ]
+  }
+}
