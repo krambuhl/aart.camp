@@ -81,6 +81,13 @@ The user is always the decision-maker. The goal is a system that
 naturally catches its own mistakes and compounds its own lessons, without
 requiring the user to remember to ask.
 
+### Learnings
+
+Lessons learned from past sessions live in `.claude/learnings/` — version
+controlled, not ephemeral. Read them at the start of a session. When
+self-improvement produces a new learning, write it there as a short
+markdown file (what happened, why it matters, how to apply it).
+
 ## Things to be careful about
 
 - p5.js sketches must be client-rendered — the `<Sketch>` component uses

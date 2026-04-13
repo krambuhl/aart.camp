@@ -43,14 +43,14 @@ Look at the current session for:
 For each signal, decide what kind of improvement it suggests:
 - **Skill**: a reusable workflow that should be a slash command
 - **Rule**: a behavioral guideline for CLAUDE.md
-- **Memory**: a persistent fact about the user or project
+- **Learning**: a lesson for `.claude/learnings/` (version-controlled)
 - **Habit**: a check or step to add to an existing workflow
 - **Nothing**: the signal was situational and doesn't generalize
 
 ### 3. Draft improvements
 
 For each non-trivial improvement:
-- Write the actual artifact (skill file, CLAUDE.md addition, memory entry)
+- Write the actual artifact (skill file, CLAUDE.md addition, learning in `.claude/learnings/`)
 - Explain *why* — what signal prompted it and what failure it prevents
 - Rate the confidence: high (clear pattern), medium (happened twice), low (one-off but worth encoding)
 
