@@ -13,21 +13,18 @@ not production software. Good enough is good enough.
 
 ## Stack
 
-Next.js (Pages Router), React, TypeScript, CSS Modules, p5.js, PostCSS.
+Next.js (App Router), React, TypeScript, CSS Modules, p5.js, PostCSS.
 No Tailwind, no CSS-in-JS. Deployed on Vercel.
-
-## Project direction
-
-- **App Router migration** is a planned future move, along with improving the
-  loading experience for individual sketches.
-- The directory listing system (`lib/directory.ts` + meta extraction from
-  sketch files) is a known pain point — it's fragile and annoying.
 
 ## Adding a new sketch
 
-Copy an existing sketch from `pages/sketch/`, rename it with the next number
-prefix (e.g., `53-name.tsx`), and modify. Each sketch exports a `meta` object
-and a default component that uses `<Sketch setup={...} draw={...} />`.
+1. Copy an existing sketch from `sketches/`, rename with the next number
+   prefix (e.g., `53-name.tsx`). Each sketch is a `'use client'` component
+   that exports `meta` (title, date) and a default component wrapping
+   `<Area>` + `<Sketch setup={...} draw={...} />`.
+2. Add an entry to `sketches/registry.ts` — this is the single source of
+   truth for all sketches. The page shell (`app/sketch/[slug]/page.tsx`)
+   handles layout, metadata, and `PageHeader` automatically.
 
 ## Design tokens
 
@@ -53,5 +50,4 @@ is welcome but keep it proportional.
 
 - p5.js sketches must be client-rendered — the `<Sketch>` component uses
   dynamic import with SSR disabled.
-- The meta extraction in `lib/directory.ts` uses regex + dirty-json to parse
-  exports from sketch files. It's brittle. Don't assume it handles edge cases.
+- All sketch files need `'use client'` at the top.
