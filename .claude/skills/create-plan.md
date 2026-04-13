@@ -60,7 +60,7 @@ Match the plan's weight to the work's weight.
 
 ## Output
 
-Plans live in `projects/[project-name]/PLAN.md` for significant work.
+Plans live in `projects/[name]/PLAN.md` for significant work.
 Small plans can just be a message in the conversation.
 
 ## When invoked from project-loop

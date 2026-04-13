@@ -11,7 +11,7 @@ argument-hint: "<project_name> <goal description>"
 
 # Project Loop
 
-`/project-loop [project_name] [goal]`
+`/project-loop [name] [goal]`
 
 The orchestration loop. Takes a project name and a goal, then drives
 the full lifecycle: plan → generate → validate → commit → learn, with
@@ -44,7 +44,7 @@ skepticism woven throughout.
 
 ### 1. Plan
 
-- If `projects/[project_name]/PLAN.md` exists, read it and resume
+- If `projects/[name]/PLAN.md` exists, read it and resume
 - If not, run **create-plan** to generate one from the goal
 - Run **manifest** to establish scope and create STATUS.md
 - Present the plan for user approval before proceeding

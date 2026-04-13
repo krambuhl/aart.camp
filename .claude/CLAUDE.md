@@ -93,6 +93,30 @@ controlled, not ephemeral. Read them at the start of a session. When
 self-improvement produces a new learning, write it there as a short
 markdown file (what happened, why it matters, how to apply it).
 
+## Projects
+
+Projects live in `projects/[name]/`. To start a project, create the
+directory and a `PLAN.md`:
+
+```
+projects/
+├── adopt-biome/
+│   └── PLAN.md
+├── add-dark-mode/
+│   ├── PLAN.md
+│   └── STATUS.md
+```
+
+- **`PLAN.md`** — the strategy, phases, tasks, and verification criteria.
+  This is what `/create-plan` produces.
+- **`STATUS.md`** — current state, completed tasks, discoveries, scope
+  changes. This is what `/manifest` maintains.
+
+Plans are the entry point. If `projects/[name]/PLAN.md` exists, the
+project exists. Plans are documentation — they explain why the work is
+shaped the way it is. They also make work resumable across sessions and
+parallelizable across agents.
+
 ## Things to be careful about
 
 - p5.js sketches must be client-rendered — the `<Sketch>` component uses

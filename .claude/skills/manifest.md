@@ -36,7 +36,7 @@ After each meaningful unit of work, manifest captures the state:
 Manifest maintains a running status in the project directory:
 
 ```
-projects/[project-name]/
+projects/[name]/
 ├── PLAN.md          # the strategy (create-plan writes this)
 ├── STATUS.md        # current state (manifest writes this)
 └── ...              # subplans, prompts, etc.
@@ -71,7 +71,7 @@ has become a feature.
 
 ## When invoked standalone
 
-`/manifest [project-name]` — Show the current status of the named project.
+`/manifest [name]` — Show the current status of the named project.
 If no project exists, ask what to scope.
 
 ## When invoked from project-loop
