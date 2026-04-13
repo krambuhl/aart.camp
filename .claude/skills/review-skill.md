@@ -1,6 +1,12 @@
 ---
 name: review-skill
-description: Reviews a Claude Code skill, agent, or command file for quality, completeness, and best-practice adherence. Produces a severity-rated audit with concrete improvement suggestions. Use when reviewing or auditing .ai/skills/ or .ai/agents/ files.
+description: >-
+  Reviews a Claude Code skill, agent, or command file for quality,
+  completeness, and best-practice adherence. Produces a severity-rated
+  audit with concrete improvement suggestions. Use when reviewing or
+  auditing .claude/skills/ or .claude/agents/ files. Do NOT use for
+  general code review or non-skill markdown files.
+disable-model-invocation: true
 argument-hint: "<path-to-SKILL.md-or-agent-or-command-file>"
 context: fork
 agent: general-purpose
@@ -24,10 +30,10 @@ You review Claude Code skill, agent, and command files for quality and best prac
 
 Determine the file type from its path and frontmatter:
 
-**Skill** — Path contains `.ai/skills/` and filename is `SKILL.md` (or a `.md` inside a skills directory).
+**Skill** — Path contains `.claude/skills/` and filename is `SKILL.md` (or a `.md` inside a skills directory).
 - Frontmatter may include: `name`, `description`, `argument-hint`, `disable-model-invocation`, `user-invocable`, `allowed-tools`, `context`, `agent`, `model`, `hooks`
 
-**Agent** — Path contains `.ai/agents/`.
+**Agent** — Path contains `.claude/agents/`.
 - Frontmatter uses `tools` (not `allowed-tools`) and may include: `name`, `description`, `tools`, `disallowedTools`, `model`, `permissionMode`, `maxTurns`, `skills`, `mcpServers`, `hooks`, `memory`
 - Both `name` and `description` are required for agents.
 
@@ -202,7 +208,7 @@ Cross-check the frontmatter invocation fields against the skill's actual behavio
 ### Category 7: File References
 
 **Check for:**
-- `@file` references (e.g., `@.ai/rules/react-components.mdc`) — use Glob to check if the referenced file likely exists relative to the skill's repo.
+- `@file` references (e.g., `@.claude/rules/react-components.mdc`) — use Glob to check if the referenced file likely exists relative to the skill's repo.
 - Relative markdown links (e.g., `[reference.md](reference.md)`) — use Glob to check if the file exists in the skill's directory.
 - URLs — note them but do not validate (the human reader can check).
 - External tool dependencies (e.g., `gt`, `eslint`, `npm run`) — are they mentioned as prerequisites?
@@ -316,7 +322,7 @@ Produce your review in exactly this structure:
 ```markdown
 ### Migration Notes
 
-This is a legacy `.claude/commands/` file. Consider migrating to the skill format (`.ai/skills/<name>/SKILL.md`) to gain:
+This is a legacy `.claude/commands/` file. Consider migrating to the skill format (`.claude/skills/<name>/SKILL.md`) to gain:
 - <list specific benefits relevant to this command>
 ```
 

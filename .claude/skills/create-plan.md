@@ -1,7 +1,11 @@
 ---
 name: create-plan
-description: Turn loose thoughts and goals into structured, actionable plans
-user_invocable: true
+description: >-
+  Turn fuzzy goals into structured, phased plans. Use when starting a new
+  project, breaking down a large goal, or creating a PLAN.md. Do not use
+  for simple task lists or one-off approach questions.
+user-invocable: true
+disable-model-invocation: true
 ---
 
 # Create Plan

@@ -1,7 +1,11 @@
 ---
 name: generate
-description: Create high-quality, consistent work — code, components, migrations, content
-user_invocable: true
+description: >-
+  Generate code, components, or content that matches existing project patterns.
+  Use when explicitly invoked via /generate or when called from /project-loop.
+  Do not auto-invoke for general creation tasks.
+user-invocable: true
+disable-model-invocation: true
 ---
 
 # Generate

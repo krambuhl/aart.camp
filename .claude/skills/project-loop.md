@@ -1,7 +1,12 @@
 ---
 name: project-loop
-description: Orchestrate a full project lifecycle using all skills — plan, generate, validate, commit, learn
-user_invocable: true
+description: >-
+  Orchestrate a full project lifecycle — plan, generate, validate, commit,
+  learn. Use when the work has multiple steps, needs planning, or benefits
+  from structured progress tracking. Only invoke via /project-loop.
+user-invocable: true
+disable-model-invocation: true
+argument-hint: "<project_name> <goal description>"
 ---
 
 # Project Loop

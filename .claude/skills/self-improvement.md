@@ -1,7 +1,11 @@
 ---
 name: self-improvement
-description: Reflect on session signals, generate skills, update rules, and improve the Claude system
-user_invocable: true
+description: >-
+  Reflect on session signals (mistakes, friction, wins, surprises) and
+  propose concrete improvements to skills, rules, and learnings. Use when
+  explicitly invoked or as the generator step in the pre-commit loop.
+user-invocable: true
+disable-model-invocation: true
 ---
 
 # Self-Improvement
