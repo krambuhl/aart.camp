@@ -5,7 +5,6 @@ description: >-
   Use when explicitly invoked via /generate or when called from /project-loop.
   Do not auto-invoke for general creation tasks.
 user-invocable: true
-disable-model-invocation: true
 ---
 
 # Generate

@@ -5,7 +5,6 @@ description: >-
   learn. Use when the work has multiple steps, needs planning, or benefits
   from structured progress tracking. Only invoke via /project-loop.
 user-invocable: true
-disable-model-invocation: true
 argument-hint: "<project_name> <goal description>"
 ---
 

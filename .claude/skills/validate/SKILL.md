@@ -5,7 +5,6 @@ description: >-
   generation to confirm the build passes, lint is clean, and the diff
   matches what was requested. A pre-commit gate, not general troubleshooting.
 user-invocable: true
-disable-model-invocation: true
 ---
 
 # Validate

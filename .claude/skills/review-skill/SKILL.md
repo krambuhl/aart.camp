@@ -6,7 +6,6 @@ description: >-
   audit with concrete improvement suggestions. Use when reviewing or
   auditing .claude/skills/ or .claude/agents/ files. Do NOT use for
   general code review or non-skill markdown files.
-disable-model-invocation: true
 argument-hint: "<path-to-SKILL.md-or-agent-or-command-file>"
 context: fork
 agent: general-purpose

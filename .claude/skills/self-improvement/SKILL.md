@@ -5,7 +5,6 @@ description: >-
   propose concrete improvements to skills, rules, and learnings. Use when
   explicitly invoked or as the generator step in the pre-commit loop.
 user-invocable: true
-disable-model-invocation: true
 ---
 
 # Self-Improvement

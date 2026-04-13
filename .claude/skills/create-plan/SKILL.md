@@ -5,7 +5,6 @@ description: >-
   project, breaking down a large goal, or creating a PLAN.md. Do not use
   for simple task lists or one-off approach questions.
 user-invocable: true
-disable-model-invocation: true
 ---
 
 # Create Plan

@@ -5,7 +5,6 @@ description: >-
   a project to establish scope, after each work unit to checkpoint, or
   standalone to check a project's current status. Writes STATUS.md.
 user-invocable: true
-disable-model-invocation: true
 ---
 
 # Manifest
