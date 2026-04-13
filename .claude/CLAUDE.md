@@ -48,42 +48,47 @@ live in `components/shared/`. These are stable infrastructure — don't
 over-engineer or refactor them unless there's a reason. Pattern exploration
 is welcome but keep it proportional.
 
-## Self-healing system
+## Skills
 
-This project is designed to get better over time. Two ambient behaviors run
-naturally during every session — they're not ceremonies you invoke, they're
-habits the system has.
+This project has a skill system in `.claude/skills/`. Skills are reusable
+workflows that can be invoked directly or composed by the orchestrator.
 
-### Before every commit
+### The core loop
 
-1. **Natural skeptic** (`.claude/skills/natural-skeptic.md`): Quick pass
-   over the work — what did we skip? what are we assuming? is this the
-   simplest version? Keep it lightweight. A few sharp observations, not a
-   full audit. If nothing's wrong, say nothing.
+`/project-loop [name] [goal]` orchestrates the full lifecycle:
 
-2. **Self-improvement** (`.claude/skills/self-improvement.md`): Did
-   anything from this work produce a learnable signal? A new habit, a
-   corrected assumption, a pattern worth encoding as a skill or rule?
-   Most commits won't have anything. That's fine — don't force insights.
-   When there *is* something, draft the improvement and present it before
-   committing.
+```
+plan → generate → validate → skeptic → commit + learn → checkpoint
+                                                 ↓
+                                          more tasks? loop back
+```
+
+### Individual skills
+
+| Skill | Role | When |
+|---|---|---|
+| `/create-plan` | Turn fuzzy goals into structured plans | Start of a project |
+| `/generate` | Create high-quality, consistent work | Each task in the plan |
+| `/validate` | Verify work is complete and correct | After generation |
+| `/natural-skeptic` | Find holes, challenge assumptions | Before every commit |
+| `/self-improvement` | Capture learnings, improve the system | Before every commit |
+| `/manifest` | Scope projects, track progress | Start + after each commit |
 
 ### The generator / antagonist pattern
 
-The two behaviors form a pair:
+Two ambient behaviors form a pair that runs before every commit:
 
-- The **generator** produces — plans, code, improvements, proposals. It
-  moves forward. It's optimistic by default.
-- The **antagonist** pressure-tests — "is this needed?", "what could go
-  wrong?", "what did we skip?". It finds holes, not solutions.
+- The **generator** produces — plans, code, improvements. It moves forward.
+- The **antagonist** pressure-tests — "is this needed?", "what did we
+  skip?". It finds holes, not solutions.
 
-The user is always the decision-maker. The goal is a system that
-naturally catches its own mistakes and compounds its own lessons, without
-requiring the user to remember to ask.
+`/natural-skeptic` and `/self-improvement` are not ceremonies — they're
+habits. Lightweight and silent when there's nothing to say. Sharp when
+there is.
 
 ### Learnings
 
-Lessons learned from past sessions live in `.claude/learnings/` — version
+Lessons from past sessions live in `.claude/learnings/` — version
 controlled, not ephemeral. Read them at the start of a session. When
 self-improvement produces a new learning, write it there as a short
 markdown file (what happened, why it matters, how to apply it).
