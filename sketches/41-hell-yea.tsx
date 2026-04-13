@@ -1,9 +1,9 @@
 'use client';
 
-import type { P5Color } from 'types/p5';
+import type { P5Color } from '@/types/p5';
 
-import { Sketch } from 'components/app/Sketch';
-import { Area } from 'components/shared/Area';
+import { Sketch } from '@/components/app/Sketch';
+import { Area } from '@/components/shared/Area';
 import {
   Black,
   White,
@@ -15,9 +15,9 @@ import {
   Malachite,
   YellowCab,
   BloodOrange,
-} from 'data/paint';
-import { createRandomWalkerGrid } from 'lib/random-walker';
-import { tokens } from 'tokens';
+} from '@/data/paint';
+import { createRandomWalkerGrid } from '@/lib/random-walker';
+import { tokens } from '@/tokens';
 
 export const meta = {
   title: 'Hell Yea',

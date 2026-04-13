@@ -1,4 +1,4 @@
-import type { P5Color } from 'types/p5';
+import type { P5Color } from '@/types/p5';
 
 export interface GridSketchProps {
   bg: P5Color;

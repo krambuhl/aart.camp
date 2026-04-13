@@ -2,11 +2,11 @@ import type { Metadata } from 'next';
 
 import { notFound } from 'next/navigation';
 
-import { PageHeader } from 'components/shared/PageHeader';
-import { Stack } from 'components/shared/Stack';
-import { constants } from 'data';
-import { registry } from 'sketches/registry';
-import { tokens } from 'tokens';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { Stack } from '@/components/shared/Stack';
+import { constants } from '@/data';
+import { registry } from '@/sketches/registry';
+import { tokens } from '@/tokens';
 
 interface Props {
   params: Promise<{ slug: string }>;

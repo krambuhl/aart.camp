@@ -5,11 +5,11 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { P5CanvasInstance } from 'react-p5-wrapper';
-import type { P5Color } from 'types/p5';
+import type { P5Color } from '@/types/p5';
 
-import { Sketch } from 'components/app/Sketch';
-import { Area } from 'components/shared/Area';
-import { tokens } from 'tokens';
+import { Sketch } from '@/components/app/Sketch';
+import { Area } from '@/components/shared/Area';
+import { tokens } from '@/tokens';
 
 const frag = (a: TemplateStringsArray) => a[0];
 const vert = (a: TemplateStringsArray) => a[0];

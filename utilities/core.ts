@@ -1,6 +1,6 @@
 import classNames from 'classnames';
 import React, { AriaAttributes } from 'react';
-import { CoreComponent } from 'types/core';
+import { CoreComponent } from '@/types/core';
 
 interface ComponentOptions {
   tagName: string;

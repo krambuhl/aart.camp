@@ -1,9 +1,9 @@
 'use client';
 
-import { GridSketch } from 'components/app/GridSketch';
-import { Area } from 'components/shared/Area';
-import { rainbow } from 'data/colorMaps';
-import { tokens } from 'tokens';
+import { GridSketch } from '@/components/app/GridSketch';
+import { Area } from '@/components/shared/Area';
+import { rainbow } from '@/data/colorMaps';
+import { tokens } from '@/tokens';
 
 export const meta = {
   title: 'Grid E',

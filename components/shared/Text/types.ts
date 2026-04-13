@@ -1,7 +1,7 @@
-import type { CoreComponent } from 'types/core';
+import type { CoreComponent } from '@/types/core';
 
-import { tokens } from 'tokens';
-import { ValueOrResponsive } from 'utilities/opaque-responsive';
+import { tokens } from '@/tokens';
+import { ValueOrResponsive } from '@/utilities/opaque-responsive';
 
 export type TextElement = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'span' | 'div';
 

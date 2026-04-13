@@ -1,10 +1,10 @@
 'use client';
 
-import type { P5Color } from 'types/p5';
+import type { P5Color } from '@/types/p5';
 
-import { Sketch } from 'components/app/Sketch';
-import { Area } from 'components/shared/Area';
-import { tokens } from 'tokens';
+import { Sketch } from '@/components/app/Sketch';
+import { Area } from '@/components/shared/Area';
+import { tokens } from '@/tokens';
 
 const black: P5Color = [0 / 255, 0 / 255, 0 / 255, 255];
 const white: P5Color = [255 / 255, 255 / 255, 255 / 255, 255];

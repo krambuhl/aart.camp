@@ -2,9 +2,9 @@ import type { FormulaSketchProps } from './types';
 
 import { useMemo } from 'react';
 
-import { Sketch } from 'components/app/Sketch';
-import { Card, CardPadding } from 'components/shared/Card';
-import { BodyText, HeadingText } from 'components/shared/Text';
+import { Sketch } from '@/components/app/Sketch';
+import { Card, CardPadding } from '@/components/shared/Card';
+import { BodyText, HeadingText } from '@/components/shared/Text';
 
 import * as styles from './FormulaSketch.module.css';
 import { useLimits } from './useLimits';

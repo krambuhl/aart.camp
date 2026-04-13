@@ -1,5 +1,5 @@
 import type { P5CanvasInstance } from 'react-p5-wrapper';
-import type { CoreComponent } from 'types/core';
+import type { CoreComponent } from '@/types/core';
 
 export interface SketchProps extends Omit<CoreComponent, 'children'> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -3,8 +3,8 @@ import type { SpacerProps } from './types';
 import cx from 'classnames';
 import React from 'react';
 
-import { tokens } from 'tokens';
-import { buildTokenKeyMap, responsiveStyleList } from 'utilities/css-utils';
+import { tokens } from '@/tokens';
+import { buildTokenKeyMap, responsiveStyleList } from '@/utilities/css-utils';
 
 import * as styles from './Spacer.module.css';
 import { wrapAndMergeResponsiveSides } from './lib';

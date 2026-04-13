@@ -3,8 +3,8 @@ import type { HeadingTextProps, BodyTextProps, DataTextProps } from './types';
 import cx from 'classnames';
 import React from 'react';
 
-import { responsiveStyleList } from 'utilities/css-utils';
-import { wrapResponsive } from 'utilities/opaque-responsive';
+import { responsiveStyleList } from '@/utilities/css-utils';
+import { wrapResponsive } from '@/utilities/opaque-responsive';
 
 import * as styles from './Text.module.css';
 

@@ -1,5 +1,5 @@
-import type { CoreComponent } from 'types/core';
-import type { File } from 'types/files';
+import type { CoreComponent } from '@/types/core';
+import type { File } from '@/types/files';
 
 export interface FileListingProps extends Omit<CoreComponent, 'children'> {
   files: File[];

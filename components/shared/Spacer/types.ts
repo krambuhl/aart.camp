@@ -1,7 +1,7 @@
-import type { CoreComponent } from 'types/core';
-import type { SpaceToken } from 'types/tokens';
+import type { CoreComponent } from '@/types/core';
+import type { SpaceToken } from '@/types/tokens';
 
-import { ValueOrResponsive } from 'utilities/opaque-responsive';
+import { ValueOrResponsive } from '@/utilities/opaque-responsive';
 
 export type Directions = 't' | 'r' | 'b' | 'l' | 'h' | 'v' | 'a';
 

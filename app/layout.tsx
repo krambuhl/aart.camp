@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 
-import { AppLayout } from 'components/shared/AppLayout';
-import { constants } from 'data';
+import { AppLayout } from '@/components/shared/AppLayout';
+import { constants } from '@/data';
 
 import 'the-new-css-reset/css/reset.css';
-import 'styles/tokens.css';
-import 'styles/globals.css';
+import '@/styles/tokens.css';
+import '@/styles/globals.css';
 
 export const metadata: Metadata = {
   title: constants.SITE_NAME,

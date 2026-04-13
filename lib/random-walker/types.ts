@@ -1,4 +1,4 @@
-import { Cell } from 'lib/grid/types';
+import { Cell } from '@/lib/grid/types';
 
 export type State = 'start' | 'walk' | 'complete';
 

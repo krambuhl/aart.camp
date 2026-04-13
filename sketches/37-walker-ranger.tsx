@@ -1,9 +1,9 @@
 'use client';
 
-import type { P5Color } from 'types/p5';
+import type { P5Color } from '@/types/p5';
 
-import { Sketch } from 'components/app/Sketch';
-import { Area } from 'components/shared/Area';
+import { Sketch } from '@/components/app/Sketch';
+import { Area } from '@/components/shared/Area';
 import {
   Black,
   White,
@@ -31,10 +31,10 @@ import {
   Gray13,
   Gray14,
   Gray15,
-} from 'data/paint';
-import { tokens } from 'tokens';
+} from '@/data/paint';
+import { tokens } from '@/tokens';
 
-import { walkGrid } from 'lib/cell-walker';
+import { walkGrid } from '@/lib/cell-walker';
 
 export const meta = {
   title: 'Walker Ranger',

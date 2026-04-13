@@ -1,10 +1,10 @@
 import cx from 'classnames';
 
-import { tokens } from 'tokens';
-import { CoreComponent } from 'types/core';
-import { SizeToken } from 'types/tokens';
-import { buildTokenKeyMap, responsiveStyleList } from 'utilities/css-utils';
-import { ValueOrResponsive, wrapResponsive } from 'utilities/opaque-responsive';
+import { tokens } from '@/tokens';
+import { CoreComponent } from '@/types/core';
+import { SizeToken } from '@/types/tokens';
+import { buildTokenKeyMap, responsiveStyleList } from '@/utilities/css-utils';
+import { ValueOrResponsive, wrapResponsive } from '@/utilities/opaque-responsive';
 
 import * as styles from './Area.module.css';
 

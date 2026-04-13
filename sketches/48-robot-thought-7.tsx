@@ -1,12 +1,12 @@
 'use client';
 
-import type { P5Color } from 'types/p5';
+import type { P5Color } from '@/types/p5';
 
-import { Sketch } from 'components/app/Sketch';
-import { Area } from 'components/shared/Area';
-import { BlueVelvet, Lavender, SkyBlue, Malachite, YellowCab, Orangina, BloodOrange } from 'data/paint';
-import { createRandomWalkerGrid } from 'lib/random-walker';
-import { tokens } from 'tokens';
+import { Sketch } from '@/components/app/Sketch';
+import { Area } from '@/components/shared/Area';
+import { BlueVelvet, Lavender, SkyBlue, Malachite, YellowCab, Orangina, BloodOrange } from '@/data/paint';
+import { createRandomWalkerGrid } from '@/lib/random-walker';
+import { tokens } from '@/tokens';
 
 export const meta = {
   title: 'Robot Thought 7 — Soft Family',

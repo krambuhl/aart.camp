@@ -1,5 +1,5 @@
-import type { CoreComponent } from 'types/core';
-import type { SizeToken } from 'types/tokens';
+import type { CoreComponent } from '@/types/core';
+import type { SizeToken } from '@/types/tokens';
 
 export interface AppLayoutProps extends CoreComponent {
   width?: SizeToken;

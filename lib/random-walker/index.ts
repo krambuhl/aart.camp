@@ -1,4 +1,4 @@
-import { generateGridPositions } from 'lib/grid';
+import { generateGridPositions } from '@/lib/grid';
 
 import { flattenCellData, generateUnwalkedCellData } from './lib/cell-data';
 import { CellData, ProgramConfig, ProgramState, WalkedCellData } from './types';

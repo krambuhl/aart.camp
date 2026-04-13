@@ -1,5 +1,5 @@
-import { AnyToken } from 'types/tokens';
-import { Breakpoint, OpaqueResponsive, reduceResponsive } from 'utilities/opaque-responsive';
+import { AnyToken } from '@/types/tokens';
+import { Breakpoint, OpaqueResponsive, reduceResponsive } from '@/utilities/opaque-responsive';
 
 export function responsiveStyleList<T>(
   responsiveValues: OpaqueResponsive<T>,

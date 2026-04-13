@@ -2,7 +2,7 @@ import {
   generateGridPositions,
   getNextCell as defaultGetNextCell,
   getNextDirection as defaultGetNextDirection,
-} from 'lib/grid';
+} from '@/lib/grid';
 
 import {
   enrichAndFlattenCellData,

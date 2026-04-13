@@ -1,13 +1,13 @@
 'use client';
 
-import type { FormulaSketchProps } from 'components/app/FormulaSketch/types';
+import type { FormulaSketchProps } from '@/components/app/FormulaSketch/types';
 
 import { useMemo } from 'react';
 
-import { FormulaSketch } from 'components/app/FormulaSketch';
-import { Area } from 'components/shared/Area';
-import { Grid } from 'components/shared/Grid';
-import { tokens } from 'tokens';
+import { FormulaSketch } from '@/components/app/FormulaSketch';
+import { Area } from '@/components/shared/Area';
+import { Grid } from '@/components/shared/Grid';
+import { tokens } from '@/tokens';
 
 export const meta = {
   title: 'Formulas',

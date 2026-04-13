@@ -1,10 +1,10 @@
 'use client';
 
-import type { P5Color } from 'types/p5';
+import type { P5Color } from '@/types/p5';
 
-import { Sketch } from 'components/app/Sketch';
-import { Area } from 'components/shared/Area';
-import { tokens } from 'tokens';
+import { Sketch } from '@/components/app/Sketch';
+import { Area } from '@/components/shared/Area';
+import { tokens } from '@/tokens';
 
 type Cell = [number, number];
 type Translation = (config: Config) => Cell;

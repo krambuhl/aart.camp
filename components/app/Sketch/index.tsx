@@ -5,7 +5,7 @@ import type { Sketch as SketchType } from 'react-p5-wrapper';
 import dynamic from 'next/dynamic';
 import { CSSProperties, useCallback, useState } from 'react';
 
-import { BodyText } from 'components/shared/Text';
+import { BodyText } from '@/components/shared/Text';
 
 import * as styles from './Sketch.module.css';
 

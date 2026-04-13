@@ -12,6 +12,9 @@
   ],
   "compilerOptions": {
     "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"]
+    },
     "composite": false,
     "declaration": true,
     "declarationMap": true,

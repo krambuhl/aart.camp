@@ -1,9 +1,9 @@
-import { FileListing } from 'components/app/FileListing';
-import { PageHeader } from 'components/shared/PageHeader';
-import { Spacer } from 'components/shared/Spacer';
-import { Stack } from 'components/shared/Stack';
-import { registry } from 'sketches/registry';
-import { tokens } from 'tokens';
+import { FileListing } from '@/components/app/FileListing';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { Spacer } from '@/components/shared/Spacer';
+import { Stack } from '@/components/shared/Stack';
+import { registry } from '@/sketches/registry';
+import { tokens } from '@/tokens';
 
 const files = registry.map(({ slug, meta }) => ({
   name: slug,

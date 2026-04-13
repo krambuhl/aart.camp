@@ -1,6 +1,6 @@
 import cx from 'classnames';
 
-import { CoreComponent } from 'types/core';
+import { CoreComponent } from '@/types/core';
 
 import * as styles from './Grid.module.css';
 

@@ -3,10 +3,10 @@ import type { FileListingProps } from './types';
 import NextLink from 'next/link';
 import { useMemo } from 'react';
 
-import { Area } from 'components/shared/Area';
-import { Stack } from 'components/shared/Stack';
-import { BodyText, HeadingText } from 'components/shared/Text';
-import { tokens } from 'tokens';
+import { Area } from '@/components/shared/Area';
+import { Stack } from '@/components/shared/Stack';
+import { BodyText, HeadingText } from '@/components/shared/Text';
+import { tokens } from '@/tokens';
 
 import * as styles from './FileListing.module.css';
 

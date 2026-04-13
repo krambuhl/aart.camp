@@ -1,5 +1,5 @@
-import { generateGridPositions } from 'lib/grid';
-import { Cell } from 'lib/grid/types';
+import { generateGridPositions } from '@/lib/grid';
+import { Cell } from '@/lib/grid/types';
 
 import { CellData, ProgramConfig, ProgramState, UnwalkedCellData } from '../types';
 

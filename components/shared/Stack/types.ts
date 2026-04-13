@@ -1,7 +1,7 @@
-import type { CoreComponent } from 'types/core';
-import type { SpaceToken } from 'types/tokens';
+import type { CoreComponent } from '@/types/core';
+import type { SpaceToken } from '@/types/tokens';
 
-import { ValueOrResponsive } from 'utilities/opaque-responsive';
+import { ValueOrResponsive } from '@/utilities/opaque-responsive';
 
 export type StackDirection = 'vertical' | 'horizontal';
 export type StackAlignment = 'start' | 'center' | 'end';

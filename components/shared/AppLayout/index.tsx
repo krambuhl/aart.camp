@@ -2,9 +2,9 @@ import type { AppLayoutProps } from './types';
 
 import cx from 'classnames';
 
-import { Area } from 'components/shared/Area';
-import { Spacer } from 'components/shared/Spacer';
-import { tokens } from 'tokens';
+import { Area } from '@/components/shared/Area';
+import { Spacer } from '@/components/shared/Spacer';
+import { tokens } from '@/tokens';
 
 import * as styles from './AppLayout.module.css';
 

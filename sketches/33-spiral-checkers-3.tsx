@@ -1,11 +1,11 @@
 'use client';
 
-import type { P5Color } from 'types/p5';
+import type { P5Color } from '@/types/p5';
 
-import { Sketch } from 'components/app/Sketch';
-import { Area } from 'components/shared/Area';
-import { paint } from 'data/colorMaps';
-import { tokens } from 'tokens';
+import { Sketch } from '@/components/app/Sketch';
+import { Area } from '@/components/shared/Area';
+import { paint } from '@/data/colorMaps';
+import { tokens } from '@/tokens';
 
 const rainbow = [
   paint.Lavender,
