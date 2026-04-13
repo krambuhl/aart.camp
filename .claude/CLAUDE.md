@@ -48,6 +48,39 @@ live in `components/shared/`. These are stable infrastructure — don't
 over-engineer or refactor them unless there's a reason. Pattern exploration
 is welcome but keep it proportional.
 
+## Self-healing system
+
+This project is designed to get better over time. Two ambient behaviors run
+naturally during every session — they're not ceremonies you invoke, they're
+habits the system has.
+
+### Before every commit
+
+1. **Natural skeptic** (`.claude/skills/natural-skeptic.md`): Quick pass
+   over the work — what did we skip? what are we assuming? is this the
+   simplest version? Keep it lightweight. A few sharp observations, not a
+   full audit. If nothing's wrong, say nothing.
+
+2. **Self-improvement** (`.claude/skills/self-improvement.md`): Did
+   anything from this work produce a learnable signal? A new habit, a
+   corrected assumption, a pattern worth encoding as a skill or rule?
+   Most commits won't have anything. That's fine — don't force insights.
+   When there *is* something, draft the improvement and present it before
+   committing.
+
+### The generator / antagonist pattern
+
+The two behaviors form a pair:
+
+- The **generator** produces — plans, code, improvements, proposals. It
+  moves forward. It's optimistic by default.
+- The **antagonist** pressure-tests — "is this needed?", "what could go
+  wrong?", "what did we skip?". It finds holes, not solutions.
+
+The user is always the decision-maker. The goal is a system that
+naturally catches its own mistakes and compounds its own lessons, without
+requiring the user to remember to ask.
+
 ## Things to be careful about
 
 - p5.js sketches must be client-rendered — the `<Sketch>` component uses
