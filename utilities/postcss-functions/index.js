@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-const getValue = require('get-value');
 
 const tokenReferenceObject = require('./token-reference-object.json');
 const tokenReferences = require('./token-reference.json');
@@ -48,7 +47,7 @@ function convertTokensToMap(keyPath) {
   const referenceKey = getTokenKey(keyPath);
 
   // get the group of tokens for the given keyPath
-  const tokenGroup = getValue(tokenReferenceObject, referenceKey);
+  const tokenGroup = referenceKey.split('.').reduce((obj, key) => obj[key], tokenReferenceObject);
 
   // get the values of the tokens
   const keys = Object.keys(tokenGroup);
