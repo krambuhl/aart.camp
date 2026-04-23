@@ -45,6 +45,25 @@ Invoke `/project-autoload <slug>`. Take in the briefing. This tells you:
 - Suggested next action
 - Open threads from the last session handoff
 
+### 1.5. Load learnings
+
+Invoke `/learnings-use` via the Skill tool (no arguments). This reads
+`learnings/rollup.md` and installs the session-long citation contract
+(the session appends `Applied: L-NNN` when a learning actually shaped a
+response). Do this once per `/ev-run` invocation — the rollup is
+session-scoped, not per-dispatch.
+
+Handle the three outcomes the skill can return:
+- **Loaded N learnings** — note it in the dispatch report.
+- **Rollup empty** — note "no rollup entries" in the dispatch report
+  and proceed.
+- **Rollup missing** — note "no rollup yet — `/learnings-compact` has
+  not run" and proceed. Do not stop.
+
+Do not read `learnings/session-notes/` or `learnings/nightly/` from the
+router — the tier separation is a hard rule of the learnings system,
+and the substrate must respect it.
+
 ### 2. Handle explicit redirects
 
 If the user provided a message, parse its intent:
@@ -89,8 +108,14 @@ One paragraph in this shape:
 
 ```
 Dispatching <slug> → phase <N> "<phase-title>" via <loop-name>.
-<Dependency-check sentence.> <Caveats or "No caveats.">
+<Dependency-check sentence.> <Learnings-loaded sentence.>
+<Caveats or "No caveats.">
 ```
+
+The learnings-loaded sentence is one of:
+- `Loaded N learnings from rollup.md (citation contract active).`
+- `No rollup yet — proceeding without citation contract.`
+- `Rollup empty — proceeding without citation contract.`
 
 Then dispatch. Don't ask for permission unless a redirect or drift
 warrants it. Example dispatch:

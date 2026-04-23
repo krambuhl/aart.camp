@@ -32,7 +32,8 @@ event.
    if no prior one exists, use the whole event log.
 3. **Read the checkins touched this session.** The manifest events
    `checkin-created` give you their paths. Read each to get scope and
-   verdict.
+   verdict. While reading, also collect **learning-capture candidates**
+   per § Learning capture candidates below.
 4. **Determine the filename.** Today's date is available via
    `date '+%Y-%m-%d'`. Start at letter `a`. If
    `sessions/YYYY-MM-DD-a.md` already exists, try `b`, then `c`, etc. If
@@ -43,11 +44,17 @@ event.
    Don't repeat the event log; synthesize. Capture things a human or a
    future Claude would actually want on a cold read: what was tried and
    rejected, what's fragile, what's blocking, what deserves a second
-   look.
+   look. Populate **Learning capture candidates** only if the scan in
+   step 3 found any.
 6. **Write the file.** Do not commit.
 7. **Invoke `/project-autosave`** via the Skill tool —
    `skill: project-autosave`, `args: "<slug> --event=session-saved
    --detail=<filename>"` — to log the event.
+8. **If any learning candidates were surfaced**, end the report with a
+   nudge: `candidates for /learnings-capture: N — see "Learning capture
+   candidates" in the handoff`. Do **not** invoke `/learnings-capture`
+   yourself — the capture gate ("would a reasonable Claude have gotten
+   this wrong by default?") is a judgment the user has to make.
 
 ## Report
 
@@ -75,9 +82,45 @@ open-threads: <comma-separated, or "none">
 - <thread the next session should pick up>
 - <known risk or unresolved question>
 
+## Learning capture candidates
+<Omit this section entirely if no candidates surfaced.>
+- **<short slug>** — <one-line description of what was corrected>.
+  Suggested `/learnings-capture` slug: `<kebab-case>`.
+
 ## Notes
 <anything not captured elsewhere — one-off observations, references, etc.>
 ```
+
+## Learning capture candidates
+
+When reading checkins and events in step 3, watch for signals that the
+session contains a correction a future Claude should learn from. Likely
+signals:
+
+- Evaluator flags tagged `rules-violation`, `scope-creep`,
+  `contract-ask-drift`, or `contract-inadequate` that the unit then
+  resolved — the *cause* of the flag is candidate material.
+- "Notes for the PR" sections in checkins that say "user redirected"
+  or "corrected approach" or otherwise name a user course-correction.
+- Events where a unit went through ≥ 2 evaluator iterations — often a
+  sign the generator's default was off.
+- The user explicitly said "next time" or "in future" while directing
+  mid-session.
+
+Apply the **capture gate** before listing a candidate, same as
+`/learnings-capture`:
+
+> Would a reasonable Claude have gotten this wrong by default? Is the
+> correction non-obvious, and does it contradict something Claude
+> would say by default?
+
+If yes, list the candidate in the handoff's "Learning capture
+candidates" section with a 3–5 word slug proposal. If no, omit. Signal
+over volume — a shallow candidate pollutes the corpus.
+
+The handoff surfaces candidates; the user decides whether to run
+`/learnings-capture`. Never write to `learnings/session-notes/` from
+this skill.
 
 ## Quality bar
 

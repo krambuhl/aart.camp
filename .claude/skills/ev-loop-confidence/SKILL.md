@@ -269,6 +269,13 @@ loop:
 - **Evaluator always runs.** No exceptions. Never self-approve.
 - **Scope discipline.** Fixes outside this phase's pattern get noted in
   "Notes for the PR" and are deferred — not absorbed silently.
+- **Record corrections in the checkin.** If the user redirects a unit
+  mid-flight, overrides a decision, or the evaluator flags something
+  the generator defaulted to incorrectly, note it verbatim in the
+  checkin's "Notes for the PR" section with a `correction:` prefix.
+  `/project-save-session` scans for these when deciding whether to
+  surface a `/learnings-capture` candidate. The loop itself never
+  writes to `learnings/` — capture is user-gated.
 - **No emojis.**
 
 ## Failure modes

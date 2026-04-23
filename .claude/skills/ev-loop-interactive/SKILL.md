@@ -129,6 +129,13 @@ For "address feedback on #N":
   self-approve. Evaluator budget is 3 runs per unit (initial + 2
   retries); on the third flag escalate to the user.
 - **Scope discipline.** One deliverable at a time in a given checkin.
+- **Record corrections in the checkin.** If the user redirects a unit
+  mid-flight, overrides a decision, or the evaluator flags something
+  the generator defaulted to incorrectly, note it verbatim in the
+  checkin's "Notes for the PR" section with a `correction:` prefix.
+  `/project-save-session` scans for these when deciding whether to
+  surface a `/learnings-capture` candidate. The loop itself never
+  writes to `learnings/` — capture is user-gated.
 - **No emojis.**
 
 ## Failure modes

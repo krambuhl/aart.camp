@@ -141,6 +141,9 @@ zero-padded: `01.md`, `02.md`, … `99.md`.
 
 ## Notes for the PR
 <anything worth surfacing in the PR body>
+<Prefix any line that records a mid-flight correction with `correction: ` —
+`/project-save-session` scans for these when surfacing
+`/learnings-capture` candidates.>
 ```
 
 Checkins are **immutable**. New information produces a new numbered file.
