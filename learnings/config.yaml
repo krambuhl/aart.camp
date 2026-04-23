@@ -1,0 +1,101 @@
+# Single source of truth for learnings system thresholds, tiers, and model IDs.
+# Edit here, not in scripts. Scripts read this at startup.
+
+# ─── Judge panel ────────────────────────────────────────────────────────────
+# Seven stateless Claude calls per panel round. "weight" is used only for the
+# tier-weighted tiebreak when an even split occurs. Every judge counts as one
+# vote toward the consensus threshold otherwise.
+judges:
+  - id: opus-4.7-A
+    model: claude-opus-4-7
+    tier: top-current
+    weight: 2
+  - id: opus-4.7-B
+    model: claude-opus-4-7
+    tier: top-current
+    weight: 2
+  - id: opus-4.6
+    model: claude-opus-4-6    # TODO: confirm exact previous-gen Opus id before first real run
+    tier: top-previous
+    weight: 1
+  - id: sonnet-4.6
+    model: claude-sonnet-4-6
+    tier: mid-current
+    weight: 1
+  - id: sonnet-4.5
+    model: claude-sonnet-4-5  # TODO: confirm exact previous-gen Sonnet id
+    tier: mid-previous
+    weight: 1
+  - id: haiku-4.5
+    model: claude-haiku-4-5-20251001
+    tier: fast-current
+    weight: 1
+  - id: haiku-prev
+    model: claude-haiku-4-0   # TODO: confirm exact previous-gen Haiku id
+    tier: fast-previous
+    weight: 1
+
+# ─── Agents ─────────────────────────────────────────────────────────────────
+agents:
+  rubric_author:
+    model: claude-opus-4-7
+    max_tokens: 2000
+  rewriter:
+    model: claude-opus-4-7
+    max_tokens: 2000
+  mediator:
+    # Mediator is a pure router — no content evaluation, no LLM call for the
+    # routing itself. Debate-round summarization uses this model.
+    model: claude-sonnet-4-6
+    max_tokens: 1500
+  operator:
+    model: claude-opus-4-7
+    max_tokens: 2000
+
+# ─── Test subject ───────────────────────────────────────────────────────────
+# Model used to generate control (no rollup) and treatment (with candidate
+# learning injected) outputs that the judge panel compares. Pick the model
+# that best represents "the Claude your users actually use."
+test_subject:
+  model: claude-opus-4-7
+  max_tokens: 3000
+
+# ─── Consensus thresholds ───────────────────────────────────────────────────
+consensus:
+  round_1_blind: 7        # 7/7 required
+  round_2_debate: 6       # 6/7 required
+  round_3_final: 5        # 5/7 required; below → operator
+
+# ─── Rewrite loop ───────────────────────────────────────────────────────────
+rewrite:
+  max_attempts: 5
+
+# ─── Kill-switch / alert thresholds (info-only, not enforced in code) ───────
+alerts:
+  did_not_reproduce_rate_max: 0.30   # >30% means benchmark is theatre
+  operator_interventions_per_run_max: 3
+
+# ─── Execution knobs ────────────────────────────────────────────────────────
+execution:
+  # Concurrency for judge calls within a single panel round.
+  judge_parallelism: 7
+  # Timeout for a single judge call, ms.
+  judge_timeout_ms: 120000
+  # Timeout for agent calls (rubric-author, rewriter, operator), ms.
+  agent_timeout_ms: 180000
+
+# ─── Paths (relative to repo root) ──────────────────────────────────────────
+paths:
+  root: learnings
+  session_notes: learnings/session-notes
+  archived: learnings/session-notes/archived
+  nightly: learnings/nightly
+  runs: learnings/runs
+  rollup: learnings/rollup.md
+  citations: learnings/citations.json
+  regressions: learnings/regressions.jsonl
+  bench_history: learnings/bench-history.jsonl
+  sessions: learnings/sessions.jsonl
+  operator_log: learnings/operator-log.jsonl
+  judge_calibration: learnings/judge-calibration.json
+  pr_templates: learnings/pr-templates
