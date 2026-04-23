@@ -273,9 +273,10 @@ loop:
   mid-flight, overrides a decision, or the evaluator flags something
   the generator defaulted to incorrectly, note it verbatim in the
   checkin's "Notes for the PR" section with a `correction:` prefix.
-  `/project-save-session` scans for these when deciding whether to
-  surface a `/learnings-capture` candidate. The loop itself never
-  writes to `learnings/` — capture is user-gated.
+  `/project-save-session` captures every such line to
+  `learnings/session-notes/` via `/learnings-capture --from-checkin`
+  at end of session; `/learnings-compact` decides which get promoted.
+  The loop itself never writes to `learnings/`.
 - **No emojis.**
 
 ## Failure modes
