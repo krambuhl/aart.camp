@@ -40,3 +40,15 @@ yarn-error.log*
 ## Panda
 styled-system
 styled-system-studio
+
+# learnings system — runtime data only; skills, config, README, pr-templates are tracked
+learnings/session-notes/
+learnings/nightly/
+learnings/runs/
+learnings/rollup.md
+learnings/citations.json
+learnings/regressions.jsonl
+learnings/bench-history.jsonl
+learnings/sessions.jsonl
+learnings/operator-log.jsonl
+learnings/judge-calibration.json
