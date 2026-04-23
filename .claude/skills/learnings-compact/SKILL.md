@@ -8,6 +8,8 @@ description: >-
   DID_NOT_REPRODUCE, regressions tests the full rollup, appends bench
   history, and opens a PR.
 user-invocable: true
+disable-model-invocation: true
+allowed-tools: Bash, Read
 ---
 
 # Learnings Compact
@@ -29,8 +31,12 @@ regression suite.
 ### 1. Pre-flight
 
 ```bash
-echo "unprocessed session-notes:"
-ls learnings/session-notes 2>/dev/null | grep -v '^archived$' || echo "(none)"
+if [ ! -d learnings/session-notes ]; then
+  echo "no session-notes dir yet — nothing to compact"
+else
+  echo "unprocessed session-notes:"
+  ls learnings/session-notes | grep -v '^archived$' || echo "(none)"
+fi
 ```
 
 If there are none AND the rollup is empty, there's nothing to compact or

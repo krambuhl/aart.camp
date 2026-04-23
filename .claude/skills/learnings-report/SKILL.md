@@ -5,6 +5,8 @@ description: >-
   instrumentation files. Use ONLY when explicitly invoked via
   /learnings-report. Read-only — does not modify any state.
 user-invocable: true
+disable-model-invocation: true
+allowed-tools: Bash, Read
 ---
 
 # Learnings Report
@@ -27,6 +29,9 @@ Produce a one-pager from:
    they need to enable to populate it (Stop hook for citations and
    sessions; `/learnings-compact` for bench-history, operator-log, and
    calibration).
+4. If the script errors (non-zero exit, malformed JSONL), surface the
+   error and stop. Do not attempt to reconstruct the report from raw
+   files — the script is the source of truth for the report format.
 
 ## What the report covers
 

@@ -5,6 +5,8 @@ description: >-
   Use ONLY when explicitly invoked via /learnings-use. Never auto-invoke.
   Do not load session-notes/ or nightly/ — only rollup.md.
 user-invocable: true
+disable-model-invocation: true
+allowed-tools: Read
 ---
 
 # Learnings Use

@@ -6,6 +6,8 @@ description: >-
   LLM panel at capture time. Gate: "did something happen here a reasonable
   Claude would have gotten wrong by default?"
 user-invocable: true
+disable-model-invocation: true
+allowed-tools: Bash, Read, Write
 ---
 
 # Learnings Capture
@@ -46,8 +48,10 @@ Signal-over-volume. A shallow capture pollutes the corpus.
 
 Create the folder:
 
-```
-learnings/session-notes/<YYYY-MM-DDThh-mm-ss>-<slug>/
+```bash
+ts=$(date -u +"%Y-%m-%dT%H-%M-%S")
+slug="spacerwithcss-migration"   # fill in: 3-5 word kebab-case summary
+mkdir -p "learnings/session-notes/${ts}-${slug}"
 ```
 
 - `<ts>` — UTC ISO-ish with colons replaced by dashes, e.g.,
@@ -127,6 +131,9 @@ Run /learnings-compact when you want to process pending captures.
 ```
 
 Then stop. Do not continue to other work unless asked.
+
+**Done when:** the five files exist in the new folder and the user has been
+told where. Do not also write `rubric.md`.
 
 ## Notes
 
