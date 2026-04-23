@@ -15,7 +15,7 @@ allowed-tools: Read, Write, Bash, Skill
 Birth a new project. Interview → PLAN.md → config.md → scaffold directory
 → init manifest. Stop there. Execution happens in a separate loop.
 
-**Format reference**: `./projects/CONVENTIONS.md`.
+**Format reference**: `projects/CONVENTIONS.md` (repo-relative).
 
 ## Process
 
@@ -48,9 +48,14 @@ Don't pad. If the user answers tersely, the plan should be terse.
 
 ### 3. Propose the slug
 
-Generate a kebab-case slug from the topic. Confirm with the user. The
-full directory name will be `<YYYY-MM-DD>-<slug>` where the date is
-today. Get today's date via `date '+%Y-%m-%d'`.
+Generate a kebab-case slug from the topic. If `$ARGUMENTS` was a long
+phrase, derive the slug from the 2–4 most salient nouns — not the whole
+string. Before confirming with the user, run `ls projects/` and check
+for existing directories ending in `-<slug>`; if any match, surface them
+(they may be the same project, a branched variant, or a name collision)
+and ask the user how to proceed. The full directory name will be
+`<YYYY-MM-DD>-<slug>` where the date is today. Get today's date via
+`date '+%Y-%m-%d'`.
 
 ### 4. Draft PLAN.md
 
@@ -105,15 +110,25 @@ Ask for, in one batch:
 3. Write `PLAN.md`.
 4. Write `config.md` from the values collected, plus a
    `## Worker bindings` section noting the preferred loop.
-5. Invoke `/project-autosave` with `--init` and the `--detail` JSON
-   describing title, slug, start date, one-line strategy summary, and
-   phases (with dependencies). The `--init` path creates
-   `sessions/`, `checkins/`, and the first `MANIFEST.md`.
+5. Invoke the `project-autosave` skill via the Skill tool:
+   - `skill`: `project-autosave`
+   - `args`: `<slug> --init --detail='{...}'` where the JSON carries
+     `title`, `slug`, `started`, `strategy`, `phases[]`.
+   The `--init` path creates `sessions/`, `checkins/`, and the first
+   `MANIFEST.md`.
 
 ### 7. Report
 
-Tell the user what was created, where it lives, and what to run next —
-typically `/ev-run <slug>` to begin the first phase.
+Tell the user what was created, where it lives, and what to run next in
+this shape:
+
+```
+Created project: <title>
+Location: ./projects/<date>-<slug>/
+Files: PLAN.md, config.md, MANIFEST.md, sessions/, checkins/
+Loop: <confidence|interactive>
+Next: /ev-run <slug>
+```
 
 ## Rules
 

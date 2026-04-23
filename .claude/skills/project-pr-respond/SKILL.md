@@ -7,7 +7,7 @@ description: >-
   PR.
 argument-hint: "<project-slug-or-path> <pr-number>"
 disable-model-invocation: true
-allowed-tools: Read, Write, Bash, Skill, mcp__github__pull_request_read, mcp__github__list_pull_requests
+allowed-tools: Read, Write, Glob, Bash(ls:*), Bash(git branch:*), mcp__github__pull_request_read, mcp__github__list_pull_requests
 ---
 
 # /project-pr-respond
@@ -25,15 +25,20 @@ modify code or reply; its output is consumed by the originating loop.
 
 ### 1. Fetch
 
-- Resolve the project directory.
-- Use `mcp__github__pull_request_read` (with `method: getComments`,
-  `getReviews`, and `getReviewComments` as needed) to pull:
+- Resolve the project directory from `$1`:
+  - If `$1` is a path, use it directly.
+  - Otherwise treat as a slug under `projects/<slug>/`.
+  - Confirm `projects/<slug>/checkins/` exists; if not, stop and report.
+- Fetch PR metadata for `$2` via `mcp__github__pull_request_read`
+  (with method variants for `getComments`, `getReviews`,
+  `getReviewComments` as needed):
   - Issue comments on the PR conversation
   - Review summaries (approved, changes requested, comment-only)
   - Inline review comments on code
   - CI check status (if available)
-- Record the PR's branch name and map it to the project via the
-  checkins directory.
+- Record the PR's branch name. Verify
+  `projects/<slug>/checkins/<branch>/` exists — if not, the PR belongs
+  to a different project; stop and report.
 
 ### 2. Classify each item
 
@@ -47,6 +52,7 @@ Use this taxonomy:
 | **Nit** | Style or micro-polish | Apply if trivial; otherwise batch and decline politely |
 | **Praise / ack** | Positive, informational | No action |
 | **Off-topic** | Not about this PR's scope | Park for follow-up project or defer |
+| **CI failure** | A required check is failing | Treat as Blocker; one item per failing check |
 
 When the same issue is raised by multiple reviewers, collapse to one row
 and note the multiplicity.
@@ -54,10 +60,13 @@ and note the multiplicity.
 ### 3. Produce the response plan
 
 Write the plan to
-`./projects/<slug>/checkins/<branch>/response-<NN>.md` where `NN` is the
-next checkin number for this branch. This is a **plan**, not a checkin —
-when the loop executes the plan and finishes a unit of work, it writes
-a fresh checkin at the same NN (`<NN>.md`) with the usual contract.
+`projects/<slug>/checkins/<branch>/response-<NN>.md` where `NN` is
+two-digit zero-padded, computed as
+`max(existing NN in checkins/<branch>/) + 1` considering both `<NN>.md`
+and `response-<NN>.md` files. This is a **plan**, not a checkin — when
+the loop executes the plan and finishes a unit of work, it writes a
+fresh checkin at the same `<NN>.md` with the usual contract. The paired
+`response-<NN>.md` and later `<NN>.md` intentionally share the number.
 
 Structure:
 
@@ -100,3 +109,5 @@ originating loop is responsible for picking it up.
   and recommend no action.
 - CI is red with no human comments → create a Blocker item for each
   failing check.
+- MCP fetch error or partial result → stop, report which endpoints
+  failed, do not write a partial plan.

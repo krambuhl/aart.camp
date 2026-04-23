@@ -21,7 +21,12 @@ order when ordering is free; the loop keeps the substrate honest.
 **Composes**: `/project-autosave`, `/project-pull-request`, evaluator.
 **Does not compose**: other loops.
 
-**Format reference**: `./projects/CONVENTIONS.md`.
+**Format reference**: `projects/CONVENTIONS.md` (repo-relative).
+
+Invocations like `/project-autosave` and `/project-pull-request` below
+mean `Skill(skill: project-autosave, args: "…")` — the Skill tool is
+how branded loops compose substrate skills. The `evaluator` subagent
+is spawned via the Agent tool with `subagent_type: evaluator`.
 
 ## Arguments
 
@@ -66,10 +71,15 @@ For each deliverable (picked per the ordering rule):
 2. **Execute.** Do the work. For creative or exploratory deliverables,
    pair with the user — ask when you hit a fork, report when you hit a
    dead end, don't charge ahead.
-3. **Evaluate.** Spawn the `evaluator` subagent with the packet
-   (Contract, artifact, original ask from PLAN.md).
+3. **Evaluate.** Spawn the `evaluator` subagent via the Agent tool with
+   `subagent_type: evaluator`. The prompt is the packet: the Contract
+   section verbatim, the artifact (files changed + Execution section),
+   and the original ask (the deliverable's line from PLAN.md). Expect
+   a reply that begins `VERDICT: approved` or `VERDICT: flagged` with
+   specific reasons (see `.claude/agents/evaluator.md` for the shape).
 4. **Iterate or commit.**
-   - Flagged: address the specific reasons, re-spawn. Max 2 retries.
+   - Flagged: address the specific reasons, re-spawn. Up to 2 retries
+     (3 evaluator runs total).
    - Approved: finalize the checkin.
 5. **Autosave.** `/project-autosave ... --event=checkin-created`.
 6. **Checkpoint.** Free mode: after every deliverable. Sequential mode:
@@ -84,7 +94,24 @@ For each deliverable (picked per the ordering rule):
 - `/project-autosave --event=phase-completed --detail=<N>
   --phase-update=<N>:completed`.
 
+## Output format
+
+After each checkpoint and at phase close, report:
+
+```
+Phase <N> — <title>
+Deliverables: <done>/<total>  (list with status)
+Last checkin: <path>
+PR: <url or "not yet opened">
+Next: <deliverable name, or "phase complete">
+```
+
 ## Message-driven redirects
+
+Trigger: if the caller's message (from the router) contains a pattern
+like `address feedback on #<pr>` while this loop is active on that PR's
+branch, branch into the flow below instead of continuing the normal
+unit loop.
 
 For "address feedback on #N":
 1. `/project-pr-respond <slug> <pr>` → plan.
@@ -94,12 +121,13 @@ For "address feedback on #N":
 ## Rules
 
 - **The human co-pilots.** Don't write long stretches without pausing.
-  If a unit would take more than ~30 minutes of uninterrupted work,
-  split it.
+  If a unit spans more than ~3 files or ~200 lines of new/changed code
+  without a natural pause, split it.
 - **Contract before execution.** Always. Even if the deliverable feels
   small.
 - **Evaluator always runs.** Same as the confidence loop — never
-  self-approve.
+  self-approve. Evaluator budget is 3 runs per unit (initial + 2
+  retries); on the third flag escalate to the user.
 - **Scope discipline.** One deliverable at a time in a given checkin.
 - **No emojis.**
 

@@ -7,7 +7,7 @@ description: >-
   existing project and establish shared context.
 argument-hint: "<project-slug-or-path>"
 disable-model-invocation: true
-allowed-tools: Read, Bash
+allowed-tools: Read, Bash(ls:*), Bash(git branch:*), Bash(git status:*)
 ---
 
 # /project-autoload
@@ -15,12 +15,14 @@ allowed-tools: Read, Bash
 Return an orientation briefing that lets the caller resume work without
 reading the full corpus. Read-only.
 
-**Format reference**: `./projects/CONVENTIONS.md`.
+**Format reference**: `projects/CONVENTIONS.md` (repo-relative).
 
 ## Process
 
-1. **Resolve the project directory** using the same rules as
-   `/project-autosave` (exact slug → suffix match → full path). If the
+1. **Resolve the project directory** from `$ARGUMENTS` using the same
+   rules as `/project-autosave` (exact slug → suffix match → full path).
+   If `$ARGUMENTS` is empty, list the active directories under
+   `projects/` (excluding `archive/`) and ask which to load. If the
    project is archived, say so and stop — archive reads go through
    `/project-archive` with a different intent.
 2. **Read `MANIFEST.md`.** If missing, report "no manifest found — project
@@ -60,6 +62,12 @@ reading the full corpus. Read-only.
 ### Config highlights
 - Verification: <copied commands>
 - PR base: <value>
+
+> Drift: manifest says <x>, git is on <y>. (Emit only when drift detected;
+> otherwise omit the drift line and the "Branch" arrow is self-evident.)
+
+Omit the `Last checkin` / `Last session` / `Config highlights` sections
+entirely when their source files are absent — do not emit empty headings.
 
 ### Suggested next action
 <one sentence — what the caller should do next, inferred from state>

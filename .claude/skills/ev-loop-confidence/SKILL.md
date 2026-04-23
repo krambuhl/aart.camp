@@ -22,13 +22,21 @@ unit and a tactical retro per tier.
 **Does not compose**: other loops. Peer loops are invoked by the router,
 not by each other.
 
-**Format reference**: `./projects/CONVENTIONS.md`.
+**Format reference**: `projects/CONVENTIONS.md` (repo-relative).
+
+Invocations like `/project-autosave` and `/project-pull-request` below
+mean `Skill(skill: project-autosave, args: "…")` — the Skill tool is
+how branded loops compose substrate skills. The `evaluator` subagent
+is spawned via the Agent tool with `subagent_type: evaluator`.
 
 ## Arguments
 
 - `<project-slug-or-path>` — resolved like `/project-autosave`.
 - `<phase-number>` — which phase of the project to run. Must exist in
   MANIFEST.md and not be in `completed` state.
+
+If `<phase-number>` is missing, already `completed`, or the slug does
+not resolve, stop and ask the user rather than guessing.
 
 ## Scope directory
 
@@ -182,13 +190,16 @@ For each unit inside a tier:
 5. **Autosave.** Invoke `/project-autosave` with
    `--event=checkin-created --detail="<NN> on <branch>"` and
    `--phase-update` reflecting the latest checkin and branch.
-6. **Checkpoint?** Call `should_checkpoint()` (see below). If true,
-   invoke `/project-pull-request <slug> <branch>` so the PR tracks the
-   latest state. Otherwise continue to the next unit.
+6. **Checkpoint?** Evaluate the should-checkpoint policy (below). If
+   any condition holds, invoke `/project-pull-request <slug> <branch>`
+   so the PR tracks the latest state. Otherwise continue to the next
+   unit.
 
 ### Should-checkpoint policy
 
-Checkpoint (push to PR) when any of:
+Checkpoint (invoke `/project-pull-request`) when any of the following
+hold. All are read off state — there is no callable function.
+
 - A full tier has just finished.
 - The number of units since last PR update ≥ 5.
 - Verification is currently green and we're about to start a riskier

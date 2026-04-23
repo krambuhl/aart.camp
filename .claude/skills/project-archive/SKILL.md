@@ -8,14 +8,26 @@ description: >-
   and the user is ready to put the project to bed.
 argument-hint: "<project-slug-or-path>"
 disable-model-invocation: true
-allowed-tools: Read, Write, Edit, Bash, Skill
+allowed-tools: Read, Write, Edit, Bash(git mv:*), Bash(git status:*), Bash(git log:*), Bash(git branch:*), Bash(ls:*), Skill
 ---
 
 # /project-archive
 
 Death ritual for a project. Retrospective + dispositions + relocation.
 
-**Format reference**: `./projects/CONVENTIONS.md`.
+**Format reference**: `projects/CONVENTIONS.md` (repo-relative).
+
+Invocations like `/project-autosave` and `/project-pull-request` below
+mean `Skill(skill: project-autosave, args: "…")` — the Skill tool is
+how substrate skills compose.
+
+## Resolve the target
+
+`$ARGUMENTS` is a project slug (e.g. `adopt-biome`) or a full path
+(e.g. `projects/2026-04-23-adopt-biome/`). Resolve it to the project
+directory before step 1. If `$ARGUMENTS` is empty, ask the user which
+project to archive and list candidates under `projects/` excluding
+`archive/`.
 
 ## Preconditions
 
@@ -155,6 +167,18 @@ After the archive PR is created:
   (`/project-plan` or a plain PR) — do not auto-dispatch.
 - For each New project, invoke `/project-plan <topic>` so the user can
   run its interview now.
+
+## Completion report
+
+After step 8, post a final summary:
+
+```
+Archived: <title> → projects/archive/<date>-<slug>/
+PR: <url>
+Inline applied: <count>
+Follow-ups to dispatch: <list with suggested commands, or "none">
+New projects to birth: <list, or "none">
+```
 
 ## Rules
 

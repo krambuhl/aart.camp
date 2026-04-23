@@ -6,7 +6,7 @@ description: >-
   narrative — appends one event row and refreshes the summary sections.
   Use when the caller needs ground-truth state persisted to disk in the
   project substrate format.
-argument-hint: "<project-slug-or-path> [--init] [--event=<name>] [--detail=<text>]"
+argument-hint: "<project-slug-or-path> [--init] [--event=<name>] [--detail=<text>] [--current-state=<text>] [--phase-update=<n>:<status>[:<k=v>]*]"
 disable-model-invocation: true
 allowed-tools: Read, Edit, Write, Bash
 ---
@@ -17,9 +17,9 @@ Write a single structured update to a project's `MANIFEST.md`. This is the
 substrate primitive for persisting state. Loops call it after every unit;
 the router calls it at phase boundaries; PR skills call it on PR events.
 
-**Format reference**: `./projects/CONVENTIONS.md`. Read it if you are
-unfamiliar with the manifest shape or event vocabulary. Do not invent fields
-or event names.
+**Format reference**: `projects/CONVENTIONS.md` (repo-relative). Read it if
+you are unfamiliar with the manifest shape or event vocabulary. Do not
+invent fields or event names.
 
 ## Arguments
 
@@ -119,6 +119,15 @@ Session handoff written by `/project-save-session`:
 ```
 /project-autosave adopt-biome --event=session-saved --detail="2026-04-23-a"
 ```
+
+## Output
+
+On success, print a single line:
+`autosave: <slug> <event> @ <timestamp>`
+
+On failure, print:
+`autosave-error: <reason>[; candidates: <a>, <b>]`
+and stop without writing.
 
 ## Failure modes
 

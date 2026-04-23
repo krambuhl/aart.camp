@@ -17,11 +17,16 @@ Author one narrative handoff file per work session. Unlike autosave
 of the session that don't fit in the event table: reasoning that moved,
 trade-offs considered, what's brittle, what to watch for next time.
 
-**Format reference**: `./projects/CONVENTIONS.md` (§ Session handoff format).
+**Format reference**: `projects/CONVENTIONS.md` (§ Session handoff format,
+repo-relative). Pairs with `/project-autosave`, which records the emitted
+event.
 
 ## Process
 
-1. **Resolve the project directory** (same rules as `/project-autosave`).
+1. **Resolve the project directory.** `$ARGUMENTS` is the project slug or
+   path (resolution rules as in `/project-autoload`). If omitted, resolve
+   from the current working directory; if resolution fails, surface the
+   error and stop.
 2. **Read the manifest** to get the list of events emitted during this
    session. A session is "events since the last `session-saved` event" —
    if no prior one exists, use the whole event log.
@@ -30,7 +35,9 @@ trade-offs considered, what's brittle, what to watch for next time.
    verdict.
 4. **Determine the filename.** Today's date is available via
    `date '+%Y-%m-%d'`. Start at letter `a`. If
-   `sessions/YYYY-MM-DD-a.md` already exists, try `b`, then `c`, etc.
+   `sessions/YYYY-MM-DD-a.md` already exists, try `b`, then `c`, etc. If
+   `z` is already taken, stop and ask the user — that's a sign something
+   has gone wrong.
 5. **Draft the handoff** using the template below. Keep it tight —
    2–6 sentences for "What happened", a short list for "Open threads".
    Don't repeat the event log; synthesize. Capture things a human or a
@@ -38,8 +45,19 @@ trade-offs considered, what's brittle, what to watch for next time.
    rejected, what's fragile, what's blocking, what deserves a second
    look.
 6. **Write the file.** Do not commit.
-7. **Invoke `/project-autosave`** with `--event=session-saved
-   --detail=<filename>` to log the event.
+7. **Invoke `/project-autosave`** via the Skill tool —
+   `skill: project-autosave`, `args: "<slug> --event=session-saved
+   --detail=<filename>"` — to log the event.
+
+## Report
+
+After writing, respond with exactly three lines:
+
+```
+session: <path of handoff file>
+touched: phases=<list>, checkins=<NN list>, PR=<#N or none>
+open-threads: <comma-separated, or "none">
+```
 
 ## Template
 

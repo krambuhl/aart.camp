@@ -9,7 +9,7 @@ description: >-
   by hand.
 argument-hint: "<project-slug-or-path> [<free-form message>]"
 disable-model-invocation: true
-allowed-tools: Read, Bash, Skill
+allowed-tools: Read, Bash(git:*), Bash(ls:*), Skill
 ---
 
 # /ev-run
@@ -24,7 +24,17 @@ invokes the right loop. Owns no work of its own.
   (e.g. "address feedback on #14", "pause and save session", "start
   phase 3 even though phase 2 isn't merged yet").
 
+Invocations of `/project-*` skills and `/ev-loop-*` skills below mean
+`Skill(skill: <name>, args: "…")` — the Skill tool is how the router
+dispatches.
+
 ## Process
+
+### 0. Parse arguments
+
+Treat the first whitespace-delimited token of `$ARGUMENTS` as the
+project slug/path. Everything after it (if any) is the free-form
+message. If `$ARGUMENTS` is empty, stop and ask for a slug.
 
 ### 1. Orient
 
@@ -75,15 +85,20 @@ loop mid-phase, they stop the current one explicitly.
 
 ### 5. Report briefly before dispatching
 
-One-paragraph summary of what you're about to do:
-- Project and slug
-- Phase and chosen loop
-- Why this phase (dependency check outcome)
-- Any caveats (drift between manifest branch and git branch, open PR
-  with unread comments, etc.)
+One paragraph in this shape:
+
+```
+Dispatching <slug> → phase <N> "<phase-title>" via <loop-name>.
+<Dependency-check sentence.> <Caveats or "No caveats.">
+```
 
 Then dispatch. Don't ask for permission unless a redirect or drift
-warrants it.
+warrants it. Example dispatch:
+
+```
+Skill: ev-loop-confidence
+args: "<slug> <phase-number> [<redirect-message>]"
+```
 
 ## Rules
 
