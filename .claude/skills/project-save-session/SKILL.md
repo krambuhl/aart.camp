@@ -31,31 +31,38 @@ event.
    session. A session is "events since the last `session-saved` event" —
    if no prior one exists, use the whole event log.
 3. **Read the checkins touched this session.** The manifest events
-   `checkin-created` give you their paths. Read each to get scope and
-   verdict.
-4. **Determine the filename.** Today's date is available via
+   `checkin-created` give you their paths. Read each to get scope,
+   verdict, and any `correction:` lines in "Notes for the PR".
+4. **Capture corrections.** For each `correction:` line found in step
+   3, invoke `/learnings-capture` via the Skill tool with
+   `args: "--from-checkin=<checkin-path> --slug=<proposed-slug>"`.
+   Do this **before** writing the handoff so the handoff can report
+   actual counts. Don't apply a value gate here — the user marking a
+   line `correction:` is the gate, and `/learnings-compact` is the
+   value filter. Capture every correction.
+5. **Determine the filename.** Today's date is available via
    `date '+%Y-%m-%d'`. Start at letter `a`. If
    `sessions/YYYY-MM-DD-a.md` already exists, try `b`, then `c`, etc. If
    `z` is already taken, stop and ask the user — that's a sign something
    has gone wrong.
-5. **Draft the handoff** using the template below. Keep it tight —
+6. **Draft the handoff** using the template below. Keep it tight —
    2–6 sentences for "What happened", a short list for "Open threads".
-   Don't repeat the event log; synthesize. Capture things a human or a
-   future Claude would actually want on a cold read: what was tried and
-   rejected, what's fragile, what's blocking, what deserves a second
-   look.
-6. **Write the file.** Do not commit.
-7. **Invoke `/project-autosave`** via the Skill tool —
+   Don't repeat the event log; synthesize. If step 4 produced captures,
+   list the session-notes paths under **Learnings captured**; otherwise
+   omit that section.
+7. **Write the file.** Do not commit.
+8. **Invoke `/project-autosave`** via the Skill tool —
    `skill: project-autosave`, `args: "<slug> --event=session-saved
    --detail=<filename>"` — to log the event.
 
 ## Report
 
-After writing, respond with exactly three lines:
+After writing, respond with exactly four lines:
 
 ```
 session: <path of handoff file>
 touched: phases=<list>, checkins=<NN list>, PR=<#N or none>
+captured: <N learnings to session-notes/ — run /learnings-compact to process, or "none">
 open-threads: <comma-separated, or "none">
 ```
 
@@ -75,9 +82,40 @@ open-threads: <comma-separated, or "none">
 - <thread the next session should pick up>
 - <known risk or unresolved question>
 
+## Learnings captured
+<Omit this section entirely if step 4 captured nothing.>
+- `learnings/session-notes/<folder>/` — from `<checkin-path>`.
+
 ## Notes
 <anything not captured elsewhere — one-off observations, references, etc.>
 ```
+
+## Capturing corrections (step 4, in detail)
+
+In step 3, when you read each checkin, collect every line in
+`## Notes for the PR` that starts with `correction:`. Each such line
+is a capture.
+
+For each correction line:
+
+1. Derive a 3–5 word kebab-case slug from the correction text or the
+   checkin's Unit field.
+2. Invoke the `learnings-capture` skill via the Skill tool:
+   - `skill`: `learnings-capture`
+   - `args`: `--from-checkin=<checkin-path> --slug=<slug>`
+3. Capture returns a `captured: learnings/session-notes/<folder>/`
+   line. Collect those paths for the handoff's "Learnings captured"
+   section.
+
+**Do not apply a value gate.** The user marking a line `correction:`
+is the gate. `/learnings-compact` is the value filter — it runs the
+judge panel and decides which captures get promoted to `rollup.md`.
+Save-session's job is to not lose correction signal, not to decide
+what's worth keeping.
+
+If a checkin has multiple `correction:` lines, invoke capture once per
+line with distinct slugs (e.g. `unit-7-corr-a`, `unit-7-corr-b`).
+Multiple captures from the same checkin is fine.
 
 ## Quality bar
 
