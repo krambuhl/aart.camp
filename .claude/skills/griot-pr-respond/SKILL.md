@@ -1,5 +1,5 @@
 ---
-name: project-pr-respond
+name: griot-pr-respond
 description: >-
   Fetch PR comments and reviews, classify them, and produce a response plan
   that the originating loop can execute. Does not write code or reply on
@@ -10,14 +10,14 @@ disable-model-invocation: true
 allowed-tools: Read, Write, Glob, Bash(ls:*), Bash(git branch:*), mcp__github__pull_request_read, mcp__github__list_pull_requests
 ---
 
-# /project-pr-respond
+# /griot-pr-respond
 
 Turn a pile of PR feedback into a structured response plan. Does not
 modify code or reply; its output is consumed by the originating loop.
 
 ## Arguments
 
-- `<project-slug-or-path>` — resolved like `/project-autosave`.
+- `<project-slug-or-path>` — resolved like `/griot-autosave`.
 - `<pr-number>` — the PR to respond to. Must belong to the project
   (cross-check via branch → `checkins/<branch>` existence).
 

@@ -18,20 +18,20 @@ Execute one phase of a project as a confidence loop: tiered transforms,
 ratcheting from small/safe to large/risky, with an evaluator verdict per
 unit and a tactical retro per tier.
 
-**Composes**: `/project-autosave`, `/project-pull-request`, evaluator.
+**Composes**: `/griot-autosave`, `/griot-pull-request`, evaluator.
 **Does not compose**: other loops. Peer loops are invoked by the router,
 not by each other.
 
 **Format reference**: `projects/CONVENTIONS.md` (repo-relative).
 
-Invocations like `/project-autosave` and `/project-pull-request` below
-mean `Skill(skill: project-autosave, args: "…")` — the Skill tool is
+Invocations like `/griot-autosave` and `/griot-pull-request` below
+mean `Skill(skill: griot-autosave, args: "…")` — the Skill tool is
 how branded loops compose substrate skills. The `evaluator` subagent
 is spawned via the Agent tool with `subagent_type: evaluator`.
 
 ## Arguments
 
-- `<project-slug-or-path>` — resolved like `/project-autosave`.
+- `<project-slug-or-path>` — resolved like `/griot-autosave`.
 - `<phase-number>` — which phase of the project to run. Must exist in
   MANIFEST.md and not be in `completed` state.
 
@@ -55,7 +55,7 @@ Create this directory if it doesn't exist.
 ### Step 0. Pre-flight
 
 Before any work:
-- `/project-autoload <slug>` to refresh state.
+- `/griot-autoload <slug>` to refresh state.
 - Confirm working tree is clean (`git status --porcelain`). If not,
   stop and ask the user to commit or stash.
 - Confirm current branch matches the phase's branch in MANIFEST.md. If
@@ -115,9 +115,9 @@ When all tiers in this phase are complete:
 - Verify every inventory item is checked off.
 - Run full verification.
 - Ensure the latest checkin exists.
-- Invoke `/project-pull-request <slug> <branch>` so the PR reflects the
+- Invoke `/griot-pull-request <slug> <branch>` so the PR reflects the
   final state.
-- Invoke `/project-autosave` with `--event=phase-completed
+- Invoke `/griot-autosave` with `--event=phase-completed
   --detail=<N>` and `--phase-update=<N>:completed`.
 - Return control to the router.
 
@@ -187,17 +187,17 @@ For each unit inside a tier:
    - If approved: finalize the checkin (Execution, Scope, Changes,
      Evaluator verdict = approved, Notes for the PR). Check off the
      inventory items.
-5. **Autosave.** Invoke `/project-autosave` with
+5. **Autosave.** Invoke `/griot-autosave` with
    `--event=checkin-created --detail="<NN> on <branch>"` and
    `--phase-update` reflecting the latest checkin and branch.
 6. **Checkpoint?** Evaluate the should-checkpoint policy (below). If
-   any condition holds, invoke `/project-pull-request <slug> <branch>`
+   any condition holds, invoke `/griot-pull-request <slug> <branch>`
    so the PR tracks the latest state. Otherwise continue to the next
    unit.
 
 ### Should-checkpoint policy
 
-Checkpoint (invoke `/project-pull-request`) when any of the following
+Checkpoint (invoke `/griot-pull-request`) when any of the following
 hold. All are read off state — there is no callable function.
 
 - A full tier has just finished.
@@ -233,11 +233,11 @@ the next tier:
 - <one concrete change to batch size, tier assignment, or process>
 ```
 
-3. Invoke `/project-autosave` with `--event=retro-written
+3. Invoke `/griot-autosave` with `--event=retro-written
    --detail="tier-<N>"`.
 
 Tactical retros are short and specific. Strategic retrospection happens
-at `/project-archive`, not here.
+at `/griot-archive`, not here.
 
 ### Gate-and-ratchet
 
@@ -253,11 +253,11 @@ whether to resume, re-tier, or bail.
 
 If the router passes a message like "address feedback on #14", this
 loop:
-1. Invokes `/project-pr-respond <slug> <pr>` to get the response plan.
+1. Invokes `/griot-pr-respond <slug> <pr>` to get the response plan.
 2. Treats each Blocker item as a new unit in the current tier (or a new
    tier if the feedback rewrites scope).
 3. Iterates the unit loop. When done, re-invokes
-   `/project-pull-request` to update the PR.
+   `/griot-pull-request` to update the PR.
 
 ## Rules
 
@@ -273,7 +273,7 @@ loop:
   mid-flight, overrides a decision, or the evaluator flags something
   the generator defaulted to incorrectly, note it verbatim in the
   checkin's "Notes for the PR" section with a `correction:` prefix.
-  `/project-save-session` captures every such line to
+  `/griot-save-session` captures every such line to
   `learnings/session-notes/` via `/learnings-capture --from-checkin`
   at end of session; `/learnings-compact` decides which get promoted.
   The loop itself never writes to `learnings/`.
