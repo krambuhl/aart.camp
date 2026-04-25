@@ -1,5 +1,5 @@
 ---
-name: project-autoload
+name: griot-autoload
 description: >-
   Load a project's MANIFEST.md, config.md, and most recent session handoff,
   then return a compact orientation briefing. Called at session start and
@@ -10,7 +10,7 @@ disable-model-invocation: true
 allowed-tools: Read, Bash(ls:*), Bash(git branch:*), Bash(git status:*)
 ---
 
-# /project-autoload
+# /griot-autoload
 
 Return an orientation briefing that lets the caller resume work without
 reading the full corpus. Read-only.
@@ -20,11 +20,11 @@ reading the full corpus. Read-only.
 ## Process
 
 1. **Resolve the project directory** from `$ARGUMENTS` using the same
-   rules as `/project-autosave` (exact slug → suffix match → full path).
+   rules as `/griot-autosave` (exact slug → suffix match → full path).
    If `$ARGUMENTS` is empty, list the active directories under
    `projects/` (excluding `archive/`) and ask which to load. If the
    project is archived, say so and stop — archive reads go through
-   `/project-archive` with a different intent.
+   `/griot-archive` with a different intent.
 2. **Read `MANIFEST.md`.** If missing, report "no manifest found — project
    scaffolding may be incomplete" and stop.
 3. **Read `config.md`** if present.
@@ -75,13 +75,13 @@ entirely when their source files are absent — do not emit empty headings.
 
 ## Suggested next action logic
 
-- Phases all completed → suggest `/project-archive <slug>`.
+- Phases all completed → suggest `/griot-archive <slug>`.
 - A phase is `blocked` → name the blocker, suggest resolving it before
   resuming work.
 - A phase is `in-progress` with a fresh checkin and no open PR → suggest
-  `/project-pull-request <slug> <branch>`.
+  `/griot-pull-request <slug> <branch>`.
 - A phase is `in-progress` with open PR and new comments → suggest
-  `/project-pr-respond <slug> <pr>` (the router picks up on this signal).
+  `/griot-pr-respond <slug> <pr>` (the router picks up on this signal).
 - A phase is `not-started` and its dependencies are satisfied → suggest
   starting it via the branded loop named in `config.md`, or via
   `/ev-run <slug>`.
@@ -90,7 +90,7 @@ entirely when their source files are absent — do not emit empty headings.
 
 ## Failure modes
 
-- Project not found → list matching candidates or suggest `/project-plan`.
+- Project not found → list matching candidates or suggest `/griot-plan`.
 - Archive path → print "archived project — read RETROSPECTIVE.md directly"
   and stop.
 - Manifest malformed → print the section that failed to parse and

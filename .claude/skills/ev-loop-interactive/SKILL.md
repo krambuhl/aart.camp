@@ -18,19 +18,19 @@ Execute one phase of a project as a human-paired loop: discrete
 deliverables, per-deliverable contract and checkpoint. The human drives
 order when ordering is free; the loop keeps the substrate honest.
 
-**Composes**: `/project-autosave`, `/project-pull-request`, evaluator.
+**Composes**: `/griot-autosave`, `/griot-pull-request`, evaluator.
 **Does not compose**: other loops.
 
 **Format reference**: `projects/CONVENTIONS.md` (repo-relative).
 
-Invocations like `/project-autosave` and `/project-pull-request` below
-mean `Skill(skill: project-autosave, args: "…")` — the Skill tool is
+Invocations like `/griot-autosave` and `/griot-pull-request` below
+mean `Skill(skill: griot-autosave, args: "…")` — the Skill tool is
 how branded loops compose substrate skills. The `evaluator` subagent
 is spawned via the Agent tool with `subagent_type: evaluator`.
 
 ## Arguments
 
-- `<project-slug-or-path>` — resolved like `/project-autosave`.
+- `<project-slug-or-path>` — resolved like `/griot-autosave`.
 - `<phase-number>` — which phase to run. Must not be in `completed`
   state.
 
@@ -49,7 +49,7 @@ If PLAN.md doesn't specify, default to **free** and ask.
 
 ### Step 0. Pre-flight
 
-- `/project-autoload <slug>` to refresh state.
+- `/griot-autoload <slug>` to refresh state.
 - Working tree clean, branch matches MANIFEST, verification baseline.
 
 ### Step 1. Enumerate deliverables
@@ -81,17 +81,17 @@ For each deliverable (picked per the ordering rule):
    - Flagged: address the specific reasons, re-spawn. Up to 2 retries
      (3 evaluator runs total).
    - Approved: finalize the checkin.
-5. **Autosave.** `/project-autosave ... --event=checkin-created`.
+5. **Autosave.** `/griot-autosave ... --event=checkin-created`.
 6. **Checkpoint.** Free mode: after every deliverable. Sequential mode:
    after every deliverable **or** when the human explicitly asks.
-   Invoke `/project-pull-request <slug> <branch>`.
+   Invoke `/griot-pull-request <slug> <branch>`.
 
 ### Step 3. Phase close
 
 - All deliverables accounted for.
 - Full verification passes.
-- `/project-pull-request` is fresh.
-- `/project-autosave --event=phase-completed --detail=<N>
+- `/griot-pull-request` is fresh.
+- `/griot-autosave --event=phase-completed --detail=<N>
   --phase-update=<N>:completed`.
 
 ## Output format
@@ -114,7 +114,7 @@ branch, branch into the flow below instead of continuing the normal
 unit loop.
 
 For "address feedback on #N":
-1. `/project-pr-respond <slug> <pr>` → plan.
+1. `/griot-pr-respond <slug> <pr>` → plan.
 2. Each Blocker becomes a new unit.
 3. Run the unit loop. Re-checkpoint when done.
 
@@ -133,7 +133,7 @@ For "address feedback on #N":
   mid-flight, overrides a decision, or the evaluator flags something
   the generator defaulted to incorrectly, note it verbatim in the
   checkin's "Notes for the PR" section with a `correction:` prefix.
-  `/project-save-session` captures every such line to
+  `/griot-save-session` captures every such line to
   `learnings/session-notes/` via `/learnings-capture --from-checkin`
   at end of session; `/learnings-compact` decides which get promoted.
   The loop itself never writes to `learnings/`.

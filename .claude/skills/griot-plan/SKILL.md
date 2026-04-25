@@ -1,5 +1,5 @@
 ---
-name: project-plan
+name: griot-plan
 description: >-
   Interview the user about a new project, synthesize PLAN.md, collect config
   values, and scaffold ./projects/<date>-<slug>/. This is how a project is
@@ -10,7 +10,7 @@ disable-model-invocation: true
 allowed-tools: Read, Write, Bash, Skill
 ---
 
-# /project-plan
+# /griot-plan
 
 Birth a new project. Interview → PLAN.md → config.md → scaffold directory
 → init manifest. Stop there. Execution happens in a separate loop.
@@ -110,8 +110,8 @@ Ask for, in one batch:
 3. Write `PLAN.md`.
 4. Write `config.md` from the values collected, plus a
    `## Worker bindings` section noting the preferred loop.
-5. Invoke the `project-autosave` skill via the Skill tool:
-   - `skill`: `project-autosave`
+5. Invoke the `griot-autosave` skill via the Skill tool:
+   - `skill`: `griot-autosave`
    - `args`: `<slug> --init --detail='{...}'` where the JSON carries
      `title`, `slug`, `started`, `strategy`, `phases[]`.
    The `--init` path creates `sessions/`, `checkins/`, and the first
@@ -132,7 +132,7 @@ Next: /ev-run <slug>
 
 ## Rules
 
-- **Do not start execution.** `/project-plan` stops at scaffold. Actual
+- **Do not start execution.** `/griot-plan` stops at scaffold. Actual
   work happens in a loop, invoked separately.
 - **Do not guess the loop strategy.** Ask.
 - **Do not write files until the plan is approved.** The interview can

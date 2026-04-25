@@ -11,8 +11,8 @@ read this file first.
 ./projects/
 ├── CONVENTIONS.md                      ← this file
 ├── <date>-<slug>/                      ← active projects (hot path)
-│   ├── PLAN.md                         ← authored by /project-plan
-│   ├── MANIFEST.md                     ← ground truth; maintained by /project-autosave
+│   ├── PLAN.md                         ← authored by /griot-plan
+│   ├── MANIFEST.md                     ← ground truth; maintained by /griot-autosave
 │   ├── config.md                       ← worker bindings, PR settings, verification cmds
 │   ├── sessions/
 │   │   └── YYYY-MM-DD-a.md             ← narrative handoffs; letter suffix if multiple per day
@@ -29,7 +29,7 @@ read this file first.
 └── archive/
     └── <date>-<slug>/                  ← closed projects (read-only)
         ├── [preserved files]
-        └── RETROSPECTIVE.md            ← written at /project-archive time
+        └── RETROSPECTIVE.md            ← written at /griot-archive time
 ```
 
 **Slug** — kebab-case project identifier. The full directory name is
@@ -142,7 +142,7 @@ zero-padded: `01.md`, `02.md`, … `99.md`.
 ## Notes for the PR
 <anything worth surfacing in the PR body>
 <Prefix any line that records a mid-flight correction with `correction: ` —
-`/project-save-session` scans for these when surfacing
+`/griot-save-session` scans for these when surfacing
 `/learnings-capture` candidates.>
 ```
 
@@ -153,7 +153,7 @@ a revised contract rather than editing in place.
 
 ## PR marker
 
-Every PR authored by `/project-pull-request` carries an HTML comment marker
+Every PR authored by `/griot-pull-request` carries an HTML comment marker
 in its body:
 
 ```html
@@ -162,7 +162,7 @@ in its body:
 
 Where `NN` is the checkin number the PR description was authored from. A PR
 is **stale** when the latest checkin in `checkins/<branch>/` is numbered
-higher than the marker. `/project-pull-request` is idempotent: stale → rewrite
+higher than the marker. `/griot-pull-request` is idempotent: stale → rewrite
 from the latest checkin and bump the marker; fresh → no-op.
 
 ## config.md format
