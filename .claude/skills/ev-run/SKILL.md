@@ -3,28 +3,28 @@ name: ev-run
 description: >-
   Thin router over a project. Loads the manifest, picks the next
   actionable phase (or routes a message like "address feedback on #14"),
-  and dispatches to the appropriate branded loop. Does no work itself —
+  and dispatches to the appropriate loop. Does no work itself —
   the loops own execution and the substrate owns state. Use when the
   user wants to make progress on a project without picking the phase
   by hand.
 argument-hint: "<project-slug-or-path> [<free-form message>]"
 disable-model-invocation: true
-allowed-tools: Read, Bash(git:*), Bash(ls:*), Skill
+allowed-tools: Read, Skill
 ---
 
 # /ev-run
 
-Router. Reads state via `/griot-autoload`, decides what to run next,
+Router. Reads state via `/trout-autoload`, decides what to run next,
 invokes the right loop. Owns no work of its own.
 
 ## Arguments
 
-- `<project-slug-or-path>` — resolved like `/griot-autosave`.
+- `<project-slug-or-path>` — resolved like `/trout-autosave`.
 - Optional free-form message — if present, interpret it as a redirect
   (e.g. "address feedback on #14", "pause and save session", "start
   phase 3 even though phase 2 isn't merged yet").
 
-Invocations of `/project-*` skills and `/ev-loop-*` skills below mean
+Invocations of `/trout-*` skills and `/ev-loop-*` skills below mean
 `Skill(skill: <name>, args: "…")` — the Skill tool is how the router
 dispatches.
 
@@ -38,7 +38,7 @@ message. If `$ARGUMENTS` is empty, stop and ask for a slug.
 
 ### 1. Orient
 
-Invoke `/griot-autoload <slug>`. Take in the briefing. This tells you:
+Invoke `/trout-autoload <slug>`. Take in the briefing. This tells you:
 - Current phase status
 - Latest checkin
 - Open PRs and their freshness
@@ -47,7 +47,7 @@ Invoke `/griot-autoload <slug>`. Take in the briefing. This tells you:
 
 ### 1.5. Load learnings
 
-Invoke `/learnings-use` via the Skill tool (no arguments). This reads
+Invoke `/griot-use` via the Skill tool (no arguments). This reads
 `learnings/rollup.md` and installs the session-long citation contract
 (the session appends `Applied: L-NNN` when a learning actually shaped a
 response). Do this once per `/ev-run` invocation — the rollup is
@@ -57,7 +57,7 @@ Handle the three outcomes the skill can return:
 - **Loaded N learnings** — note it in the dispatch report.
 - **Rollup empty** — note "no rollup entries" in the dispatch report
   and proceed.
-- **Rollup missing** — note "no rollup yet — `/learnings-compact` has
+- **Rollup missing** — note "no rollup yet — `/griot-compact` has
   not run" and proceed. Do not stop.
 
 Do not read `learnings/session-notes/` or `learnings/nightly/` from the
@@ -71,8 +71,8 @@ If the user provided a message, parse its intent:
 | Intent | Action |
 |--------|--------|
 | "address feedback on #N" | Verify #N belongs to this project. Dispatch to the loop that owns the branch, passing the redirect message. |
-| "save session" / "wrap up" | Invoke `/griot-save-session <slug>` and stop. |
-| "archive" / "close out" | Verify all phases are complete. Invoke `/griot-archive <slug>`. |
+| "save session" / "wrap up" | Invoke `/trout-save-session <slug>` and stop. |
+| "archive" / "close out" | Verify all phases are complete. Invoke `/trout-archive <slug>`. |
 | "skip to phase N" | Warn if dependencies aren't satisfied. Confirm with the user. If confirmed, dispatch to the loop for phase N. |
 | "pause" | Stop and report. Do not dispatch. |
 | ambiguous | Ask the user one clarifying question; do not guess. |
@@ -85,7 +85,7 @@ With no message, pick the phase using this policy:
 2. Otherwise, pick the lowest-numbered `not-started` phase whose
    dependencies are all satisfied (all named prior PRs merged).
 3. If no phase qualifies, surface the blocker: "waiting on PR #X to
-   merge" or "all phases completed — run `/griot-archive`."
+   merge" or "all phases completed — run `/trout-archive`."
 
 ### 4. Dispatch
 
@@ -138,9 +138,9 @@ args: "<slug> <phase-number> [<redirect-message>]"
 ## Failure modes
 
 - Project not found → forward the autoload error; suggest
-  `/griot-plan`.
+  `/trout-plan`.
 - Manifest inconsistent with git state → stop, report the drift, let
   the user resolve.
 - No actionable phase and not all phases done → list open blockers and
   stop.
-- All phases done → recommend `/griot-archive` and stop.
+- All phases done → recommend `/trout-archive` and stop.

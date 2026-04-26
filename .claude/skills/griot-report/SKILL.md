@@ -1,12 +1,12 @@
 ---
-name: learnings-report
+name: griot-report
 description: >-
   Generate a one-pager report on trend, cost, and judge calibration from the
   instrumentation files. Use ONLY when explicitly invoked via
-  /learnings-report. Read-only — does not modify any state.
+  /griot-report. Read-only — does not modify any state.
 user-invocable: true
 disable-model-invocation: true
-allowed-tools: Bash, Read
+allowed-tools: Bash(npm run learnings:report), Read
 ---
 
 # Learnings Report
@@ -27,7 +27,7 @@ Produce a one-pager from:
 2. Show the output to the user verbatim. It's already formatted markdown.
 3. If any section says "no data yet," tell the user which hook / skill
    they need to enable to populate it (Stop hook for citations and
-   sessions; `/learnings-compact` for bench-history, operator-log, and
+   sessions; `/griot-compact` for bench-history, operator-log, and
    calibration).
 4. If the script errors (non-zero exit, malformed JSONL), surface the
    error and stop. Do not attempt to reconstruct the report from raw

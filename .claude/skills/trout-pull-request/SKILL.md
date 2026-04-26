@@ -1,17 +1,16 @@
 ---
-name: griot-pull-request
+name: trout-pull-request
 description: >-
   Author or update a GitHub PR from the latest numbered checkin on a branch.
   Idempotent — uses an HTML marker in the PR body to detect staleness and
   only rewrites when the latest checkin has moved past the marker. Use
   when a loop decides it is time to checkpoint, or when the user wants to
   reconcile a PR with the latest checkin.
-argument-hint: "<project-slug-or-path> <branch-name>"
-disable-model-invocation: true
-allowed-tools: Read, Write, Edit, Bash, Skill, mcp__github__list_pull_requests, mcp__github__create_pull_request, mcp__github__update_pull_request, mcp__github__pull_request_read, mcp__github__search_pull_requests
+argument-hint: "<project-slug-or-path> <branch>"
+allowed-tools: Read, Write, Edit, Bash(git:*), Skill, mcp__github__list_pull_requests, mcp__github__create_pull_request, mcp__github__update_pull_request, mcp__github__pull_request_read
 ---
 
-# /griot-pull-request
+# /trout-pull-request
 
 Author or update the PR for a branch so its description matches the latest
 checkin. Idempotent: stale → rewrite; fresh → no-op. This is the only skill
@@ -22,11 +21,14 @@ format, repo-relative).
 
 ## Arguments
 
-Positional: `$1 = <project-slug-or-path>`, `$2 = <branch-name>`.
+Positional: `$1 = <project-slug-or-path>`, `$2 = <branch>`.
 
-- `$1` (`<project-slug-or-path>`) — resolved like `/griot-autosave`.
-- `$2` (`<branch-name>`) — the git branch the PR is tied to. May contain
+- `$1` (`<project-slug-or-path>`) — resolved like `/trout-autosave`.
+- `$2` (`<branch>`) — the git branch the PR is tied to. May contain
   slashes (`claude/adopt-biome-v1`).
+
+If either argument is missing, stop and ask the caller for the project
+slug/path and branch — do not guess from cwd.
 
 ## Process
 
@@ -34,7 +36,7 @@ Positional: `$1 = <project-slug-or-path>`, `$2 = <branch-name>`.
 
 - Resolve the project directory.
 - Confirm the branch exists locally: `git rev-parse --verify <branch>`.
-- Identify `checkins/<branch-name>/` and find the highest-numbered file.
+- Identify `checkins/<branch>/` and find the highest-numbered file.
   That is "the latest checkin". Read it.
 
 ### 2. Find the existing PR, if any
@@ -104,7 +106,7 @@ detected on the next invocation.
 4. Author the title and body per § 3.
 5. Create the PR via `mcp__github__create_pull_request` with base from
    `config.md` (default `main`).
-6. Invoke `/griot-autosave` with `--event=pr-opened --detail=#<N>`
+6. Invoke `/trout-autosave` with `--event=pr-opened --detail=#<N>`
    and `--phase-update` reflecting the new PR number on the appropriate
    phase row.
 
@@ -115,7 +117,7 @@ detected on the next invocation.
    push-retry policy.
 3. Author fresh title and body per § 3.
 4. Update via `mcp__github__update_pull_request`.
-5. Invoke `/griot-autosave` with `--event=pr-updated --detail=#<N>`.
+5. Invoke `/trout-autosave` with `--event=pr-updated --detail=#<N>`.
 
 ### Retry policy
 

@@ -1,9 +1,9 @@
 # Project substrate conventions
 
-Canonical reference for the formats and structures used by the `/project-*`
-substrate. All substrate skills and all branded loops read from and write to
-the shapes defined here. If you are a skill and you are unsure of a format,
-read this file first.
+Canonical reference for the formats and structures of the project substrate.
+The `/trout-*` skill family and the `/ev-*` execution loops both read from
+and write to the shapes defined here. If you are a skill and you are unsure
+of a format, read this file first.
 
 ## Directory layout
 
@@ -11,8 +11,8 @@ read this file first.
 ./projects/
 ├── CONVENTIONS.md                      ← this file
 ├── <date>-<slug>/                      ← active projects (hot path)
-│   ├── PLAN.md                         ← authored by /griot-plan
-│   ├── MANIFEST.md                     ← ground truth; maintained by /griot-autosave
+│   ├── PLAN.md                         ← authored by /trout-plan
+│   ├── MANIFEST.md                     ← ground truth; maintained by /trout-autosave
 │   ├── config.md                       ← worker bindings, PR settings, verification cmds
 │   ├── sessions/
 │   │   └── YYYY-MM-DD-a.md             ← narrative handoffs; letter suffix if multiple per day
@@ -29,7 +29,7 @@ read this file first.
 └── archive/
     └── <date>-<slug>/                  ← closed projects (read-only)
         ├── [preserved files]
-        └── RETROSPECTIVE.md            ← written at /griot-archive time
+        └── RETROSPECTIVE.md            ← written at /trout-archive time
 ```
 
 **Slug** — kebab-case project identifier. The full directory name is
@@ -87,21 +87,21 @@ to that phase's branch.
 Every write to MANIFEST.md appends one row to the Events table. The event
 column is drawn from a closed vocabulary:
 
-| Event | Detail format |
-|-------|---------------|
-| `project-initialized` | — |
-| `phase-started` | `<phase-number> <phase-name>` |
-| `phase-completed` | `<phase-number>` |
-| `phase-blocked` | `<phase-number> on: <reason>` |
-| `phase-unblocked` | `<phase-number>` |
-| `checkin-created` | `<NN> on <branch>` |
-| `pr-opened` | `#<N>` |
-| `pr-updated` | `#<N>` |
-| `pr-merged` | `#<N>` |
-| `session-saved` | `<filename>` |
-| `retro-written` | `tier-<N>` or `phase-<N>` |
-| `archived` | `<destination path>` |
-| `note` | `<freeform one line>` |
+| Event | Detail format | Emitter |
+|-------|---------------|---------|
+| `project-initialized` | — | `/trout-autosave --init` |
+| `phase-started` | `<phase-number> <phase-name>` | *reserved — phase status set via `--phase-update`* |
+| `phase-completed` | `<phase-number>` | `/ev-loop-confidence`, `/ev-loop-interactive` |
+| `phase-blocked` | `<phase-number> on: <reason>` | *reserved — phase status set via `--phase-update`* |
+| `phase-unblocked` | `<phase-number>` | *reserved — phase status set via `--phase-update`* |
+| `checkin-created` | `<NN> on <branch>` | `/ev-loop-confidence`, `/ev-loop-interactive` |
+| `pr-opened` | `#<N>` | `/trout-pull-request` |
+| `pr-updated` | `#<N>` | `/trout-pull-request` |
+| `pr-merged` | `#<N>` | *not yet tracked* |
+| `session-saved` | `<filename>` | `/trout-save-session` |
+| `retro-written` | `tier-<N>` or `phase-<N>` | `/ev-loop-confidence` |
+| `archived` | `<destination path>` | `/trout-archive` |
+| `note` | `<freeform one line>` | user-invoked manually |
 
 Prefer an existing event over inventing new ones. Use `note` for anything
 that does not fit.
@@ -142,8 +142,8 @@ zero-padded: `01.md`, `02.md`, … `99.md`.
 ## Notes for the PR
 <anything worth surfacing in the PR body>
 <Prefix any line that records a mid-flight correction with `correction: ` —
-`/griot-save-session` scans for these when surfacing
-`/learnings-capture` candidates.>
+`/trout-save-session` scans for these when surfacing
+`/griot-capture` candidates.>
 ```
 
 Checkins are **immutable**. New information produces a new numbered file.
@@ -153,7 +153,7 @@ a revised contract rather than editing in place.
 
 ## PR marker
 
-Every PR authored by `/griot-pull-request` carries an HTML comment marker
+Every PR authored by `/trout-pull-request` carries an HTML comment marker
 in its body:
 
 ```html
@@ -162,7 +162,7 @@ in its body:
 
 Where `NN` is the checkin number the PR description was authored from. A PR
 is **stale** when the latest checkin in `checkins/<branch>/` is numbered
-higher than the marker. `/griot-pull-request` is idempotent: stale → rewrite
+higher than the marker. `/trout-pull-request` is idempotent: stale → rewrite
 from the latest checkin and bump the marker; fresh → no-op.
 
 ## config.md format
@@ -180,7 +180,7 @@ from the latest checkin and bump the marker; fresh → no-op.
 - Labels: project/<slug>
 
 ## Worker bindings
-<branded-layer-specific; free-form>
+<loop-specific; free-form>
 ```
 
 ## Session handoff format

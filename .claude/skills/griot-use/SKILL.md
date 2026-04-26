@@ -1,11 +1,10 @@
 ---
-name: learnings-use
+name: griot-use
 description: >-
   Load learnings/rollup.md into context and install the citation contract.
-  Use ONLY when explicitly invoked via /learnings-use. Never auto-invoke.
+  Use ONLY when explicitly invoked via /griot-use. Never auto-invoke.
   Do not load session-notes/ or nightly/ — only rollup.md.
 user-invocable: true
-disable-model-invocation: true
 allowed-tools: Read
 ---
 
@@ -18,7 +17,7 @@ the citation contract.
 
 1. Read `learnings/rollup.md` from the repo root.
    - If it doesn't exist, tell the user: _"No rollup yet — run
-     `/learnings-compact` once captures exist."_ Then stop.
+     `/griot-compact` once captures exist."_ Then stop.
    - If it exists but has no entries (only the header), tell the user:
      _"Rollup is empty — no validated learnings yet."_ Then stop.
 2. If there are entries, echo a summary like: _"Loaded N learnings from
@@ -47,7 +46,7 @@ citations poison that signal.
 Only `rollup.md` is ever loaded at session time. Do **not** read
 `session-notes/`, `nightly/`, or anything else under `learnings/` during a
 session — those layers are allowed to contradict the rollup and are only
-valid inputs to `/learnings-compact`.
+valid inputs to `/griot-compact`.
 
 ## When this ends
 
