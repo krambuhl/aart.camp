@@ -1,5 +1,5 @@
 ---
-name: hachiko-pr-respond
+name: fasa-pr-respond
 description: >-
   Fetch PR comments and reviews, classify them, and produce a response plan
   that the originating loop can execute. Does not write code or reply on
@@ -10,14 +10,14 @@ disable-model-invocation: true
 allowed-tools: Read, Write, Glob, Bash(ls:*), Bash(git branch:*), mcp__github__pull_request_read, mcp__github__list_pull_requests
 ---
 
-# /hachiko-pr-respond
+# /fasa-pr-respond
 
 Turn a pile of PR feedback into a structured response plan. Does not
 modify code or reply; its output is consumed by the originating loop.
 
 ## Arguments
 
-- `<project-slug-or-path>` — resolved like `/hachiko-autosave`.
+- `<project-slug-or-path>` — resolved like `/fasa-autosave`.
 - `<pr-number>` — the PR to respond to. Must belong to the project
   (cross-check via branch → `checkins/<branch>` existence).
 
@@ -91,7 +91,7 @@ important work item the loop should take up next.
 ### 4. Route
 
 Do not execute the plan. Do not post replies. Report the plan path and
-the recommended next unit to the caller. The router (`/mingus-run`) or the
+the recommended next unit to the caller. The router (`/ev-run`) or the
 originating loop is responsible for picking it up.
 
 ## Quality bar

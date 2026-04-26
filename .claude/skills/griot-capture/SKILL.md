@@ -3,7 +3,7 @@ name: griot-capture
 description: >-
   Capture a correction as a candidate learning. Invoked either (a)
   interactively by the user after a correction, or (b) by
-  /hachiko-save-session in --from-checkin mode, which replays a checkin
+  /fasa-save-session in --from-checkin mode, which replays a checkin
   whose Notes for the PR contain a `correction:` line. Fast, synchronous,
   writes files only — no LLM panel at capture time. The real value gate
   is /griot-compact, not this skill.
@@ -27,7 +27,7 @@ explicitly after Claude got something wrong and they corrected it. The
 skill uses the live transcript as its material and applies the capture
 gate (see below).
 
-**From-checkin mode.** `/hachiko-save-session` invokes the skill with
+**From-checkin mode.** `/fasa-save-session` invokes the skill with
 `--from-checkin=<path> [--slug=<slug>]`. The skill reads the named
 checkin and derives the five files from it. The capture gate is
 considered pre-applied — the user marked the correction when they put
@@ -37,7 +37,7 @@ liberally in this mode; compaction is the real value gate.
 ## When this runs
 
 - Interactively when the user explicitly invokes it.
-- Automatically from `/hachiko-save-session` for each `correction:`
+- Automatically from `/fasa-save-session` for each `correction:`
   line in the session's checkins.
 
 Do not auto-invoke from anywhere else — no mid-session auto-triggers
@@ -176,7 +176,7 @@ Run /griot-compact when you want to process pending captures.
 ```
 
 In from-checkin mode, emit a single machine-readable line so
-`/hachiko-save-session` can roll up the count:
+`/fasa-save-session` can roll up the count:
 
 ```
 captured: learnings/session-notes/<folder>/ from <checkin-path>

@@ -1,5 +1,5 @@
 ---
-name: hachiko-autosave
+name: fasa-autosave
 description: >-
   Write a structured state update to a project's MANIFEST.md. Called after
   each unit of work, at phase boundaries, and on PR events. Mechanical, not
@@ -11,7 +11,7 @@ disable-model-invocation: true
 allowed-tools: Read, Edit, Write, Bash
 ---
 
-# /hachiko-autosave
+# /fasa-autosave
 
 Write a single structured update to a project's `MANIFEST.md`. This is the
 substrate primitive for persisting state. Loops call it after every unit;
@@ -32,7 +32,7 @@ identifier is flags.
     suffix match on everything after the date prefix)
   - A full path: `./projects/2026-04-23-adopt-biome`
 - `--init` — create the project directory scaffold and write the first
-  MANIFEST.md. Expects the caller (`/hachiko-plan`) to have already
+  MANIFEST.md. Expects the caller (`/fasa-plan`) to have already
   produced `PLAN.md` content in-memory; the `--detail` flag carries a
   compact JSON object with fields: `title`, `slug`, `started`, `strategy`,
   `phases` (array of `{name, dependencies}`).
@@ -89,7 +89,7 @@ to mutate one row of the Phases table (for example,
 Given a bare name `adopt-biome`, look for a directory under `./projects/`
 whose name ends with `-adopt-biome`. If exactly one matches, use it. If
 multiple match, fail and print the candidates. If none matches and the
-argument is not a full path, fail and suggest `/hachiko-plan <topic>` to
+argument is not a full path, fail and suggest `/fasa-plan <topic>` to
 create a new project.
 
 If the argument is a full path (starts with `.` or `/`), use it directly.
@@ -100,24 +100,24 @@ fail.
 
 ## Examples
 
-Initial scaffold (called by `/hachiko-plan`):
+Initial scaffold (called by `/fasa-plan`):
 ```
-/hachiko-autosave 2026-04-23-adopt-biome --init --detail='{"title":"Adopt Biome","slug":"2026-04-23-adopt-biome","started":"2026-04-23","strategy":"Replace ESLint with Biome across three phases.","phases":[{"name":"Setup"},{"name":"Remove ESLint","dependencies":["Phase 1 merged"]},{"name":"Cleanup","dependencies":["Phase 2 merged"]}]}'
+/fasa-autosave 2026-04-23-adopt-biome --init --detail='{"title":"Adopt Biome","slug":"2026-04-23-adopt-biome","started":"2026-04-23","strategy":"Replace ESLint with Biome across three phases.","phases":[{"name":"Setup"},{"name":"Remove ESLint","dependencies":["Phase 1 merged"]},{"name":"Cleanup","dependencies":["Phase 2 merged"]}]}'
 ```
 
 Record a checkin from inside a loop:
 ```
-/hachiko-autosave adopt-biome --event=checkin-created --detail="03 on claude/adopt-biome-v1" --phase-update=2:in-progress:branch=claude/adopt-biome-v1:checkin=03 --current-state="Phase 2 unit 3: running lint to verify ESLint removal."
+/fasa-autosave adopt-biome --event=checkin-created --detail="03 on claude/adopt-biome-v1" --phase-update=2:in-progress:branch=claude/adopt-biome-v1:checkin=03 --current-state="Phase 2 unit 3: running lint to verify ESLint removal."
 ```
 
-PR opened by `/hachiko-pull-request`:
+PR opened by `/fasa-pull-request`:
 ```
-/hachiko-autosave adopt-biome --event=pr-opened --detail="#14" --phase-update=2:in-progress:pr=#14
+/fasa-autosave adopt-biome --event=pr-opened --detail="#14" --phase-update=2:in-progress:pr=#14
 ```
 
-Session handoff written by `/hachiko-save-session`:
+Session handoff written by `/fasa-save-session`:
 ```
-/hachiko-autosave adopt-biome --event=session-saved --detail="2026-04-23-a"
+/fasa-autosave adopt-biome --event=session-saved --detail="2026-04-23-a"
 ```
 
 ## Output
@@ -131,7 +131,7 @@ and stop without writing.
 
 ## Failure modes
 
-- Project not found → suggest `/hachiko-plan` or list matching candidates.
+- Project not found → suggest `/fasa-plan` or list matching candidates.
 - Multiple matches → print candidates; caller must retry with a fuller slug.
 - Archived project → refuse to write.
 - Unknown event name → print the valid vocabulary from CONVENTIONS.md.

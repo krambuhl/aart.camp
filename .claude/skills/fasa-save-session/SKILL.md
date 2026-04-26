@@ -1,5 +1,5 @@
 ---
-name: hachiko-save-session
+name: fasa-save-session
 description: >-
   Author a narrative session handoff at the end of a work session. Reads
   recent manifest events, writes sessions/YYYY-MM-DD-<letter>.md, and
@@ -10,7 +10,7 @@ disable-model-invocation: true
 allowed-tools: Read, Write, Bash, Skill
 ---
 
-# /hachiko-save-session
+# /fasa-save-session
 
 Author one narrative handoff file per work session. Unlike autosave
 (mechanical, per-unit), this is written by Claude and captures the parts
@@ -18,13 +18,13 @@ of the session that don't fit in the event table: reasoning that moved,
 trade-offs considered, what's brittle, what to watch for next time.
 
 **Format reference**: `projects/CONVENTIONS.md` (§ Session handoff format,
-repo-relative). Pairs with `/hachiko-autosave`, which records the emitted
+repo-relative). Pairs with `/fasa-autosave`, which records the emitted
 event.
 
 ## Process
 
 1. **Resolve the project directory.** `$ARGUMENTS` is the project slug or
-   path (resolution rules as in `/hachiko-autoload`). If omitted, resolve
+   path (resolution rules as in `/fasa-autoload`). If omitted, resolve
    from the current working directory; if resolution fails, surface the
    error and stop.
 2. **Read the manifest** to get the list of events emitted during this
@@ -51,8 +51,8 @@ event.
    list the session-notes paths under **Learnings captured**; otherwise
    omit that section.
 7. **Write the file.** Do not commit.
-8. **Invoke `/hachiko-autosave`** via the Skill tool —
-   `skill: hachiko-autosave`, `args: "<slug> --event=session-saved
+8. **Invoke `/fasa-autosave`** via the Skill tool —
+   `skill: fasa-autosave`, `args: "<slug> --event=session-saved
    --detail=<filename>"` — to log the event.
 
 ## Report
@@ -128,7 +128,7 @@ Multiple captures from the same checkin is fine.
 
 ## Failure modes
 
-- Project not found → surface the error from `/hachiko-autosave`
+- Project not found → surface the error from `/fasa-autosave`
   resolution; do not create anything.
 - No new events since last session-saved → write a short file that says
   "No substantive work this session" and still record the event, unless
