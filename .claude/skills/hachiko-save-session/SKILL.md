@@ -1,5 +1,5 @@
 ---
-name: griot-save-session
+name: hachiko-save-session
 description: >-
   Author a narrative session handoff at the end of a work session. Reads
   recent manifest events, writes sessions/YYYY-MM-DD-<letter>.md, and
@@ -10,7 +10,7 @@ disable-model-invocation: true
 allowed-tools: Read, Write, Bash, Skill
 ---
 
-# /griot-save-session
+# /hachiko-save-session
 
 Author one narrative handoff file per work session. Unlike autosave
 (mechanical, per-unit), this is written by Claude and captures the parts
@@ -18,13 +18,13 @@ of the session that don't fit in the event table: reasoning that moved,
 trade-offs considered, what's brittle, what to watch for next time.
 
 **Format reference**: `projects/CONVENTIONS.md` (§ Session handoff format,
-repo-relative). Pairs with `/griot-autosave`, which records the emitted
+repo-relative). Pairs with `/hachiko-autosave`, which records the emitted
 event.
 
 ## Process
 
 1. **Resolve the project directory.** `$ARGUMENTS` is the project slug or
-   path (resolution rules as in `/griot-autoload`). If omitted, resolve
+   path (resolution rules as in `/hachiko-autoload`). If omitted, resolve
    from the current working directory; if resolution fails, surface the
    error and stop.
 2. **Read the manifest** to get the list of events emitted during this
@@ -34,11 +34,11 @@ event.
    `checkin-created` give you their paths. Read each to get scope,
    verdict, and any `correction:` lines in "Notes for the PR".
 4. **Capture corrections.** For each `correction:` line found in step
-   3, invoke `/learnings-capture` via the Skill tool with
+   3, invoke `/griot-capture` via the Skill tool with
    `args: "--from-checkin=<checkin-path> --slug=<proposed-slug>"`.
    Do this **before** writing the handoff so the handoff can report
    actual counts. Don't apply a value gate here — the user marking a
-   line `correction:` is the gate, and `/learnings-compact` is the
+   line `correction:` is the gate, and `/griot-compact` is the
    value filter. Capture every correction.
 5. **Determine the filename.** Today's date is available via
    `date '+%Y-%m-%d'`. Start at letter `a`. If
@@ -51,8 +51,8 @@ event.
    list the session-notes paths under **Learnings captured**; otherwise
    omit that section.
 7. **Write the file.** Do not commit.
-8. **Invoke `/griot-autosave`** via the Skill tool —
-   `skill: griot-autosave`, `args: "<slug> --event=session-saved
+8. **Invoke `/hachiko-autosave`** via the Skill tool —
+   `skill: hachiko-autosave`, `args: "<slug> --event=session-saved
    --detail=<filename>"` — to log the event.
 
 ## Report
@@ -62,7 +62,7 @@ After writing, respond with exactly four lines:
 ```
 session: <path of handoff file>
 touched: phases=<list>, checkins=<NN list>, PR=<#N or none>
-captured: <N learnings to session-notes/ — run /learnings-compact to process, or "none">
+captured: <N learnings to session-notes/ — run /griot-compact to process, or "none">
 open-threads: <comma-separated, or "none">
 ```
 
@@ -100,15 +100,15 @@ For each correction line:
 
 1. Derive a 3–5 word kebab-case slug from the correction text or the
    checkin's Unit field.
-2. Invoke the `learnings-capture` skill via the Skill tool:
-   - `skill`: `learnings-capture`
+2. Invoke the `griot-capture` skill via the Skill tool:
+   - `skill`: `griot-capture`
    - `args`: `--from-checkin=<checkin-path> --slug=<slug>`
 3. Capture returns a `captured: learnings/session-notes/<folder>/`
    line. Collect those paths for the handoff's "Learnings captured"
    section.
 
 **Do not apply a value gate.** The user marking a line `correction:`
-is the gate. `/learnings-compact` is the value filter — it runs the
+is the gate. `/griot-compact` is the value filter — it runs the
 judge panel and decides which captures get promoted to `rollup.md`.
 Save-session's job is to not lose correction signal, not to decide
 what's worth keeping.
@@ -128,7 +128,7 @@ Multiple captures from the same checkin is fine.
 
 ## Failure modes
 
-- Project not found → surface the error from `/griot-autosave`
+- Project not found → surface the error from `/hachiko-autosave`
   resolution; do not create anything.
 - No new events since last session-saved → write a short file that says
   "No substantive work this session" and still record the event, unless

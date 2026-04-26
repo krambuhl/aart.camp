@@ -1,8 +1,8 @@
 ---
-name: learnings-compact
+name: griot-compact
 description: >-
   Run the nightly learnings validation pipeline. Use ONLY when explicitly
-  invoked via /learnings-compact. Expensive — spends real API tokens.
+  invoked via /griot-compact. Expensive — spends real API tokens.
   Processes every session-note in learnings/session-notes/, runs the judge
   panel, promotes IMPROVED learnings, rewrites UNCHANGED/REGRESSED, flags
   DID_NOT_REPRODUCE, regressions tests the full rollup, appends bench
@@ -93,6 +93,6 @@ For every note whose outcome was `escalated`:
 
 ## After a successful run
 
-Remind the user: `/learnings-report` gives a one-pager on trend, cost, and
+Remind the user: `/griot-report` gives a one-pager on trend, cost, and
 judge calibration. Skim that before the next run if you want to see how
 `corrections_per_session` is moving.
