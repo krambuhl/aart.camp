@@ -37,7 +37,7 @@ two questions at a time. Cover:
 - **Verification**: commands or signals that prove each phase's changes
   are safe (lint, build, tests, manual checks)
 - **PR cadence**: one PR per phase (default), or batches within a phase?
-- **Loop strategy**: which branded loop does this project want by
+- **Loop strategy**: which loop does this project want by
   default — confidence (tiered-transform, good for bulk transforms and
   audits) or interactive (human-paired, good for exploratory or
   creative work)?

@@ -3,7 +3,7 @@ name: ev-run
 description: >-
   Thin router over a project. Loads the manifest, picks the next
   actionable phase (or routes a message like "address feedback on #14"),
-  and dispatches to the appropriate branded loop. Does no work itself —
+  and dispatches to the appropriate loop. Does no work itself —
   the loops own execution and the substrate owns state. Use when the
   user wants to make progress on a project without picking the phase
   by hand.
@@ -24,7 +24,7 @@ invokes the right loop. Owns no work of its own.
   (e.g. "address feedback on #14", "pause and save session", "start
   phase 3 even though phase 2 isn't merged yet").
 
-Invocations of `/project-*` skills and `/ev-loop-*` skills below mean
+Invocations of `/trout-*` skills and `/ev-loop-*` skills below mean
 `Skill(skill: <name>, args: "…")` — the Skill tool is how the router
 dispatches.
 

@@ -1,10 +1,10 @@
 ---
 name: ev-loop-interactive
 description: >-
-  Branded execution loop for human-paired work. Runs a phase as a sequence
+  Execution loop for human-paired work. Runs a phase as a sequence
   of deliverables, each with its own unit contract and evaluator
   checkpoint. Supports sequential (ordered) and free (user picks next)
-  deliverable ordering. Composes /project-* primitives; composes no
+  deliverable ordering. Composes /trout-* primitives; composes no
   other loop. Use when a phase is exploratory, creative, or otherwise
   not a bulk transform.
 argument-hint: "<project-slug-or-path> <phase-number>"
@@ -25,7 +25,7 @@ order when ordering is free; the loop keeps the substrate honest.
 
 Invocations like `/trout-autosave` and `/trout-pull-request` below
 mean `Skill(skill: trout-autosave, args: "…")` — the Skill tool is
-how branded loops compose substrate skills. The `evaluator` subagent
+how loops compose substrate skills. The `evaluator` subagent
 is spawned via the Agent tool with `subagent_type: evaluator`.
 
 ## Arguments

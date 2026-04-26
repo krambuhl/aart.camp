@@ -83,7 +83,7 @@ entirely when their source files are absent — do not emit empty headings.
 - A phase is `in-progress` with open PR and new comments → suggest
   `/trout-pr-respond <slug> <pr>` (the router picks up on this signal).
 - A phase is `not-started` and its dependencies are satisfied → suggest
-  starting it via the branded loop named in `config.md`, or via
+  starting it via the loop named in `config.md`, or via
   `/ev-run <slug>`.
 - A phase is `not-started` and blocked on merged-ness of a prior PR →
   name the PR the caller is waiting on.

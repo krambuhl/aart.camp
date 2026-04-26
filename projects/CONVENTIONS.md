@@ -1,9 +1,9 @@
 # Project substrate conventions
 
-Canonical reference for the formats and structures used by the `/project-*`
-substrate. All substrate skills and all branded loops read from and write to
-the shapes defined here. If you are a skill and you are unsure of a format,
-read this file first.
+Canonical reference for the formats and structures of the project substrate.
+The `/trout-*` skill family and the `/ev-*` execution loops both read from
+and write to the shapes defined here. If you are a skill and you are unsure
+of a format, read this file first.
 
 ## Directory layout
 
@@ -180,7 +180,7 @@ from the latest checkin and bump the marker; fresh → no-op.
 - Labels: project/<slug>
 
 ## Worker bindings
-<branded-layer-specific; free-form>
+<loop-specific; free-form>
 ```
 
 ## Session handoff format

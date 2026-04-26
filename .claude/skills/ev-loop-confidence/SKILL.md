@@ -1,10 +1,10 @@
 ---
 name: ev-loop-confidence
 description: >-
-  Branded execution loop for tiered-transform work. Runs a phase as a
+  Execution loop for tiered-transform work. Runs a phase as a
   sequence of tiers, each tier processing a batch of files under a tier
   contract, gated by evaluator verdicts and pre-flight checks. Writes
-  tactical retros between tiers. Composes /project-* primitives; composes
+  tactical retros between tiers. Composes /trout-* primitives; composes
   no other loop. Use when a phase is a bulk transform, audit, or
   find-replace-style operation across many files.
 argument-hint: "<project-slug-or-path> <phase-number>"
@@ -26,7 +26,7 @@ not by each other.
 
 Invocations like `/trout-autosave` and `/trout-pull-request` below
 mean `Skill(skill: trout-autosave, args: "…")` — the Skill tool is
-how branded loops compose substrate skills. The `evaluator` subagent
+how loops compose substrate skills. The `evaluator` subagent
 is spawned via the Agent tool with `subagent_type: evaluator`.
 
 ## Arguments
