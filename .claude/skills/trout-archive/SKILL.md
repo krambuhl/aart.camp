@@ -3,11 +3,11 @@ name: trout-archive
 description: >-
   Close out a completed project. Synthesize a retrospective from the full
   corpus, interview the user for color, classify findings, dispatch them
-  (inline / follow-up / new project / defer), and relocate the project
-  directory under ./projects/archive/. Use when all phases are complete
-  and the user is ready to put the project to bed.
+  (inline / follow-up / new project / defer), relocate the project
+  directory under ./projects/archive/, and author the archive PR via
+  /trout-pull-request. Use when all phases are complete and the user is
+  ready to put the project to bed.
 argument-hint: "<project-slug-or-path>"
-disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Bash(git mv:*), Bash(git status:*), Bash(git log:*), Bash(git branch:*), Bash(ls:*), Skill
 ---
 

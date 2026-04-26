@@ -6,7 +6,6 @@ description: >-
   born. Use when the user wants to start a new long-running, multi-PR
   effort that should be tracked by the project substrate.
 argument-hint: "<topic or short description>"
-disable-model-invocation: true
 allowed-tools: Read, Write, Bash, Skill
 ---
 

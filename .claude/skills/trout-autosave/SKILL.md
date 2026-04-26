@@ -7,8 +7,7 @@ description: >-
   Use when the caller needs ground-truth state persisted to disk in the
   project substrate format.
 argument-hint: "<project-slug-or-path> [--init] [--event=<name>] [--detail=<text>] [--current-state=<text>] [--phase-update=<n>:<status>[:<k=v>]*]"
-disable-model-invocation: true
-allowed-tools: Read, Edit, Write, Bash
+allowed-tools: Read, Edit, Write, Bash(date:*)
 ---
 
 # /trout-autosave

@@ -6,7 +6,6 @@ description: >-
   by /ev-run before routing. Use when Claude needs to resume work on an
   existing project and establish shared context.
 argument-hint: "<project-slug-or-path>"
-disable-model-invocation: true
 allowed-tools: Read, Bash(ls:*), Bash(git branch:*), Bash(git status:*)
 ---
 

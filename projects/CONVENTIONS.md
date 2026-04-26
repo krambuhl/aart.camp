@@ -87,21 +87,21 @@ to that phase's branch.
 Every write to MANIFEST.md appends one row to the Events table. The event
 column is drawn from a closed vocabulary:
 
-| Event | Detail format |
-|-------|---------------|
-| `project-initialized` | — |
-| `phase-started` | `<phase-number> <phase-name>` |
-| `phase-completed` | `<phase-number>` |
-| `phase-blocked` | `<phase-number> on: <reason>` |
-| `phase-unblocked` | `<phase-number>` |
-| `checkin-created` | `<NN> on <branch>` |
-| `pr-opened` | `#<N>` |
-| `pr-updated` | `#<N>` |
-| `pr-merged` | `#<N>` |
-| `session-saved` | `<filename>` |
-| `retro-written` | `tier-<N>` or `phase-<N>` |
-| `archived` | `<destination path>` |
-| `note` | `<freeform one line>` |
+| Event | Detail format | Emitter |
+|-------|---------------|---------|
+| `project-initialized` | — | `/trout-autosave --init` |
+| `phase-started` | `<phase-number> <phase-name>` | *reserved — phase status set via `--phase-update`* |
+| `phase-completed` | `<phase-number>` | `/ev-loop-confidence`, `/ev-loop-interactive` |
+| `phase-blocked` | `<phase-number> on: <reason>` | *reserved — phase status set via `--phase-update`* |
+| `phase-unblocked` | `<phase-number>` | *reserved — phase status set via `--phase-update`* |
+| `checkin-created` | `<NN> on <branch>` | `/ev-loop-confidence`, `/ev-loop-interactive` |
+| `pr-opened` | `#<N>` | `/trout-pull-request` |
+| `pr-updated` | `#<N>` | `/trout-pull-request` |
+| `pr-merged` | `#<N>` | *not yet tracked* |
+| `session-saved` | `<filename>` | `/trout-save-session` |
+| `retro-written` | `tier-<N>` or `phase-<N>` | `/ev-loop-confidence` |
+| `archived` | `<destination path>` | `/trout-archive` |
+| `note` | `<freeform one line>` | user-invoked manually |
 
 Prefer an existing event over inventing new ones. Use `note` for anything
 that does not fit.

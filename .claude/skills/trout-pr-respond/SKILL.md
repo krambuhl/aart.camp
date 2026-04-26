@@ -6,7 +6,6 @@ description: >-
   GitHub. Use when the user wants to address feedback on an open project
   PR.
 argument-hint: "<project-slug-or-path> <pr-number>"
-disable-model-invocation: true
 allowed-tools: Read, Write, Glob, Bash(ls:*), Bash(git branch:*), mcp__github__pull_request_read, mcp__github__list_pull_requests
 ---
 

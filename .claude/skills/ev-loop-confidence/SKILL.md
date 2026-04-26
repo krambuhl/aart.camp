@@ -8,7 +8,6 @@ description: >-
   no other loop. Use when a phase is a bulk transform, audit, or
   find-replace-style operation across many files.
 argument-hint: "<project-slug-or-path> <phase-number>"
-disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Bash, Agent, Skill, mcp__github__get_file_contents
 ---
 

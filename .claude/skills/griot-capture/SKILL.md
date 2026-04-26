@@ -8,7 +8,6 @@ description: >-
   writes files only — no LLM panel at capture time. The real value gate
   is /griot-compact, not this skill.
 user-invocable: true
-disable-model-invocation: true
 argument-hint: "[--from-checkin=<path> [--slug=<slug>]]"
 allowed-tools: Bash, Read, Write
 ---

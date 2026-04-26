@@ -8,7 +8,6 @@ description: >-
   user wants to make progress on a project without picking the phase
   by hand.
 argument-hint: "<project-slug-or-path> [<free-form message>]"
-disable-model-invocation: true
 allowed-tools: Read, Bash(git:*), Bash(ls:*), Skill
 ---
 

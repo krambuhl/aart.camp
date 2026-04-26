@@ -6,8 +6,7 @@ description: >-
   only rewrites when the latest checkin has moved past the marker. Use
   when a loop decides it is time to checkpoint, or when the user wants to
   reconcile a PR with the latest checkin.
-argument-hint: "<project-slug-or-path> <branch-name>"
-disable-model-invocation: true
+argument-hint: "<project-slug-or-path> <branch>"
 allowed-tools: Read, Write, Edit, Bash, Skill, mcp__github__list_pull_requests, mcp__github__create_pull_request, mcp__github__update_pull_request, mcp__github__pull_request_read, mcp__github__search_pull_requests
 ---
 
@@ -22,10 +21,10 @@ format, repo-relative).
 
 ## Arguments
 
-Positional: `$1 = <project-slug-or-path>`, `$2 = <branch-name>`.
+Positional: `$1 = <project-slug-or-path>`, `$2 = <branch>`.
 
 - `$1` (`<project-slug-or-path>`) — resolved like `/trout-autosave`.
-- `$2` (`<branch-name>`) — the git branch the PR is tied to. May contain
+- `$2` (`<branch>`) — the git branch the PR is tied to. May contain
   slashes (`claude/adopt-biome-v1`).
 
 ## Process
@@ -34,7 +33,7 @@ Positional: `$1 = <project-slug-or-path>`, `$2 = <branch-name>`.
 
 - Resolve the project directory.
 - Confirm the branch exists locally: `git rev-parse --verify <branch>`.
-- Identify `checkins/<branch-name>/` and find the highest-numbered file.
+- Identify `checkins/<branch>/` and find the highest-numbered file.
   That is "the latest checkin". Read it.
 
 ### 2. Find the existing PR, if any

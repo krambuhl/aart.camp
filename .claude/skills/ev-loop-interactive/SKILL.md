@@ -8,7 +8,6 @@ description: >-
   other loop. Use when a phase is exploratory, creative, or otherwise
   not a bulk transform.
 argument-hint: "<project-slug-or-path> <phase-number>"
-disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Bash, Agent, Skill, mcp__github__get_file_contents
 ---
 

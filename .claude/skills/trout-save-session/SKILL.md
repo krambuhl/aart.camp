@@ -6,7 +6,6 @@ description: >-
   records the session-saved event. Use at session end when there is state
   worth handing off to the next session.
 argument-hint: "<project-slug-or-path>"
-disable-model-invocation: true
 allowed-tools: Read, Write, Bash, Skill
 ---
 

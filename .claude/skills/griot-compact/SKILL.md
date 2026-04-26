@@ -8,8 +8,7 @@ description: >-
   DID_NOT_REPRODUCE, regressions tests the full rollup, appends bench
   history, and opens a PR.
 user-invocable: true
-disable-model-invocation: true
-allowed-tools: Bash, Read
+allowed-tools: Bash(npm:*), Bash(ls:*), Bash(git add:*), Read
 ---
 
 # Learnings Compact
