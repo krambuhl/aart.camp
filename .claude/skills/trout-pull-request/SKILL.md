@@ -1,5 +1,5 @@
 ---
-name: fasa-pull-request
+name: trout-pull-request
 description: >-
   Author or update a GitHub PR from the latest numbered checkin on a branch.
   Idempotent — uses an HTML marker in the PR body to detect staleness and
@@ -11,7 +11,7 @@ disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Bash, Skill, mcp__github__list_pull_requests, mcp__github__create_pull_request, mcp__github__update_pull_request, mcp__github__pull_request_read, mcp__github__search_pull_requests
 ---
 
-# /fasa-pull-request
+# /trout-pull-request
 
 Author or update the PR for a branch so its description matches the latest
 checkin. Idempotent: stale → rewrite; fresh → no-op. This is the only skill
@@ -24,7 +24,7 @@ format, repo-relative).
 
 Positional: `$1 = <project-slug-or-path>`, `$2 = <branch-name>`.
 
-- `$1` (`<project-slug-or-path>`) — resolved like `/fasa-autosave`.
+- `$1` (`<project-slug-or-path>`) — resolved like `/trout-autosave`.
 - `$2` (`<branch-name>`) — the git branch the PR is tied to. May contain
   slashes (`claude/adopt-biome-v1`).
 
@@ -104,7 +104,7 @@ detected on the next invocation.
 4. Author the title and body per § 3.
 5. Create the PR via `mcp__github__create_pull_request` with base from
    `config.md` (default `main`).
-6. Invoke `/fasa-autosave` with `--event=pr-opened --detail=#<N>`
+6. Invoke `/trout-autosave` with `--event=pr-opened --detail=#<N>`
    and `--phase-update` reflecting the new PR number on the appropriate
    phase row.
 
@@ -115,7 +115,7 @@ detected on the next invocation.
    push-retry policy.
 3. Author fresh title and body per § 3.
 4. Update via `mcp__github__update_pull_request`.
-5. Invoke `/fasa-autosave` with `--event=pr-updated --detail=#<N>`.
+5. Invoke `/trout-autosave` with `--event=pr-updated --detail=#<N>`.
 
 ### Retry policy
 

@@ -1,5 +1,5 @@
 ---
-name: fasa-archive
+name: trout-archive
 description: >-
   Close out a completed project. Synthesize a retrospective from the full
   corpus, interview the user for color, classify findings, dispatch them
@@ -11,14 +11,14 @@ disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Bash(git mv:*), Bash(git status:*), Bash(git log:*), Bash(git branch:*), Bash(ls:*), Skill
 ---
 
-# /fasa-archive
+# /trout-archive
 
 Death ritual for a project. Retrospective + dispositions + relocation.
 
 **Format reference**: `projects/CONVENTIONS.md` (repo-relative).
 
-Invocations like `/fasa-autosave` and `/fasa-pull-request` below
-mean `Skill(skill: fasa-autosave, args: "…")` — the Skill tool is
+Invocations like `/trout-autosave` and `/trout-pull-request` below
+mean `Skill(skill: trout-autosave, args: "…")` — the Skill tool is
 how substrate skills compose.
 
 ## Resolve the target
@@ -104,8 +104,8 @@ For each finding, propose one of:
 | Disposition | When | What happens |
 |-------------|------|--------------|
 | **Inline** | Trivial fix belongs in the archive PR itself | Apply during this skill, include in the archive PR |
-| **Follow-up** | Medium-size fix, related to this project but out of scope | Dispatch as a separate project or PR (suggest `/fasa-plan`) |
-| **New project** | Large discovery — different scope, different substrate | Invoke `/fasa-plan <topic>` after archive PR is up |
+| **Follow-up** | Medium-size fix, related to this project but out of scope | Dispatch as a separate project or PR (suggest `/trout-plan`) |
+| **New project** | Large discovery — different scope, different substrate | Invoke `/trout-plan <topic>` after archive PR is up |
 | **Defer** | Known but not worth acting on now | Record in RETROSPECTIVE and forget |
 
 Present the list to the user: one row per finding with your proposed
@@ -117,10 +117,10 @@ disposition and a one-line rationale. Ask them to approve or revise each.
   on a new branch `archive/<slug>`. Keep them genuinely trivial — if it
   turns into work, promote to Follow-up.
 - **Follow-up findings**: do **not** implement. Write a note in
-  RETROSPECTIVE.md with a TODO link format suggesting `/fasa-plan`
+  RETROSPECTIVE.md with a TODO link format suggesting `/trout-plan`
   or a direct PR later.
 - **New project**: after the archive PR is authored, invoke
-  `/fasa-plan <topic>` to birth the replacement.
+  `/trout-plan <topic>` to birth the replacement.
 - **Defer**: record verbatim in the Dispositions section.
 
 Write the final **Dispositions** section in RETROSPECTIVE.md listing each
@@ -130,14 +130,14 @@ finding and its approved disposition.
 
 1. Update `MANIFEST.md` `Status` from `active` to `archived`.
 2. `git mv ./projects/<date>-<slug>/ ./projects/archive/<date>-<slug>/`.
-3. Invoke `/fasa-autosave` with `--event=archived
+3. Invoke `/trout-autosave` with `--event=archived
    --detail=projects/archive/<date>-<slug>/` — but note: after the move,
    the manifest lives at the new path. Call autosave against the new
    path.
 
 ### 7. Archive PR
 
-Invoke `/fasa-pull-request <slug> archive/<slug>` to author the
+Invoke `/trout-pull-request <slug> archive/<slug>` to author the
 archive PR. Its body is the RETROSPECTIVE.md Summary sections, not the
 usual checkin body — override the authoring template for archive PRs:
 
@@ -164,8 +164,8 @@ Full retrospective: ./projects/archive/<date>-<slug>/RETROSPECTIVE.md
 
 After the archive PR is created:
 - For each Follow-up, surface the suggested command to the user
-  (`/fasa-plan` or a plain PR) — do not auto-dispatch.
-- For each New project, invoke `/fasa-plan <topic>` so the user can
+  (`/trout-plan` or a plain PR) — do not auto-dispatch.
+- For each New project, invoke `/trout-plan <topic>` so the user can
   run its interview now.
 
 ## Completion report

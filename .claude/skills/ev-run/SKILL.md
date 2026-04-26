@@ -14,12 +14,12 @@ allowed-tools: Read, Bash(git:*), Bash(ls:*), Skill
 
 # /ev-run
 
-Router. Reads state via `/fasa-autoload`, decides what to run next,
+Router. Reads state via `/trout-autoload`, decides what to run next,
 invokes the right loop. Owns no work of its own.
 
 ## Arguments
 
-- `<project-slug-or-path>` — resolved like `/fasa-autosave`.
+- `<project-slug-or-path>` — resolved like `/trout-autosave`.
 - Optional free-form message — if present, interpret it as a redirect
   (e.g. "address feedback on #14", "pause and save session", "start
   phase 3 even though phase 2 isn't merged yet").
@@ -38,7 +38,7 @@ message. If `$ARGUMENTS` is empty, stop and ask for a slug.
 
 ### 1. Orient
 
-Invoke `/fasa-autoload <slug>`. Take in the briefing. This tells you:
+Invoke `/trout-autoload <slug>`. Take in the briefing. This tells you:
 - Current phase status
 - Latest checkin
 - Open PRs and their freshness
@@ -71,8 +71,8 @@ If the user provided a message, parse its intent:
 | Intent | Action |
 |--------|--------|
 | "address feedback on #N" | Verify #N belongs to this project. Dispatch to the loop that owns the branch, passing the redirect message. |
-| "save session" / "wrap up" | Invoke `/fasa-save-session <slug>` and stop. |
-| "archive" / "close out" | Verify all phases are complete. Invoke `/fasa-archive <slug>`. |
+| "save session" / "wrap up" | Invoke `/trout-save-session <slug>` and stop. |
+| "archive" / "close out" | Verify all phases are complete. Invoke `/trout-archive <slug>`. |
 | "skip to phase N" | Warn if dependencies aren't satisfied. Confirm with the user. If confirmed, dispatch to the loop for phase N. |
 | "pause" | Stop and report. Do not dispatch. |
 | ambiguous | Ask the user one clarifying question; do not guess. |
@@ -85,7 +85,7 @@ With no message, pick the phase using this policy:
 2. Otherwise, pick the lowest-numbered `not-started` phase whose
    dependencies are all satisfied (all named prior PRs merged).
 3. If no phase qualifies, surface the blocker: "waiting on PR #X to
-   merge" or "all phases completed — run `/fasa-archive`."
+   merge" or "all phases completed — run `/trout-archive`."
 
 ### 4. Dispatch
 
@@ -138,9 +138,9 @@ args: "<slug> <phase-number> [<redirect-message>]"
 ## Failure modes
 
 - Project not found → forward the autoload error; suggest
-  `/fasa-plan`.
+  `/trout-plan`.
 - Manifest inconsistent with git state → stop, report the drift, let
   the user resolve.
 - No actionable phase and not all phases done → list open blockers and
   stop.
-- All phases done → recommend `/fasa-archive` and stop.
+- All phases done → recommend `/trout-archive` and stop.
