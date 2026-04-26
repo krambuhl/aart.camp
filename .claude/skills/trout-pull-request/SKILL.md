@@ -7,7 +7,7 @@ description: >-
   when a loop decides it is time to checkpoint, or when the user wants to
   reconcile a PR with the latest checkin.
 argument-hint: "<project-slug-or-path> <branch>"
-allowed-tools: Read, Write, Edit, Bash, Skill, mcp__github__list_pull_requests, mcp__github__create_pull_request, mcp__github__update_pull_request, mcp__github__pull_request_read, mcp__github__search_pull_requests
+allowed-tools: Read, Write, Edit, Bash(git:*), Skill, mcp__github__list_pull_requests, mcp__github__create_pull_request, mcp__github__update_pull_request, mcp__github__pull_request_read
 ---
 
 # /trout-pull-request
@@ -26,6 +26,9 @@ Positional: `$1 = <project-slug-or-path>`, `$2 = <branch>`.
 - `$1` (`<project-slug-or-path>`) — resolved like `/trout-autosave`.
 - `$2` (`<branch>`) — the git branch the PR is tied to. May contain
   slashes (`claude/adopt-biome-v1`).
+
+If either argument is missing, stop and ask the caller for the project
+slug/path and branch — do not guess from cwd.
 
 ## Process
 

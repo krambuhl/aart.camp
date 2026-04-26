@@ -5,9 +5,10 @@ description: >-
   invoked via /griot-compact. Expensive — spends real API tokens.
   Processes every session-note in learnings/session-notes/, runs the judge
   panel, promotes IMPROVED learnings, rewrites UNCHANGED/REGRESSED, flags
-  DID_NOT_REPRODUCE, regressions tests the full rollup, appends bench
+  DID_NOT_REPRODUCE, regression-tests the full rollup, appends bench
   history, and opens a PR.
 user-invocable: true
+disable-model-invocation: true
 allowed-tools: Bash(npm:*), Bash(ls:*), Bash(git add:*), Read
 ---
 

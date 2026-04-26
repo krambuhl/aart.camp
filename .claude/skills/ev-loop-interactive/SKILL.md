@@ -8,7 +8,7 @@ description: >-
   other loop. Use when a phase is exploratory, creative, or otherwise
   not a bulk transform.
 argument-hint: "<project-slug-or-path> <phase-number>"
-allowed-tools: Read, Write, Edit, Bash, Agent, Skill, mcp__github__get_file_contents
+allowed-tools: Read, Write, Edit, Bash, Agent, Skill
 ---
 
 # /ev-loop-interactive
@@ -29,9 +29,12 @@ is spawned via the Agent tool with `subagent_type: evaluator`.
 
 ## Arguments
 
-- `<project-slug-or-path>` — resolved like `/trout-autosave`.
-- `<phase-number>` — which phase to run. Must not be in `completed`
-  state.
+- `<project-slug-or-path>` — resolved like `/trout-autosave`. If
+  missing or unresolved, stop and ask the user for the project.
+- `<phase-number>` — which phase to run. If missing, default to the
+  next non-`completed` phase from MANIFEST.md and confirm with the
+  user before proceeding. If the named phase is already `completed`,
+  stop and ask whether to re-run or pick a different phase.
 
 ## Ordering
 

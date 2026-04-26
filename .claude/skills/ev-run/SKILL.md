@@ -8,7 +8,8 @@ description: >-
   user wants to make progress on a project without picking the phase
   by hand.
 argument-hint: "<project-slug-or-path> [<free-form message>]"
-allowed-tools: Read, Bash(git:*), Bash(ls:*), Skill
+disable-model-invocation: true
+allowed-tools: Read, Skill
 ---
 
 # /ev-run

@@ -6,7 +6,7 @@ description: >-
   records the session-saved event. Use at session end when there is state
   worth handing off to the next session.
 argument-hint: "<project-slug-or-path>"
-allowed-tools: Read, Write, Bash, Skill
+allowed-tools: Read, Write, Bash(date:*), Skill
 ---
 
 # /trout-save-session

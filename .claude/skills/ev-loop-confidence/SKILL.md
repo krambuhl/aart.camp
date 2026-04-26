@@ -278,6 +278,18 @@ loop:
   The loop itself never writes to `learnings/`.
 - **No emojis.**
 
+## Output to router
+
+On any termination — phase close, closed gate, or escalation — return:
+
+- **Status**: completed | gated | escalated | aborted
+- **Phase**: `<N>` `<name>`
+- **Tiers run**: list with counts (e.g., `1: 3 files, 2: 7 files`)
+- **Last checkin**: `<NN>`
+- **Last PR update**: `<url>` or `none`
+- **Reason** (if not completed): one-line cause
+- **Next action**: what the router or user should do next
+
 ## Failure modes
 
 - Pre-flight fails → stop, report, do not proceed.

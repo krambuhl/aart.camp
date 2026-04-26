@@ -2,10 +2,11 @@
 name: trout-pr-respond
 description: >-
   Fetch PR comments and reviews, classify them, and produce a response plan
-  that the originating loop can execute. Does not write code or reply on
-  GitHub. Use when the user wants to address feedback on an open project
-  PR.
+  that the originating loop can execute. Internal — invoked by /ev-loop-*
+  skills when feedback arrives on a project PR. Produces a plan; does not
+  execute it. Does not write code or reply on GitHub.
 argument-hint: "<project-slug-or-path> <pr-number>"
+user-invocable: false
 allowed-tools: Read, Write, Glob, Bash(ls:*), Bash(git branch:*), mcp__github__pull_request_read, mcp__github__list_pull_requests
 ---
 

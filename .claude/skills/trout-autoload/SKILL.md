@@ -2,11 +2,12 @@
 name: trout-autoload
 description: >-
   Load a project's MANIFEST.md, config.md, and most recent session handoff,
-  then return a compact orientation briefing. Called at session start and
-  by /ev-run before routing. Use when Claude needs to resume work on an
-  existing project and establish shared context.
+  then return a compact orientation briefing. Internal substrate skill —
+  invoked by /ev-run and other /trout-* skills, not directly by the user.
+  Use when Claude needs to resume work on an existing project.
 argument-hint: "<project-slug-or-path>"
-allowed-tools: Read, Bash(ls:*), Bash(git branch:*), Bash(git status:*)
+user-invocable: false
+allowed-tools: Read, Bash(ls:*), Bash(git branch:*)
 ---
 
 # /trout-autoload

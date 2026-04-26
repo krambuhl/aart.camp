@@ -1,12 +1,12 @@
 ---
 name: trout-autosave
 description: >-
-  Write a structured state update to a project's MANIFEST.md. Called after
-  each unit of work, at phase boundaries, and on PR events. Mechanical, not
-  narrative — appends one event row and refreshes the summary sections.
-  Use when the caller needs ground-truth state persisted to disk in the
-  project substrate format.
+  Write a structured state update to a project's MANIFEST.md. Internal
+  substrate primitive — invoked by /trout-* loops and /ev-* skills after
+  each unit of work, at phase boundaries, and on PR events. Mechanical,
+  not narrative — appends one event row and refreshes the summary sections.
 argument-hint: "<project-slug-or-path> [--init] [--event=<name>] [--detail=<text>] [--current-state=<text>] [--phase-update=<n>:<status>[:<k=v>]*]"
+user-invocable: false
 allowed-tools: Read, Edit, Write, Bash(date:*)
 ---
 
@@ -130,6 +130,8 @@ and stop without writing.
 
 ## Failure modes
 
+- No arguments → print `autosave-error: missing project identifier`
+  followed by the argument hint, then stop.
 - Project not found → suggest `/trout-plan` or list matching candidates.
 - Multiple matches → print candidates; caller must retry with a fuller slug.
 - Archived project → refuse to write.

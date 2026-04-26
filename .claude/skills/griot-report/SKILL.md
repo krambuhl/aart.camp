@@ -5,7 +5,8 @@ description: >-
   instrumentation files. Use ONLY when explicitly invoked via
   /griot-report. Read-only — does not modify any state.
 user-invocable: true
-allowed-tools: Bash, Read
+disable-model-invocation: true
+allowed-tools: Bash(npm run learnings:report), Read
 ---
 
 # Learnings Report
