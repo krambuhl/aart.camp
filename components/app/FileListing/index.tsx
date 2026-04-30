@@ -23,7 +23,7 @@ export function FileListing({ files, ...props }: FileListingProps) {
   }, [files]);
 
   return (
-    <Stack alignment="start" gap={{ xs: tokens.space.x6, sm: tokens.space.x12 }} {...props}>
+    <Stack alignment="start" gap={{ xs: tokens.space.x12, sm: tokens.space.x16 }} {...props}>
       {fileList ? (
         fileList
           .filter(({ name }) => name !== 'index')
