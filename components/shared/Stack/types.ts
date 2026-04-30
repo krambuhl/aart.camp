@@ -5,7 +5,7 @@ import type { ValueOrResponsive } from '@/utilities/opaque-responsive';
 
 export type StackDirection = 'vertical' | 'horizontal';
 export type StackAlignment = 'start' | 'center' | 'end' | 'baseline';
-export type StackJustify = 'start' | 'center' | 'end';
+export type StackJustify = 'start' | 'center' | 'end' | 'between' | 'around';
 
 export interface StackProps extends CoreComponent {
   as?: 'div' | 'section' | 'header' | 'footer';

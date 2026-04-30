@@ -1,9 +1,17 @@
 .root {
   display: flex;
   flex-direction: column;
+  min-height: 100dvh;
   width: 100%;
 }
 
 .main {
+  flex-grow: 1;
   width: 100%;
+}
+
+.centered {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }

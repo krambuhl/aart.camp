@@ -5,6 +5,7 @@ import type { SizeToken } from '@/types/tokens';
 export interface AppLayoutProps extends CoreComponent {
   width?: SizeToken;
   topBar?: ReactNode;
+  centerContent?: boolean;
   showHeader?: boolean;
   showFooter?: boolean;
   menu?: React.ReactNode;
