@@ -1,5 +1,5 @@
 'use client';
-import type { P5CanvasInstance } from '@p5-wrapper/react';
+import type p5 from 'p5';
 import { Sketch } from '@/components/app/Sketch';
 import { Area } from '@/components/shared/Area';
 import { tokens } from '@/tokens';
@@ -27,7 +27,7 @@ export default function Output() {
   return (
     <Area width={tokens.size.x768}>
       <Sketch
-        setup={(p: P5CanvasInstance, store) => {
+        setup={(p: p5, store) => {
           p.createCanvas(canvasSize, canvasSize, p.WEBGL);
           p.colorMode(p.HSL);
 

@@ -1,9 +1,9 @@
-import type { P5CanvasInstance } from '@p5-wrapper/react';
+import type p5 from 'p5';
 import type { CoreComponent } from '@/types/core';
 
 export interface SketchProps extends Omit<CoreComponent, 'children'> {
-  setup: (p: P5CanvasInstance, store: any) => void;
-  draw: (p: P5CanvasInstance, store: any) => void;
+  setup: (p: p5, store: any) => void;
+  draw: (p: p5, store: any) => void;
 
   aspectRatio?: number;
 }

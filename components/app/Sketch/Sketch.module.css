@@ -1,7 +1,3 @@
-.loading {
-  align-self: center;
-}
-
 .sketch {
   aspect-ratio: var(--sketch-aspect-ratio, 1);
   display: flex;
