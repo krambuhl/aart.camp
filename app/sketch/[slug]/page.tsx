@@ -2,11 +2,8 @@ import type { Metadata } from 'next';
 
 import { notFound } from 'next/navigation';
 
-import { PageHeader } from '@/components/shared/PageHeader';
-import { Stack } from '@/components/shared/Stack';
 import { constants } from '@/data';
 import { registry } from '@/sketches/registry';
-import { tokens } from '@/tokens';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -33,10 +30,5 @@ export default async function SketchPage({ params }: Props) {
 
   const SketchComponent = entry.component;
 
-  return (
-    <Stack gap={tokens.space.x24}>
-      <PageHeader title={entry.meta.title} date={entry.meta.date} />
-      <SketchComponent />
-    </Stack>
-  );
+  return <SketchComponent />;
 }

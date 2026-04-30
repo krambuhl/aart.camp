@@ -11,6 +11,7 @@
     .alignment-start-$(breakpointName) { align-items: flex-start; }
     .alignment-center-$(breakpointName) { align-items: center; }
     .alignment-end-$(breakpointName) { align-items: flex-end; }
+    .alignment-baseline-$(breakpointName) { align-items: baseline; }
 
     .justify-start-$(breakpointName) { justify-content: flex-start; }
     .justify-center-$(breakpointName) { justify-content: center; }

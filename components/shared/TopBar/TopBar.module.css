@@ -1,0 +1,7 @@
+.root {
+  padding: token("space.x12") token("space.x24");
+}
+
+.brand:hover {
+  text-decoration: underline;
+}

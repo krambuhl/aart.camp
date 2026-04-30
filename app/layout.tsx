@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 
-import { AppLayout } from '@/components/shared/AppLayout';
 import { constants } from '@/data';
 
 import 'the-new-css-reset/css/reset.css';
@@ -15,9 +14,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
-        <AppLayout>{children}</AppLayout>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

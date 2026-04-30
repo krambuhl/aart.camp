@@ -4,7 +4,7 @@ import type { SpaceToken } from '@/types/tokens';
 import type { ValueOrResponsive } from '@/utilities/opaque-responsive';
 
 export type StackDirection = 'vertical' | 'horizontal';
-export type StackAlignment = 'start' | 'center' | 'end';
+export type StackAlignment = 'start' | 'center' | 'end' | 'baseline';
 export type StackJustify = 'start' | 'center' | 'end';
 
 export interface StackProps extends CoreComponent {
