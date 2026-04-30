@@ -247,4 +247,24 @@ export const registry: SketchEntry[] = [
     meta: { title: 'Robot Thought 11 — Gyre', date: '2025-09-02T00:00:00' },
     component: dynamic(() => import('./52-robot-thought-11')),
   },
+  {
+    slug: '53-tsuru',
+    meta: { title: 'Tsuru — JAL Crane', date: '2026-04-30T00:00:00' },
+    component: dynamic(() => import('./53-tsuru')),
+  },
+  {
+    slug: '54-haneda-night',
+    meta: { title: 'Haneda Night — Neon Descent', date: '2026-04-30T00:00:00' },
+    component: dynamic(() => import('./54-haneda-night')),
+  },
+  {
+    slug: '55-omakase',
+    meta: { title: 'Omakase', date: '2026-04-30T00:00:00' },
+    component: dynamic(() => import('./55-omakase')),
+  },
+  {
+    slug: '56-engimono',
+    meta: { title: 'Engimono — Good Luck', date: '2026-04-30T00:00:00' },
+    component: dynamic(() => import('./56-engimono')),
+  },
 ];
