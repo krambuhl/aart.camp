@@ -3,56 +3,64 @@
 import { Sketch } from '@/components/app/Sketch';
 import { Area } from '@/components/shared/Area';
 import { tokens } from '@/tokens';
-import type { P5Color } from '@/types/p5';
 
 export const meta = {
   title: 'Omakase',
   date: '2026-04-30T00:00:00',
 };
 
-// Sushi platter as a Voronoi-ish cluster of color regions. Each "piece"
-// is a drifting seed in cell-space; cells take the color of their
-// nearest seed. Slow drift = chef rearranging in front of you.
+// Sushi platter as a Voronoi-ish cluster of color regions. Sixteen
+// seeds drift slowly on a 4×4 grid; each seed cycles through the
+// palette with a phase offset, so the whole plate morphs without ever
+// repeating the same arrangement quickly. The plate itself responds
+// to the wall-clock time of day — bright rice at noon, dark teak at
+// midnight, with golden warmth around dawn and dusk.
 
-const bgColor: P5Color = [250 / 255, 245 / 255, 235 / 255, 255]; // rice/plate
 const canvasSize = 1280;
 const padding = 40;
 const gutter = -0.5;
 const steps = 61;
 const cell = (canvasSize - padding * 2) / steps;
 
-// sushi palette
+// Even palette of fresh tones — dropped nori and soy from earlier so
+// regions sit at similar luminance.
 const Salmon = '#F58A6F';
 const Tuna = '#B22A2A';
 const Hamachi = '#F2D4A0';
 const Tamago = '#F5C242';
 const Ikura = '#FF7A3D';
 const Wasabi = '#90B14C';
-const Nori = '#1F3327';
-const Soy = '#3E2412';
-const Rice = '#FAF5EB';
+const palette = [Salmon, Tuna, Hamachi, Tamago, Ikura, Wasabi];
 
-const palette = [Salmon, Tuna, Hamachi, Tamago, Ikura, Wasabi, Nori, Soy, Rice];
+// Sixteen seeds on an even 4×4 grid, all with identical drift amplitude
+// and phase-staggered timing. Even spatial scale + even color rotation.
+const seedCount = 16;
+const driftAmp = 0.14;
+const seeds = Array.from({ length: seedCount }, (_, i) => {
+  const col = i % 4;
+  const row = Math.floor(i / 4);
+  return {
+    ax: (col + 0.5) / 4,
+    ay: (row + 0.5) / 4,
+    phase: (i / seedCount) * Math.PI * 2,
+  };
+});
 
-// Sixteen drifting seeds in normalized cell-space — packed plate.
-const seeds = [
-  { ax: 0.14, ay: 0.18, dx: 0.05, dy: 0.06, color: 0 }, // salmon
-  { ax: 0.36, ay: 0.12, dx: 0.06, dy: 0.05, color: 1 }, // tuna
-  { ax: 0.62, ay: 0.18, dx: 0.05, dy: 0.07, color: 2 }, // hamachi
-  { ax: 0.86, ay: 0.22, dx: 0.06, dy: 0.05, color: 3 }, // tamago
-  { ax: 0.18, ay: 0.4, dx: 0.07, dy: 0.05, color: 4 }, // ikura
-  { ax: 0.42, ay: 0.42, dx: 0.05, dy: 0.07, color: 5 }, // wasabi
-  { ax: 0.66, ay: 0.4, dx: 0.06, dy: 0.06, color: 6 }, // nori
-  { ax: 0.88, ay: 0.46, dx: 0.05, dy: 0.06, color: 0 }, // salmon
-  { ax: 0.16, ay: 0.66, dx: 0.06, dy: 0.05, color: 7 }, // soy
-  { ax: 0.4, ay: 0.7, dx: 0.05, dy: 0.06, color: 1 }, // tuna
-  { ax: 0.62, ay: 0.66, dx: 0.07, dy: 0.06, color: 3 }, // tamago
-  { ax: 0.84, ay: 0.7, dx: 0.05, dy: 0.07, color: 5 }, // wasabi
-  { ax: 0.24, ay: 0.88, dx: 0.06, dy: 0.05, color: 2 }, // hamachi
-  { ax: 0.5, ay: 0.9, dx: 0.07, dy: 0.05, color: 6 }, // nori
-  { ax: 0.76, ay: 0.88, dx: 0.05, dy: 0.06, color: 4 }, // ikura
-  { ax: 0.5, ay: 0.5, dx: 0.08, dy: 0.07, color: 1 }, // tuna (center)
-];
+function lerpPalette(p: any, pal: string[], t: number) {
+  const wrapped = ((t % 1) + 1) % 1;
+  const scaled = wrapped * pal.length;
+  const i0 = Math.floor(scaled) % pal.length;
+  const i1 = (i0 + 1) % pal.length;
+  const frac = scaled - Math.floor(scaled);
+  return p.lerpColor(p.color(pal[i0]), p.color(pal[i1]), frac);
+}
+
+// Wall-clock time of day mapped to 0 (midnight) → 1 (noon), sinusoidal.
+function timeOfDayBrightness() {
+  const now = new Date();
+  const h = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
+  return 0.5 + 0.5 * Math.cos((h / 24 - 0.5) * Math.PI * 2);
+}
 
 export default function Output() {
   return (
@@ -64,16 +72,25 @@ export default function Output() {
           p.noStroke();
         }}
         draw={(p) => {
-          p.clear(...bgColor);
-          const loopFrames = 300;
+          // Long loop — 30 seconds at 60fps. Plate keeps changing for
+          // a long time before any pattern repeats.
+          const loopFrames = 1800;
           const u = (p.frameCount % loopFrames) / loopFrames;
           const time = u * Math.PI * 2;
 
-          // animate seed positions in a closed loop (lissajous)
+          // Time of day controls the plate and the overall light.
+          const tod = timeOfDayBrightness();
+          const dayPlate = p.color('#FAF5EB'); // bright rice
+          const nightPlate = p.color('#15110D'); // dark teak
+          const plate = p.lerpColor(nightPlate, dayPlate, tod);
+          p.background(plate);
+
+          // Each seed: drift on a lissajous (integer time multipliers so
+          // the loop is seamless), color phase rotates over the loop.
           const placed = seeds.map((s, i) => ({
-            x: s.ax + s.dx * Math.cos(time + i * 0.7),
-            y: s.ay + s.dy * Math.sin(time * 1.1 + i * 0.5),
-            color: s.color,
+            x: s.ax + driftAmp * Math.cos(time + s.phase),
+            y: s.ay + driftAmp * Math.sin(time * 2 + s.phase * 1.3),
+            colorT: u + i / seedCount,
           }));
 
           for (let fy = 0; fy < steps; fy++) {
@@ -81,7 +98,7 @@ export default function Output() {
               const nx = (fx + 0.5) / steps;
               const ny = (fy + 0.5) / steps;
 
-              // find nearest seed
+              // nearest seed (Voronoi)
               let best = 0;
               let bestDist = Infinity;
               for (let i = 0; i < placed.length; i++) {
@@ -94,11 +111,14 @@ export default function Output() {
                 }
               }
 
-              // crisp regions, subtle edge softening at boundary
-              const c = p.color(palette[placed[best].color]);
+              // morphing color: lerp through palette by seed's phase
+              let c = lerpPalette(p, palette, placed[best].colorT);
 
-              // rice background pokes through near edges between regions
-              // (find second-nearest, blend if very close to first)
+              // time-of-day tint: at night, blend toward plate
+              const dimmed = p.lerpColor(plate, c, 0.35 + tod * 0.6);
+              c = dimmed;
+
+              // thin plate seam at region boundaries
               let secondDist = Infinity;
               for (let i = 0; i < placed.length; i++) {
                 if (i === best) continue;
@@ -108,8 +128,8 @@ export default function Output() {
                 if (d < secondDist) secondDist = d;
               }
               const edge = Math.sqrt(secondDist) - Math.sqrt(bestDist);
-              const seam = edge < 0.012 ? 0.5 : 1; // thin rice seam
-              const blended = p.lerpColor(p.color(Rice), c, seam);
+              const seamMix = edge < 0.012 ? 0.45 : 1;
+              const blended = p.lerpColor(plate, c, seamMix);
 
               p.fill(blended);
               p.rect(fx * cell + padding, fy * cell + padding, cell - gutter, cell - gutter);

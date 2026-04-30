@@ -45,7 +45,9 @@ export default function Output() {
         }}
         draw={(p) => {
           p.clear(...bgColor);
-          const loopFrames = 300;
+          // 30-second loop. All time multipliers are integers so the
+          // mandala returns to its exact starting frame at u = 1.
+          const loopFrames = 1800;
           const u = (p.frameCount % loopFrames) / loopFrames;
           const time = u * Math.PI * 2;
 
@@ -57,8 +59,8 @@ export default function Output() {
           // 6 concentric rings; alternate rings spin opposite directions.
           // The whole mandala also breathes radially.
           const rings = 6;
-          const breath = 0.5 + 0.5 * Math.cos(time);
-          const ringShift = 0.06 * Math.sin(time * 2); // ring boundaries pulse
+          const breath = 0.5 + 0.5 * Math.cos(time * 4); // 4 breaths per loop
+          const ringShift = 0.06 * Math.sin(time * 6); // 6 ring pulses per loop
 
           for (let fy = 0; fy < steps; fy++) {
             for (let fx = 0; fx < steps; fx++) {
@@ -75,8 +77,8 @@ export default function Output() {
               const dir = ringIdx % 2 === 0 ? 1 : -1;
               const petals = 6 + ringIdx * 2;
 
-              // petal pattern with strong rotation
-              const petal = (Math.cos(petals * theta + dir * time * 3 + ringIdx * 0.7) + 1) * 0.5;
+              // petal pattern with strong rotation (12 petal-shifts per loop)
+              const petal = (Math.cos(petals * theta + dir * time * 12 + ringIdx * 0.7) + 1) * 0.5;
 
               // ring band, modulated by breath so the mandala swells
               const band = Math.sin(ringPhase * Math.PI) ** (1 + 0.5 * (1 - breath));
@@ -89,7 +91,7 @@ export default function Output() {
                 : intensity * 0.55; // stays in crimson territory
 
               // shimmer: a slow global hue wash riding over the mandala
-              const shimmer = 0.08 * Math.sin(time + theta * 2 + rn * 4);
+              const shimmer = 0.08 * Math.sin(time * 4 + theta * 2 + rn * 4);
 
               p.fill(lerpPalette(p, palette, Math.max(0, Math.min(1, tBase + shimmer))));
               p.rect(fx * cell + padding, fy * cell + padding, cell - gutter, cell - gutter);

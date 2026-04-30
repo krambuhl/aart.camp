@@ -11,9 +11,9 @@ export const meta = {
   date: '2026-04-30T00:00:00',
 };
 
-// Landing approach into Tokyo, after dark. The city laid out below as
-// noise-driven density, scattered with the flicker of neon signs and
-// the steady pulse of a runway streak.
+// Landing approach into Tokyo, after dark — beer-drunk at 2am. The
+// city below isn't laid out neatly; it warps. Coordinates pulse, the
+// grid itself ripples, the runway snakes instead of running straight.
 
 const bgColor: P5Color = [4 / 255, 6 / 255, 18 / 255, 255]; // ink-blue night
 const canvasSize = 1280;
@@ -52,50 +52,69 @@ export default function Output() {
         }}
         draw={(p) => {
           p.clear(...bgColor);
-          const loopFrames = 240;
+          // 30-second loop. All time multipliers are integers so the warp
+          // returns to its starting frame exactly at u = 1.
+          const loopFrames = 1800;
           const u = (p.frameCount % loopFrames) / loopFrames;
           const time = u * Math.PI * 2;
 
           const cityPalette = ['#040612', BlueVelvet, DeepSea, Fjord];
           const neonPalette = [Magenta, SoftPink, Cyan, YellowCab];
 
-          // runway streak position (horizontal band, slightly off-center)
-          const runwayY = Math.floor(steps * 0.62);
-          const runwayPulse = 0.5 + 0.5 * Math.cos(time * 2);
+          // Warp amplitudes pulse fast — vision swimming in and out of focus.
+          const warpAmp = 0.7 + 0.5 * Math.sin(time * 30);
+          const swayAmp = 0.4 + 0.3 * Math.cos(time * 24);
+
+          // Pixel-level jitter for the grid itself — cells visibly ripple.
+          const jitterPx = cell * 0.35;
+
+          // Snake runway: y position wobbles along fx, plus shifts over time.
+          const runwayBase = Math.floor(steps * 0.62);
+          const runwayPulse = 0.5 + 0.5 * Math.cos(time * 30);
 
           for (let fy = 0; fy < steps; fy++) {
             for (let fx = 0; fx < steps; fx++) {
-              // gentle perlin "city density" + slow drift
-              const nx = fx * 0.07 + Math.cos(time) * 0.3;
-              const ny = fy * 0.07 + Math.sin(time) * 0.3;
-              const density = p.noise(nx, ny);
+              // Domain warp — each cell samples noise at a wavily-displaced point.
+              const wx = fx * 0.07 + warpAmp * Math.sin(time * 20 + fy * 0.22);
+              const wy = fy * 0.07 + warpAmp * Math.cos(time * 24 + fx * 0.18);
 
-              // base city color — darkest where density is low, deeper blues otherwise
+              // Big city density + a faster flicker layer mixed in.
+              const big = p.noise(wx, wy);
+              const fast = p.noise(wx * 2.4 + 13, wy * 2.4 + 7 + time * 16);
+              const density = big * 0.7 + fast * 0.3;
+
+              // base city color — darkest where density is low
               let c = lerpPalette(p, cityPalette, density);
 
-              // glow pockets: where density > threshold, splash neon
-              if (density > 0.58) {
-                const phase = (fx * 0.21 + fy * 0.13 + time * 0.5) % 1;
-                const neon = lerpPalette(p, neonPalette, phase);
-                const mix = Math.min(1, (density - 0.58) * 3);
-                c = p.lerpColor(c, neon, mix * 0.85);
+              // glow pockets bleed wider, neon hue scrolls
+              if (density > 0.5) {
+                const phase = (fx * 0.21 + fy * 0.13 + time * 12 + Math.sin(time * 18 + fy * 0.2) * 0.3) % 1;
+                const neon = lerpPalette(p, neonPalette, (phase + 1) % 1);
+                const mix = Math.min(1, (density - 0.5) * 2.5);
+                c = p.lerpColor(c, neon, mix * 0.9);
               }
 
-              // sparkle: a few cells flick on/off per frame
-              const sparkle = hash2(fx + Math.floor(time * 4), fy);
-              if (sparkle > 0.985) {
-                c = p.color('#FFFFFF');
+              // sparkle: floor(u*N) cycles cleanly 0..N-1 over the loop
+              const sparkle = hash2(fx + Math.floor(u * 150), fy + Math.floor(u * 90));
+              if (sparkle > 0.982) {
+                const tint = sparkle > 0.992 ? p.color('#FFFFFF') : p.color(neonPalette[(fx + fy) % neonPalette.length]);
+                c = tint;
               }
 
-              // runway streak: bright cells along a horizontal line, pulsing
-              if (fy === runwayY && fx > steps * 0.18 && fx < steps * 0.82) {
-                const along = (fx - steps * 0.18) / (steps * 0.64);
+              // snake runway — Y bends with fx and time
+              const snakeY = runwayBase + Math.round(2.6 * Math.sin(fx * 0.22 + time * 30));
+              if (fy === snakeY && fx > steps * 0.16 && fx < steps * 0.84) {
+                const along = (fx - steps * 0.16) / (steps * 0.68);
                 const taper = Math.sin(along * Math.PI);
-                c = p.lerpColor(c, p.color(YellowCab), Math.min(1, taper * (0.4 + runwayPulse * 0.6)));
+                c = p.lerpColor(c, p.color(YellowCab), Math.min(1, taper * (0.45 + runwayPulse * 0.55)));
               }
+
+              // visual jitter — the grid ripples like heat / a tipsy frame.
+              const jitX = jitterPx * Math.sin(time * 24 + fy * 0.32);
+              const jitY = jitterPx * Math.cos(time * 20 + fx * 0.28) * (0.4 + 0.6 * swayAmp);
 
               p.fill(c);
-              p.rect(fx * cell + padding, fy * cell + padding, cell - gutter, cell - gutter);
+              p.rect(fx * cell + padding + jitX, fy * cell + padding + jitY, cell - gutter, cell - gutter);
             }
           }
         }}
