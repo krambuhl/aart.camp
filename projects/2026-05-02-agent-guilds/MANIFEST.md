@@ -4,7 +4,7 @@
 **Started**: 2026-05-02
 **Status**: active
 **Current branch**: ev.agent-guilds.substrate-foundations
-**Latest checkin**: checkins/ev.agent-guilds.substrate-foundations/01.md
+**Latest checkin**: checkins/ev.agent-guilds.substrate-foundations/02.md
 
 ## Strategy
 
@@ -14,7 +14,7 @@ Extract `guild-*` agent-panel substrate alongside trout/griot, thin ev-loop into
 
 | # | Name | Status | Branch | Latest checkin | PR |
 |---|------|--------|--------|----------------|----|
-| 1 | Substrate foundations | in-progress | ev.agent-guilds.substrate-foundations | 01 | — |
+| 1 | Substrate foundations | in-progress | ev.agent-guilds.substrate-foundations | 02 | — |
 | 2 | Antagonist evaluator panel | not-started | — | — | — |
 | 3 | Whiteboard mechanism + engineers | not-started | — | — | — |
 | 4 | Domain pairs | not-started | — | — | — |
@@ -28,7 +28,7 @@ Extract `guild-*` agent-panel substrate alongside trout/griot, thin ev-loop into
 
 ## Current state
 
-Phase 1 unit 1 of 4 complete: evaluator-base.md and evaluator-contract-fit.md introduced; evaluator.md preserved as bridge. Evaluator approved verdict. Awaiting decision: commit per-deliverable or batch at phase close, then proceed to unit 2 (author guild-spawn).
+Phase 1 unit 2 of 4 complete: guild-spawn substrate skill authored at .claude/skills/guild-spawn/SKILL.md. Style-neutral parallel-spawn primitive with three inputs (agents, brief, per_agent_context). Iteration 2 of 3 — initial draft dropped per_agent_context on YAGNI grounds; evaluator flagged contract-ask-drift; iteration restored the field. Approved. Two commits on the branch (a8f1cfd unit 1, 226745b unit 2). Next: unit 3 (guild-validate, composes guild-spawn).
 
 ## Events
 
@@ -36,3 +36,4 @@ Phase 1 unit 1 of 4 complete: evaluator-base.md and evaluator-contract-fit.md in
 |------|-------|--------|
 | 2026-05-02 18:08 | project-initialized | — |
 | 2026-05-02 19:31 | checkin-created | 01 on ev.agent-guilds.substrate-foundations |
+| 2026-05-03 09:18 | checkin-created | 02 on ev.agent-guilds.substrate-foundations |
