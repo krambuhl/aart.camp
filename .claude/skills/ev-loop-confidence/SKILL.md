@@ -17,16 +17,18 @@ Execute one phase of a project as a confidence loop: tiered transforms,
 ratcheting from small/safe to large/risky, with an evaluator verdict per
 unit and a tactical retro per tier.
 
-**Composes**: `/trout-autosave`, `/trout-pull-request`, evaluator.
+**Composes**: `/trout-autosave`, `/trout-pull-request`, `/guild-validate`.
 **Does not compose**: other loops. Peer loops are invoked by the router,
 not by each other.
 
 **Format reference**: `projects/CONVENTIONS.md` (repo-relative).
 
-Invocations like `/trout-autosave` and `/trout-pull-request` below
-mean `Skill(skill: trout-autosave, args: "…")` — the Skill tool is
-how loops compose substrate skills. The `evaluator` subagent
-is spawned via the Agent tool with `subagent_type: evaluator`.
+Invocations like `/trout-autosave`, `/trout-pull-request`, and
+`/guild-validate` below mean `Skill(skill: <name>, args: "…")` — the
+Skill tool is how loops compose substrate skills. Antagonist evaluation
+runs through `/guild-validate`, which spawns evaluator agents in
+parallel via `/guild-spawn`; the loop itself never calls the `Agent`
+tool directly.
 
 ## Arguments
 
@@ -173,16 +175,22 @@ For each unit inside a tier:
    Contract section — Execution/Scope/Changes/Evaluator verdict come
    later.
 2. **Execute.** Do the transform on the batch. Keep to scope.
-3. **Evaluate.** Spawn the `evaluator` subagent via the Agent tool with:
-   - `description`: "Evaluate unit <NN> (<tier>) for <phase>"
-   - `subagent_type`: `evaluator`
-   - `prompt`: the evaluation packet — the Contract section verbatim,
+3. **Evaluate.** Invoke `/guild-validate` via the `Skill` tool to run
+   the antagonist panel against this unit. v1 panels are single-
+   evaluator lists; Phase 2+ phases will name larger panels in PLAN.md.
+   - `agents`: `evaluator-contract-fit`
+   - `packet`: the evaluation packet — the Contract section verbatim,
      plus the artifact (list of files changed and a summary of the
      diff), plus the original ask (the phase description).
+   The skill returns a structured verdict (`approved` | `flagged` |
+   `flagged-conflict`) with `blocking_findings`, `advisory_findings`,
+   `cli_runs`, and `conflicts` lists. See
+   `.claude/agents/evaluator-base.md` for the per-evaluator verdict
+   shape that `/guild-validate` parses and aggregates.
 4. **Iterate or commit.**
    - If flagged: update the checkin Execution section with the remedy
-     taken, re-spawn the evaluator. Maximum 2 re-iterations per unit —
-     on the third flag, stop and escalate to the user.
+     taken, re-invoke `/guild-validate`. Maximum 2 re-iterations per
+     unit — on the third flag, stop and escalate to the user.
    - If approved: finalize the checkin (Execution, Scope, Changes,
      Evaluator verdict = approved, Notes for the PR). Check off the
      inventory items.

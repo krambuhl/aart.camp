@@ -17,15 +17,17 @@ Execute one phase of a project as a human-paired loop: discrete
 deliverables, per-deliverable contract and checkpoint. The human drives
 order when ordering is free; the loop keeps the substrate honest.
 
-**Composes**: `/trout-autosave`, `/trout-pull-request`, evaluator.
+**Composes**: `/trout-autosave`, `/trout-pull-request`, `/guild-validate`.
 **Does not compose**: other loops.
 
 **Format reference**: `projects/CONVENTIONS.md` (repo-relative).
 
-Invocations like `/trout-autosave` and `/trout-pull-request` below
-mean `Skill(skill: trout-autosave, args: "…")` — the Skill tool is
-how loops compose substrate skills. The `evaluator` subagent
-is spawned via the Agent tool with `subagent_type: evaluator`.
+Invocations like `/trout-autosave`, `/trout-pull-request`, and
+`/guild-validate` below mean `Skill(skill: <name>, args: "…")` — the
+Skill tool is how loops compose substrate skills. Antagonist evaluation
+runs through `/guild-validate`, which spawns evaluator agents in
+parallel via `/guild-spawn`; the loop itself never calls the `Agent`
+tool directly.
 
 ## Arguments
 
@@ -73,15 +75,21 @@ For each deliverable (picked per the ordering rule):
 2. **Execute.** Do the work. For creative or exploratory deliverables,
    pair with the user — ask when you hit a fork, report when you hit a
    dead end, don't charge ahead.
-3. **Evaluate.** Spawn the `evaluator` subagent via the Agent tool with
-   `subagent_type: evaluator`. The prompt is the packet: the Contract
-   section verbatim, the artifact (files changed + Execution section),
-   and the original ask (the deliverable's line from PLAN.md). Expect
-   a reply that begins `VERDICT: approved` or `VERDICT: flagged` with
-   specific reasons (see `.claude/agents/evaluator.md` for the shape).
+3. **Evaluate.** Invoke `/guild-validate` via the `Skill` tool to run
+   the antagonist panel against this unit. v1 panels are single-
+   evaluator lists; Phase 2+ phases will name larger panels in PLAN.md.
+   - `agents`: `evaluator-contract-fit`
+   - `packet`: the Contract section verbatim, the artifact (files
+     changed + Execution section), and the original ask (the
+     deliverable's line from PLAN.md).
+   The skill returns a structured verdict (`approved` | `flagged` |
+   `flagged-conflict`) with `blocking_findings`, `advisory_findings`,
+   `cli_runs`, and `conflicts` lists. See
+   `.claude/agents/evaluator-base.md` for the per-evaluator verdict
+   shape that `/guild-validate` parses and aggregates.
 4. **Iterate or commit.**
-   - Flagged: address the specific reasons, re-spawn. Up to 2 retries
-     (3 evaluator runs total).
+   - Flagged: address the specific reasons, re-invoke `/guild-validate`.
+     Up to 2 retries (3 panel runs total).
    - Approved: finalize the checkin.
 5. **Autosave.** `/trout-autosave ... --event=checkin-created`.
 6. **Checkpoint.** Free mode: after every deliverable. Sequential mode:
