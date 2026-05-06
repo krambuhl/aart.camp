@@ -155,7 +155,8 @@ overview) or compress the body harder.
 <!-- project-pr-checkins: <comma-separated NN list> -->
 
 > [!NOTE]
-> This PR is tracked by the project substrate. Full acceptance
+> Part of the **<project title>** project — see
+> [PLAN.md](projects/<slug>/PLAN.md) for context. Full acceptance
 > criteria, scope, execution, and evaluator verdict live in the
 > linked checkin file(s) in the Reference / Units section below —
 > the body is intentionally a summary.
@@ -187,13 +188,16 @@ Tracked by project substrate: <path to MANIFEST.md> — checkin{s} <NN list>
 The marker MUST be the first line of the body. It is how staleness is
 detected on the next invocation.
 
-The `> [!NOTE]` callout is required and verbatim — it's how reviewers
-unfamiliar with the substrate find out the body's brevity is intentional
-and the depth is one click away. Keep its wording stable so reviewers
-who read multiple substrate-tracked PRs recognize the pattern. If
-adopting other GitHub alert types in the future (`> [!WARNING]`,
-`> [!CAUTION]`), they go in `## Notes`, not as a replacement for the
-substrate-orientation note.
+The `> [!NOTE]` callout is required. The two templated slots — project
+title and `projects/<slug>/PLAN.md` link — are sourced from the project
+MANIFEST's `# Project: <title>` line and the resolved slug; the rest of
+the wording is fixed. The structural framing ("body is intentionally a
+summary") is how reviewers unfamiliar with the substrate find out the
+body's brevity is intentional and the depth is one click away. Keep the
+structural wording stable so reviewers who read multiple substrate-
+tracked PRs recognize the pattern. If adopting other GitHub alert types
+in the future (`> [!WARNING]`, `> [!CAUTION]`), they go in `## Notes`,
+not as a replacement for the substrate-orientation note.
 
 **Section caps are hard.** If the source material wants to balloon a
 section, that's a sign the PR is doing too much — split it, or compress
@@ -299,11 +303,15 @@ loop owns commits; the human owns merges.
    600 words is signaling that the unit is doing too much or that the
    author is over-explaining.
 8. **The substrate-orientation `> [!NOTE]` callout is always present.**
-   It sits between the marker and `## Motivation`, verbatim per § 4.2.
-   Its job is to onboard reviewers unfamiliar with the substrate to the
-   "body is a summary, depth is one click away" convention. Removing or
-   rewording it is a regression — the wording stability is what makes
-   the pattern recognizable across substrate-tracked PRs.
+   It sits between the marker and `## Motivation`. Two slots template in
+   per § 4.2: project title (from MANIFEST `# Project: <title>`) and
+   PLAN.md link (`projects/<slug>/PLAN.md`). The structural wording is
+   fixed — its job is to onboard reviewers unfamiliar with the substrate
+   to the "body is a summary, depth is one click away" convention.
+   Removing the callout, restructuring the framing, or dropping the
+   templated project context is a regression — both the wording
+   stability AND the project context are what make the pattern
+   recognizable and useful.
 
 ## Report
 

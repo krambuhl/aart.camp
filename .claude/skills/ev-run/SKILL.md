@@ -37,6 +37,37 @@ Treat the first whitespace-delimited token of `$ARGUMENTS` as the
 project slug/path. Everything after it (if any) is the free-form
 message. If `$ARGUMENTS` is empty, stop and ask for a slug.
 
+### 0.5. Sync git state
+
+Refresh git state before orientation so the autoload briefing reflects
+what's actually merged on the remote — not a stale local snapshot.
+This is the single point in the substrate where the working tree gets
+synced; downstream loops trust the result.
+
+1. `git fetch origin` — always; never modifies the working tree.
+2. If currently on the base branch (typically `main`):
+   `git pull --ff-only origin <base>`. If non-fast-forward (local has
+   commits not on origin), stop and surface the error rather than
+   auto-resolving — local main with unexpected commits is suspicious.
+3. If currently on a feature branch: do not auto-rebase or auto-checkout.
+   If `origin/<base>` has new commits ahead of local `<base>`, note the
+   gap in the dispatch report so the user knows the next branch-cut
+   should pull first.
+4. `git status --porcelain` for tracked-modified files. Filter out
+   `.claude/settings.local.json` (permitted user-local carry-over).
+5. If any tracked-modified files remain, they are loose changes from a
+   prior session that should have shipped with their original PR.
+   Surface them as a one-line summary AND stop. Ask the user to choose:
+   - **discard**: `git checkout -- <files>` and proceed.
+   - **commit**: pause for the user to commit (then re-invoke the router).
+   - **continue anyway**: proceed without resetting (escape hatch for
+     intentional WIP).
+   Never auto-discard — destructive actions require explicit consent.
+
+Untracked files (`??` in `git status --porcelain`) are not surfaced —
+they may be intentional WIP, substrate config, or scratch the user is
+working with.
+
 ### 1. Orient
 
 Invoke `Bash("node .claude/scripts/trout/autoload.ts <slug>")`. Take in
