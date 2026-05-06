@@ -50,3 +50,4 @@ Phase 1 merged via PR #8. Phase 1.5 splits into two PRs after the post-merge aud
 | 2026-05-05 11:00 | phase-started | 1.5 on ev.agent-guilds.replan-phase-1-5 |
 | 2026-05-05 11:30 | checkin-created | 01 on ev.agent-guilds.replan-phase-1-5 |
 | 2026-05-05 12:00 | note | Phase 1.5 split into replan PR (this branch, ships convention doc) + cleanup PR (next, executes 11 migrations) |
+| 2026-05-05 21:28 | session-saved | 2026-05-05-b.md |
