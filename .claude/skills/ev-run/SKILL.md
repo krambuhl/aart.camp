@@ -14,8 +14,8 @@ allowed-tools: Read, Skill
 
 # /ev-run
 
-Router. Reads state via `/trout-autoload`, decides what to run next,
-invokes the right loop. Owns no work of its own.
+Router. Reads state via `.claude/scripts/trout/autoload.ts`, decides
+what to run next, invokes the right loop. Owns no work of its own.
 
 ## Arguments
 
@@ -39,7 +39,8 @@ message. If `$ARGUMENTS` is empty, stop and ask for a slug.
 
 ### 1. Orient
 
-Invoke `/trout-autoload <slug>`. Take in the briefing. This tells you:
+Invoke `Bash("node .claude/scripts/trout/autoload.ts <slug>")`. Take in
+the briefing on stdout. This tells you:
 - Current phase status
 - Latest checkin
 - Open PRs and their freshness

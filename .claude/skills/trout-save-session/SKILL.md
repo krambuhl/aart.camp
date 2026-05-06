@@ -23,7 +23,8 @@ records the emitted event.
 ## Process
 
 1. **Resolve the project directory.** `$ARGUMENTS` is the project slug or
-   path (resolution rules as in `/trout-autoload`). If omitted, resolve
+   path (resolution rules as in `.claude/scripts/trout/autoload.ts`).
+   If omitted, resolve
    from the current working directory; if resolution fails, surface the
    error and stop.
 2. **Read the manifest** to get the list of events emitted during this

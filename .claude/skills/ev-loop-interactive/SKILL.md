@@ -17,7 +17,8 @@ Execute one phase of a project as a human-paired loop: discrete
 deliverables, per-deliverable contract and checkpoint. The human drives
 order when ordering is free; the loop keeps the substrate honest.
 
-**Composes**: `.claude/scripts/trout/autosave.ts` (via Bash),
+**Composes**: `.claude/scripts/trout/autosave.ts`,
+`.claude/scripts/trout/autoload.ts` (both via Bash),
 `/trout-pull-request`, `/guild-validate`.
 **Does not compose**: other loops.
 
@@ -57,7 +58,7 @@ If PLAN.md doesn't specify, default to **free** and ask.
 
 ### Step 0. Pre-flight
 
-- `/trout-autoload <slug>` to refresh state.
+- `Bash("node .claude/scripts/trout/autoload.ts <slug>")` to refresh state.
 - Working tree clean, branch matches MANIFEST, verification baseline.
 
 ### Step 1. Enumerate deliverables

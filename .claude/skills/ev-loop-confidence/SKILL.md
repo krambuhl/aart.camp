@@ -17,7 +17,8 @@ Execute one phase of a project as a confidence loop: tiered transforms,
 ratcheting from small/safe to large/risky, with an evaluator verdict per
 unit and a tactical retro per tier.
 
-**Composes**: `.claude/scripts/trout/autosave.ts` (via Bash),
+**Composes**: `.claude/scripts/trout/autosave.ts`,
+`.claude/scripts/trout/autoload.ts` (both via Bash),
 `/trout-pull-request`, `/guild-validate`.
 **Does not compose**: other loops. Peer loops are invoked by the router,
 not by each other.
@@ -60,7 +61,7 @@ Create this directory if it doesn't exist.
 ### Step 0. Pre-flight
 
 Before any work:
-- `/trout-autoload <slug>` to refresh state.
+- `Bash("node .claude/scripts/trout/autoload.ts <slug>")` to refresh state.
 - Confirm working tree is clean (`git status --porcelain`). If not,
   stop and ask the user to commit or stash.
 - Confirm current branch matches the phase's branch in MANIFEST.md. If

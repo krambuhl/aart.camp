@@ -7,8 +7,6 @@
       "Skill(ev-loop-interactive:*)",
       "Skill(ev-loop-confidence)",
       "Skill(ev-loop-confidence:*)",
-      "Skill(trout-autoload)",
-      "Skill(trout-autoload:*)",
       "Bash(node .claude/scripts/trout/*)",
       "Skill(trout-plan)",
       "Skill(trout-plan:*)",
