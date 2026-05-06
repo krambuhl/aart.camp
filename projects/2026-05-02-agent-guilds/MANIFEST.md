@@ -68,3 +68,4 @@ Phase 1 merged via PR #8. Phase 1.5 split into a sequence of PRs after a post-me
 | 2026-05-06 16:30 | checkin-created | 01 on ev.agent-guilds.phase-1-5-substrate-cleanup-2 |
 | 2026-05-06 16:32 | pr-opened | #13 |
 | 2026-05-06 16:51 | checkin-created | 02 on ev.agent-guilds.phase-1-5-substrate-cleanup-2 |
+| 2026-05-06 16:53 | pr-updated | #13 (re-authored via new multi-checkin skill from checkins 01,02 with project-aware callout) |
