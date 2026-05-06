@@ -60,3 +60,4 @@ Phase 1 merged via PR #8. Phase 1.5 split into two PRs after a post-merge audit 
 | 2026-05-06 02:12 | checkin-created | 01 on ev.agent-guilds.phase-1-5-substrate-cleanup |
 | 2026-05-06 02:52 | pr-opened | #10 |
 | 2026-05-06 03:25 | session-saved | 2026-05-06-a |
+| 2026-05-06 03:54 | pr-updated | #10 (re-authored with concise template) |
