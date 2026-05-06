@@ -3,7 +3,7 @@
 **Slug**: 2026-05-02-agent-guilds
 **Started**: 2026-05-02
 **Status**: active
-**Current branch**: ev.agent-guilds.phase-1-5-substrate-cleanup
+**Current branch**: ev.agent-guilds.phase-1-5-substrate-cleanup-2
 **Latest checkin**: checkins/ev.agent-guilds.phase-1-5-substrate-cleanup/02.md
 
 ## Strategy
@@ -15,7 +15,7 @@ Extract `guild-*` agent-panel substrate alongside trout/griot, thin ev-loop into
 | # | Name | Status | Branch | Latest checkin | PR |
 |---|------|--------|--------|----------------|----|
 | 1 | Substrate foundations | completed | ev.agent-guilds.substrate-foundations | 05 | #8 (merged) |
-| 1.5 | Substrate primitive cleanup | in-progress | ev.agent-guilds.phase-1-5-substrate-cleanup | 02 | #10 (open) |
+| 1.5 | Substrate primitive cleanup | in-progress | ev.agent-guilds.phase-1-5-substrate-cleanup-2 | — | — |
 | 2 | Antagonist evaluator panel | not-started | — | — | — |
 | 3 | Whiteboard mechanism + engineers | not-started | — | — | — |
 | 4 | Domain pairs | not-started | — | — | — |
@@ -30,7 +30,7 @@ Extract `guild-*` agent-panel substrate alongside trout/griot, thin ev-loop into
 
 ## Current state
 
-Phase 1 merged via PR #8. Phase 1.5 split into two PRs after a post-merge audit produced both a rewritten plan (4× original scope) and a load-bearing convention. **Replan PR #9 merged** (on `ev.agent-guilds.replan-phase-1-5`) — shipped planning churn, deliverable 1 (the "Substrate primitive shapes" section in `projects/CONVENTIONS.md`), the `/trout-pull-request` rework (multi-checkin support + why-focus gate), and the project-wide `.claude/settings.json` for substrate skills. **Cleanup PR** (current, on `ev.agent-guilds.phase-1-5-substrate-cleanup` cut from main post-#9-merge) executes the remaining 11 deliverables: 3 full CRUD migrations (`trout-autosave`, `trout-autoload`, `griot-capture` → `.claude/scripts/<family>/<verb>.js`), 1 parser extraction (`guild-validate`), 5 LLM/CRUD splits (`trout-pull-request`, `trout-archive` relocate, `trout-save-session` finalize, `trout-pr-respond` plumbing, `trout-plan` scaffold), 1 inline-as-script (`griot-use`), 1 e2e verification on `phase-1-5-test`. Loop: interactive, sequential ordering. Next: deliverable 2 — `trout-autosave` → `.claude/scripts/trout/autosave.js`. Per-family wildcard permissions (`Bash(node .claude/scripts/<family>/*)`) land alongside each family's first script.
+Phase 1 merged via PR #8. Phase 1.5 split into a sequence of PRs after a post-merge audit produced both a rewritten plan (4× original scope) and a load-bearing convention. **Replan PR #9 merged** (on `ev.agent-guilds.replan-phase-1-5`) — planning churn, deliverable 1 (the "Substrate primitive shapes" section in `projects/CONVENTIONS.md`), the `/trout-pull-request` rework (multi-checkin support + why-focus gate), and the project-wide `.claude/settings.json` for substrate skills. **First cleanup PR #10 merged** (on `ev.agent-guilds.phase-1-5-substrate-cleanup`) — deliverable 2 (`trout-autosave` → `.claude/scripts/trout/autosave.ts` with sibling `.test.ts`, 20 tests), the substrate-script convention bootstrap (CONVENTIONS.md "Substrate scripts: layout and conventions" section, root `npm run test`, nested `.claude/scripts/package.json` ESM stopgap, `Bash(node .claude/scripts/trout/*)` permission), a self-documenting tightening of `/trout-pull-request` so PR bodies cap at 500-600 words (Invariant 7), plus a follow-on landed outside this plan (PR #12) requiring a substrate-orientation `[!NOTE]` callout in PR bodies. **Second cleanup PR** (current, on `ev.agent-guilds.phase-1-5-substrate-cleanup-2` cut from main post-#10-merge) executes the remaining 10 deliverables: 2 full CRUD migrations (`trout-autoload`, `griot-capture` → `.claude/scripts/<family>/<verb>.ts`), 1 parser extraction (`guild-validate`), 5 LLM/CRUD splits (`trout-pull-request` LLM/CRUD split, `trout-archive` relocate, `trout-save-session` finalize, `trout-pr-respond` plumbing, `trout-plan` scaffold), 1 inline-as-script (`griot-use`), 1 e2e verification on `phase-1-5-test`. Loop: interactive, sequential ordering. Next: deliverable 3 — `trout-autoload` → `.claude/scripts/trout/autoload.ts`. Per-family wildcard permissions (`Bash(node .claude/scripts/<family>/*)`) land alongside each family's first script.
 
 ## Events
 
@@ -63,3 +63,5 @@ Phase 1 merged via PR #8. Phase 1.5 split into two PRs after a post-merge audit 
 | 2026-05-06 03:54 | pr-updated | #10 (re-authored with concise template) |
 | 2026-05-06 04:05 | checkin-created | 02 on ev.agent-guilds.phase-1-5-substrate-cleanup |
 | 2026-05-06 04:06 | pr-updated | #10 (multi-checkin re-author from 01,02) |
+| 2026-05-06 04:07 | pr-merged | #10 |
+| 2026-05-06 05:00 | note | Second cleanup branch ev.agent-guilds.phase-1-5-substrate-cleanup-2 cut from main post-#10-merge; deliverables 3-12 begin here |
