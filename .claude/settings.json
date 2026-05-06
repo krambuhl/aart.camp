@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(ev-run)",
+      "Skill(ev-run:*)",
+      "Skill(ev-loop-interactive)",
+      "Skill(ev-loop-interactive:*)",
+      "Skill(ev-loop-confidence)",
+      "Skill(ev-loop-confidence:*)",
+      "Skill(trout-autoload)",
+      "Skill(trout-autoload:*)",
+      "Skill(trout-autosave)",
+      "Skill(trout-autosave:*)",
+      "Skill(trout-plan)",
+      "Skill(trout-plan:*)",
+      "Skill(trout-pull-request)",
+      "Skill(trout-pull-request:*)",
+      "Skill(trout-pr-respond)",
+      "Skill(trout-pr-respond:*)",
+      "Skill(trout-save-session)",
+      "Skill(trout-save-session:*)",
+      "Skill(trout-archive)",
+      "Skill(trout-archive:*)",
+      "Skill(griot-capture)",
+      "Skill(griot-capture:*)",
+      "Skill(griot-use)",
+      "Skill(griot-use:*)",
+      "Skill(guild-spawn)",
+      "Skill(guild-spawn:*)",
+      "Skill(guild-validate)",
+      "Skill(guild-validate:*)"
+    ]
+  }
+}
