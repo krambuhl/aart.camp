@@ -3,8 +3,8 @@
 **Slug**: 2026-05-06-adopt-test-harnesses
 **Started**: 2026-05-06
 **Status**: active
-**Current branch**: —
-**Latest checkin**: —
+**Current branch**: ev.adopt-test-harnesses.vitest-harness
+**Latest checkin**: checkins/ev.adopt-test-harnesses.vitest-harness/01.md
 
 ## Strategy
 
@@ -19,7 +19,7 @@ everything into CI).
 
 | # | Name | Status | Branch | Latest checkin | PR |
 |---|------|--------|--------|----------------|----|
-| 1 | Vitest harness | not-started | — | — | — |
+| 1 | Vitest harness | in-progress | ev.adopt-test-harnesses.vitest-harness | 01 | — |
 | 2 | Storybook harness | not-started | — | — | — |
 | 3 | Playwright harness | not-started | — | — | — |
 | 4 | GitHub Actions CI | not-started | — | — | — |
@@ -31,12 +31,15 @@ everything into CI).
 
 ## Current state
 
-Project just scaffolded by /trout-plan. No work started yet. Next step is
-to run /ev-run on this slug to begin the interactive loop, starting with
-Phase 1 (Vitest harness).
+Phase 1, D1 complete: vitest + RTL + jest-dom + jsdom installed and
+configured. vitest.config.ts and vitest.setup.ts in place. npm test
+passes (with --passWithNoTests until D2). Build and lint clean. Next:
+D2 — write the example test against wrapResponsive (or similar) and
+remove the --passWithNoTests crutch if appropriate.
 
 ## Events
 
 | When | Event | Detail |
 |------|-------|--------|
 | 2026-05-06 01:56 | project-initialized | — |
+| 2026-05-06 02:41 | checkin-created | 01 on ev.adopt-test-harnesses.vitest-harness |
