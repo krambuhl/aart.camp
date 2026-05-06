@@ -17,7 +17,8 @@ modify code or reply; its output is consumed by the originating loop.
 
 ## Arguments
 
-- `<project-slug-or-path>` — resolved like `/trout-autosave`.
+- `<project-slug-or-path>` — resolved like `.claude/scripts/trout/autosave.ts`
+  (exact slug → suffix match → full path).
 - `<pr-number>` — the PR to respond to. Must belong to the project
   (cross-check via branch → `checkins/<branch>` existence).
 

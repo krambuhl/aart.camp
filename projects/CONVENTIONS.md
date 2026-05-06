@@ -38,18 +38,48 @@ Orchestration substrate must therefore stay discoverable.
 ```
 .claude/scripts/
 ├── trout/                             ← project state primitives
-│   ├── autosave.js
-│   ├── autoload.js
+│   ├── autosave.ts
+│   ├── autosave.test.ts
+│   ├── autoload.ts
 │   └── ...
 ├── griot/                             ← learnings primitives
-│   ├── capture.js
-│   └── use.js
+│   ├── capture.ts
+│   └── use.ts
 └── guild/                             ← agent-panel primitives
-    └── parse-and-aggregate.js
+    └── parse-and-aggregate.ts
 ```
 
-Scripts are Node, stdlib only — no npm dependencies. Callers shell out
-via `Bash("node .claude/scripts/<family>/<verb>.js <args>")`.
+Scripts are TypeScript, stdlib only — no npm runtime dependencies.
+Node 24 strips type annotations natively, so callers shell out via
+`Bash("node .claude/scripts/<family>/<verb>.ts <args>")`. Source must
+be erasable TypeScript (no enums, namespaces, parameter properties, or
+`const enum`) — type stripping rejects those forms.
+
+### Substrate scripts: layout and conventions
+
+- **Source**: `.claude/scripts/<family>/<verb>.ts`. Use `parseArgs` from
+  `node:util` for the argument surface; handwrite the parser only for
+  shapes parseArgs can't handle (e.g. colon-separated values like
+  `--phase-update=N:status:k=v:k=v`).
+- **Tests**: sibling `<verb>.test.ts` next to source. No `__tests__/`
+  folders. Tests use `node:test` and run via `npm run test`
+  (`node --test '.claude/scripts/**/*.test.ts'`). Every script ships
+  with a test.
+- **Errors**: `<verb>-error: <reason>[; candidates: <a>, <b>]` to
+  stderr, non-zero exit. Match the prior skill's failure-mode wording
+  so callers don't have to relearn output shapes.
+- **Shared schemas**: parse `projects/CONVENTIONS.md` at runtime when a
+  script needs the event vocabulary, manifest schema, or any other
+  CONVENTIONS-defined shape. Don't duplicate the data in TypeScript
+  consts — single source of truth, parsing is sub-millisecond. Provide
+  a hardcoded fallback only if the file is unreadable.
+- **Module type**: a nested `.claude/scripts/package.json` carries
+  `{"type": "module"}` so substrate scripts run as ESM without
+  forcing the root project to migrate off CommonJS. **This is a
+  stopgap.** The eventual target is `"type": "module"` at the root
+  with `next.config.js` / `postcss.config.js` migrated to ESM (or
+  renamed `.cjs`); the nested file goes away then. Substrate imports
+  use ESM syntax; `import` paths use Node's resolution.
 
 ### Permissions
 

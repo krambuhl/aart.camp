@@ -9,6 +9,7 @@
     "lint": "biome check .",
     "format": "biome format --write .",
     "check": "biome check --write .",
+    "test": "node --test '.claude/scripts/**/*.test.ts'",
     "generate:tokens": "tsx ./scripts/generate-tokens.ts",
     "learnings:compact": "tsx ./scripts/learnings-compact/index.ts",
     "learnings:report": "tsx ./scripts/learnings-report.ts"

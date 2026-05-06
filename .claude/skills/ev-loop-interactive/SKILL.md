@@ -17,22 +17,26 @@ Execute one phase of a project as a human-paired loop: discrete
 deliverables, per-deliverable contract and checkpoint. The human drives
 order when ordering is free; the loop keeps the substrate honest.
 
-**Composes**: `/trout-autosave`, `/trout-pull-request`, `/guild-validate`.
+**Composes**: `.claude/scripts/trout/autosave.ts` (via Bash),
+`/trout-pull-request`, `/guild-validate`.
 **Does not compose**: other loops.
 
 **Format reference**: `projects/CONVENTIONS.md` (repo-relative).
 
-Invocations like `/trout-autosave`, `/trout-pull-request`, and
-`/guild-validate` below mean `Skill(skill: <name>, args: "…")` — the
-Skill tool is how loops compose substrate skills. Antagonist evaluation
-runs through `/guild-validate`, which spawns evaluator agents in
-parallel via `/guild-spawn`; the loop itself never calls the `Agent`
+Skill invocations like `/trout-pull-request` and `/guild-validate` below
+mean `Skill(skill: <name>, args: "…")` — the Skill tool is how loops
+compose substrate skills. Script invocations like
+`.claude/scripts/trout/autosave.ts` mean
+`Bash("node .claude/scripts/trout/autosave.ts <args>")`. Antagonist
+evaluation runs through `/guild-validate`, which spawns evaluator agents
+in parallel via `/guild-spawn`; the loop itself never calls the `Agent`
 tool directly.
 
 ## Arguments
 
-- `<project-slug-or-path>` — resolved like `/trout-autosave`. If
-  missing or unresolved, stop and ask the user for the project.
+- `<project-slug-or-path>` — resolved like `.claude/scripts/trout/autosave.ts`
+  (exact slug → suffix match → full path). If missing or unresolved,
+  stop and ask the user for the project.
 - `<phase-number>` — which phase to run. If missing, default to the
   next non-`completed` phase from MANIFEST.md and confirm with the
   user before proceeding. If the named phase is already `completed`,
@@ -91,7 +95,7 @@ For each deliverable (picked per the ordering rule):
    - Flagged: address the specific reasons, re-invoke `/guild-validate`.
      Up to 2 retries (3 panel runs total).
    - Approved: finalize the checkin.
-5. **Autosave.** `/trout-autosave ... --event=checkin-created`.
+5. **Autosave.** `Bash("node .claude/scripts/trout/autosave.ts <slug> --event=checkin-created --detail='<NN> on <branch>' --phase-update=<N>:in-progress:branch=<branch>:checkin=<NN>")`.
 6. **Checkpoint.** Free mode: after every deliverable. Sequential mode:
    after every deliverable **or** when the human explicitly asks.
    Invoke `/trout-pull-request <slug> <branch>`.
@@ -101,8 +105,7 @@ For each deliverable (picked per the ordering rule):
 - All deliverables accounted for.
 - Full verification passes.
 - `/trout-pull-request` is fresh.
-- `/trout-autosave --event=phase-completed --detail=<N>
-  --phase-update=<N>:completed`.
+- `Bash("node .claude/scripts/trout/autosave.ts <slug> --event=phase-completed --detail=<N> --phase-update=<N>:completed")`.
 
 ## Output format
 

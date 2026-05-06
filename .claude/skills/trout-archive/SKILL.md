@@ -17,9 +17,11 @@ Death ritual for a project. Retrospective + dispositions + relocation.
 
 **Format reference**: `projects/CONVENTIONS.md` (repo-relative).
 
-Invocations like `/trout-autosave` and `/trout-pull-request` below
-mean `Skill(skill: trout-autosave, args: "…")` — the Skill tool is
-how substrate skills compose.
+Skill invocations like `/trout-pull-request` below mean
+`Skill(skill: <name>, args: "…")` — the Skill tool is how substrate
+skills compose. Script invocations like
+`.claude/scripts/trout/autosave.ts` mean
+`Bash("node .claude/scripts/trout/autosave.ts <args>")`.
 
 ## Resolve the target
 
@@ -130,10 +132,7 @@ finding and its approved disposition.
 
 1. Update `MANIFEST.md` `Status` from `active` to `archived`.
 2. `git mv ./projects/<date>-<slug>/ ./projects/archive/<date>-<slug>/`.
-3. Invoke `/trout-autosave` with `--event=archived
-   --detail=projects/archive/<date>-<slug>/` — but note: after the move,
-   the manifest lives at the new path. Call autosave against the new
-   path.
+3. Run `Bash("node .claude/scripts/trout/autosave.ts ./projects/archive/<date>-<slug>/ --event=archived --detail=projects/archive/<date>-<slug>/")` — note: after the move, the manifest lives at the new path. Call autosave against the new path.
 
 ### 7. Archive PR
 

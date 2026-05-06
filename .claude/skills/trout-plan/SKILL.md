@@ -109,12 +109,10 @@ Ask for, in one batch:
 3. Write `PLAN.md`.
 4. Write `config.md` from the values collected, plus a
    `## Worker bindings` section noting the preferred loop.
-5. Invoke the `trout-autosave` skill via the Skill tool:
-   - `skill`: `trout-autosave`
-   - `args`: `<slug> --init --detail='{...}'` where the JSON carries
-     `title`, `slug`, `started`, `strategy`, `phases[]`.
-   The `--init` path creates `sessions/`, `checkins/`, and the first
-   `MANIFEST.md`.
+5. Run `Bash("node .claude/scripts/trout/autosave.ts <slug> --init --detail='{...}'")`
+   where the JSON carries `title`, `slug`, `started`, `strategy`,
+   `phases[]`. The `--init` path creates `sessions/`, `checkins/`, and
+   the first `MANIFEST.md`.
 
 ### 7. Report
 

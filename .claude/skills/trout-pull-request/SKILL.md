@@ -27,7 +27,8 @@ format, repo-relative).
 
 Positional: `$1 = <project-slug-or-path>`, `$2 = <branch>`.
 
-- `$1` (`<project-slug-or-path>`) — resolved like `/trout-autosave`.
+- `$1` (`<project-slug-or-path>`) — resolved like `.claude/scripts/trout/autosave.ts`
+  (exact slug → suffix match → full path).
 - `$2` (`<branch>`) — the git branch the PR is tied to. May contain
   slashes (`claude/adopt-biome-v1`).
 
@@ -226,9 +227,7 @@ footer's checkin paths give reviewers the way in):
 4. Author the title and body per § 4.
 5. Create the PR via `mcp__github__create_pull_request` with base from
    `config.md` (default `main`).
-6. Invoke `/trout-autosave` with `--event=pr-opened --detail=#<N>`
-   and `--phase-update` reflecting the new PR number on the appropriate
-   phase row.
+6. Run `Bash("node .claude/scripts/trout/autosave.ts <slug> --event=pr-opened --detail=#<N> --phase-update=<N>:in-progress:pr=#<N> (open)")`.
 
 ### 6. Stale PR
 
@@ -236,7 +235,7 @@ footer's checkin paths give reviewers the way in):
 2. **Push** any new commits with the standard push-retry policy.
 3. Author fresh title and body per § 4.
 4. Update via `mcp__github__update_pull_request`.
-5. Invoke `/trout-autosave` with `--event=pr-updated --detail=#<N>`.
+5. Run `Bash("node .claude/scripts/trout/autosave.ts <slug> --event=pr-updated --detail=#<N>")`.
 
 ### Retry policy
 

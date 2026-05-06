@@ -19,7 +19,8 @@ invokes the right loop. Owns no work of its own.
 
 ## Arguments
 
-- `<project-slug-or-path>` — resolved like `/trout-autosave`.
+- `<project-slug-or-path>` — resolved like `.claude/scripts/trout/autosave.ts`
+  (exact slug → suffix match → full path).
 - Optional free-form message — if present, interpret it as a redirect
   (e.g. "address feedback on #14", "pause and save session", "start
   phase 3 even though phase 2 isn't merged yet").
