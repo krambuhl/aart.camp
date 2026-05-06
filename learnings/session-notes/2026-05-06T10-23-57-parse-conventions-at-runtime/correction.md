@@ -1,0 +1,1 @@
+correction: prefer parsing `projects/CONVENTIONS.md` at runtime over hybrid TS-const-plus-drift-test approaches for shared substrate vocabularies. The user explicitly rejected hybrid + drift-test as over-engineered; runtime parsing is sub-millisecond and removes a whole class of drift.
