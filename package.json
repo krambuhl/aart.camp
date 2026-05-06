@@ -11,6 +11,7 @@
     "check": "biome check --write .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:agentic": "vitest run .claude/scripts",
     "generate:tokens": "tsx ./scripts/generate-tokens.ts",
     "learnings:compact": "tsx ./scripts/learnings-compact/index.ts",
     "learnings:report": "tsx ./scripts/learnings-report.ts"
