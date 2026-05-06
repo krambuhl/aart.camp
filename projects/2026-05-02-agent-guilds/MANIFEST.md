@@ -3,7 +3,7 @@
 **Slug**: 2026-05-02-agent-guilds
 **Started**: 2026-05-02
 **Status**: active
-**Current branch**: ev.agent-guilds.replan-phase-1-5
+**Current branch**: ev.agent-guilds.phase-1-5-substrate-cleanup
 **Latest checkin**: checkins/ev.agent-guilds.replan-phase-1-5/02.md
 
 ## Strategy
@@ -15,7 +15,7 @@ Extract `guild-*` agent-panel substrate alongside trout/griot, thin ev-loop into
 | # | Name | Status | Branch | Latest checkin | PR |
 |---|------|--------|--------|----------------|----|
 | 1 | Substrate foundations | completed | ev.agent-guilds.substrate-foundations | 05 | #8 (merged) |
-| 1.5 | Substrate primitive cleanup | in-progress | ev.agent-guilds.replan-phase-1-5 | 02 | #9 (open) |
+| 1.5 | Substrate primitive cleanup | in-progress | ev.agent-guilds.phase-1-5-substrate-cleanup | — | — |
 | 2 | Antagonist evaluator panel | not-started | — | — | — |
 | 3 | Whiteboard mechanism + engineers | not-started | — | — | — |
 | 4 | Domain pairs | not-started | — | — | — |
@@ -30,7 +30,7 @@ Extract `guild-*` agent-panel substrate alongside trout/griot, thin ev-loop into
 
 ## Current state
 
-Phase 1 merged via PR #8. Phase 1.5 splits into two PRs after the post-merge audit produced both a rewritten plan (4× the original scope) and a load-bearing convention. **Replan PR** (current, on `ev.agent-guilds.replan-phase-1-5`) ships planning churn + deliverable 1 (the "Substrate primitive shapes" section in `projects/CONVENTIONS.md`). Branch state: artifact commit, MANIFEST open, PLAN.md Phase 1.5 detail, convention-doc unit (checkin 01, evaluator-approved on retry after a stray `next-env.d.ts` was reverted), this manifest update. **Cleanup PR** (next; cuts a fresh `ev.agent-guilds.phase-1-5-substrate-cleanup` from main once the replan merges) executes the remaining 11 deliverables: 3 full CRUD migrations (`trout-autosave`, `trout-autoload`, `griot-capture` → `.claude/scripts/<family>/<verb>.js`), 1 parser extraction (`guild-validate`), 5 LLM/CRUD splits (`trout-pull-request`, `trout-archive` relocate, `trout-save-session` finalize, `trout-pr-respond` plumbing, `trout-plan` scaffold), 1 inline-as-script (`griot-use`), 1 e2e verification on `phase-1-5-test`. Loop: interactive. Per-family wildcard permissions (`Bash(node .claude/scripts/<family>/*)`) added to project-wide `.claude/settings.json` as each family's first script lands.
+Phase 1 merged via PR #8. Phase 1.5 split into two PRs after a post-merge audit produced both a rewritten plan (4× original scope) and a load-bearing convention. **Replan PR #9 merged** (on `ev.agent-guilds.replan-phase-1-5`) — shipped planning churn, deliverable 1 (the "Substrate primitive shapes" section in `projects/CONVENTIONS.md`), the `/trout-pull-request` rework (multi-checkin support + why-focus gate), and the project-wide `.claude/settings.json` for substrate skills. **Cleanup PR** (current, on `ev.agent-guilds.phase-1-5-substrate-cleanup` cut from main post-#9-merge) executes the remaining 11 deliverables: 3 full CRUD migrations (`trout-autosave`, `trout-autoload`, `griot-capture` → `.claude/scripts/<family>/<verb>.js`), 1 parser extraction (`guild-validate`), 5 LLM/CRUD splits (`trout-pull-request`, `trout-archive` relocate, `trout-save-session` finalize, `trout-pr-respond` plumbing, `trout-plan` scaffold), 1 inline-as-script (`griot-use`), 1 e2e verification on `phase-1-5-test`. Loop: interactive, sequential ordering. Next: deliverable 2 — `trout-autosave` → `.claude/scripts/trout/autosave.js`. Per-family wildcard permissions (`Bash(node .claude/scripts/<family>/*)`) land alongside each family's first script.
 
 ## Events
 
@@ -55,3 +55,5 @@ Phase 1 merged via PR #8. Phase 1.5 splits into two PRs after the post-merge aud
 | 2026-05-05 21:31 | pr-updated | #9 |
 | 2026-05-05 22:16 | checkin-created | 02 on ev.agent-guilds.replan-phase-1-5 |
 | 2026-05-05 22:41 | pr-updated | #9 (re-authored via new multi-checkin skill from checkins 01,02) |
+| 2026-05-05 23:59 | pr-merged | #9 |
+| 2026-05-05 23:59 | note | Phase 1.5 cleanup branch ev.agent-guilds.phase-1-5-substrate-cleanup cut from main post-#9-merge; deliverables 2-12 begin here |
