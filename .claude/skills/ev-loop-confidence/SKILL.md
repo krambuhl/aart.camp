@@ -17,22 +17,26 @@ Execute one phase of a project as a confidence loop: tiered transforms,
 ratcheting from small/safe to large/risky, with an evaluator verdict per
 unit and a tactical retro per tier.
 
-**Composes**: `/trout-autosave`, `/trout-pull-request`, `/guild-validate`.
+**Composes**: `.claude/scripts/trout/autosave.ts` (via Bash),
+`/trout-pull-request`, `/guild-validate`.
 **Does not compose**: other loops. Peer loops are invoked by the router,
 not by each other.
 
 **Format reference**: `projects/CONVENTIONS.md` (repo-relative).
 
-Invocations like `/trout-autosave`, `/trout-pull-request`, and
-`/guild-validate` below mean `Skill(skill: <name>, args: "…")` — the
-Skill tool is how loops compose substrate skills. Antagonist evaluation
-runs through `/guild-validate`, which spawns evaluator agents in
-parallel via `/guild-spawn`; the loop itself never calls the `Agent`
+Skill invocations like `/trout-pull-request` and `/guild-validate` below
+mean `Skill(skill: <name>, args: "…")` — the Skill tool is how loops
+compose substrate skills. Script invocations like
+`.claude/scripts/trout/autosave.ts` mean
+`Bash("node .claude/scripts/trout/autosave.ts <args>")`. Antagonist
+evaluation runs through `/guild-validate`, which spawns evaluator agents
+in parallel via `/guild-spawn`; the loop itself never calls the `Agent`
 tool directly.
 
 ## Arguments
 
-- `<project-slug-or-path>` — resolved like `/trout-autosave`.
+- `<project-slug-or-path>` — resolved like `.claude/scripts/trout/autosave.ts`
+  (exact slug → suffix match → full path).
 - `<phase-number>` — which phase of the project to run. Must exist in
   MANIFEST.md and not be in `completed` state.
 
@@ -118,8 +122,7 @@ When all tiers in this phase are complete:
 - Ensure the latest checkin exists.
 - Invoke `/trout-pull-request <slug> <branch>` so the PR reflects the
   final state.
-- Invoke `/trout-autosave` with `--event=phase-completed
-  --detail=<N>` and `--phase-update=<N>:completed`.
+- Run `Bash("node .claude/scripts/trout/autosave.ts <slug> --event=phase-completed --detail=<N> --phase-update=<N>:completed")`.
 - Return control to the router.
 
 ## Tier-level process
@@ -194,9 +197,7 @@ For each unit inside a tier:
    - If approved: finalize the checkin (Execution, Scope, Changes,
      Evaluator verdict = approved, Notes for the PR). Check off the
      inventory items.
-5. **Autosave.** Invoke `/trout-autosave` with
-   `--event=checkin-created --detail="<NN> on <branch>"` and
-   `--phase-update` reflecting the latest checkin and branch.
+5. **Autosave.** Run `Bash("node .claude/scripts/trout/autosave.ts <slug> --event=checkin-created --detail='<NN> on <branch>' --phase-update=<N>:in-progress:branch=<branch>:checkin=<NN>")`.
 6. **Checkpoint?** Evaluate the should-checkpoint policy (below). If
    any condition holds, invoke `/trout-pull-request <slug> <branch>`
    so the PR tracks the latest state. Otherwise continue to the next
@@ -240,8 +241,7 @@ the next tier:
 - <one concrete change to batch size, tier assignment, or process>
 ```
 
-3. Invoke `/trout-autosave` with `--event=retro-written
-   --detail="tier-<N>"`.
+3. Run `Bash("node .claude/scripts/trout/autosave.ts <slug> --event=retro-written --detail='tier-<N>'")`.
 
 Tactical retros are short and specific. Strategic retrospection happens
 at `/trout-archive`, not here.

@@ -20,7 +20,7 @@ reading the full corpus. Read-only.
 ## Process
 
 1. **Resolve the project directory** from `$ARGUMENTS` using the same
-   rules as `/trout-autosave` (exact slug → suffix match → full path).
+   rules as `.claude/scripts/trout/autosave.ts` (exact slug → suffix match → full path).
    If `$ARGUMENTS` is empty, list the active directories under
    `projects/` (excluding `archive/`) and ask which to load. If the
    project is archived, say so and stop — archive reads go through

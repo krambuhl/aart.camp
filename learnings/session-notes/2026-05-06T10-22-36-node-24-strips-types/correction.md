@@ -1,0 +1,1 @@
+correction: do not use `npx tsx` or `tsx` chains for substrate scripts when Node 24 is available — strip-types runs `.ts` natively via `node script.ts`. The proposed `tsx` convention was retracted after benchmarking and verification; `node` is now the default.

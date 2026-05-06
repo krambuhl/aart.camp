@@ -17,8 +17,8 @@ of the session that don't fit in the event table: reasoning that moved,
 trade-offs considered, what's brittle, what to watch for next time.
 
 **Format reference**: `projects/CONVENTIONS.md` (§ Session handoff format,
-repo-relative). Pairs with `/trout-autosave`, which records the emitted
-event.
+repo-relative). Pairs with `.claude/scripts/trout/autosave.ts`, which
+records the emitted event.
 
 ## Process
 
@@ -50,9 +50,7 @@ event.
    list the session-notes paths under **Learnings captured**; otherwise
    omit that section.
 7. **Write the file.** Do not commit.
-8. **Invoke `/trout-autosave`** via the Skill tool —
-   `skill: trout-autosave`, `args: "<slug> --event=session-saved
-   --detail=<filename>"` — to log the event.
+8. **Run** `Bash("node .claude/scripts/trout/autosave.ts <slug> --event=session-saved --detail=<filename>")` to log the event.
 
 ## Report
 
@@ -127,7 +125,7 @@ Multiple captures from the same checkin is fine.
 
 ## Failure modes
 
-- Project not found → surface the error from `/trout-autosave`
+- Project not found → surface the error from `.claude/scripts/trout/autosave.ts`
   resolution; do not create anything.
 - No new events since last session-saved → write a short file that says
   "No substantive work this session" and still record the event, unless

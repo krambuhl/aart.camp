@@ -27,7 +27,8 @@ format, repo-relative).
 
 Positional: `$1 = <project-slug-or-path>`, `$2 = <branch>`.
 
-- `$1` (`<project-slug-or-path>`) — resolved like `/trout-autosave`.
+- `$1` (`<project-slug-or-path>`) — resolved like `.claude/scripts/trout/autosave.ts`
+  (exact slug → suffix match → full path).
 - `$2` (`<branch>`) — the git branch the PR is tied to. May contain
   slashes (`claude/adopt-biome-v1`).
 
@@ -142,22 +143,36 @@ the user said yes to the follow-up).
 
 #### 4.2 Body — common shell
 
+PR descriptions are reviewer-facing **summaries**, not exhaustive specs.
+The checkin file in the repo IS the exhaustive spec — the PR body's job
+is orientation. Every section has a hard cap, and the body itself caps
+at **500-600 words total**. If the body wants to grow past 600 words,
+the unit is doing too much — either split it into multiple checkins
+shipping in a multi-checkin PR (the table gives reviewers a navigable
+overview) or compress the body harder.
+
 ```markdown
 <!-- project-pr-checkins: <comma-separated NN list> -->
 
 ## Motivation
-<1–3 paragraphs from the why source material — see § 3>
+<2–4 sentences. The "why" at conceptual level — design philosophy,
+constraint, prior incident, problem being solved. Not "we need X" — the
+underlying reason X is worth doing now.>
 
 ## Summary
-<2–5 bullets distilled from Contract Goals + Executions across all checkins>
+<3–5 one-line bullets. Each bullet is one conceptual change, not one
+file. Distilled from Contract Goal + Execution across all checkins.>
 
-<Contract section — varies by single vs multi, see § 4.3 / § 4.4>
+<Reference section — varies by single vs multi, see § 4.3 / § 4.4>
 
 ## Verification
-<commands from each checkin's "Rules applied", deduplicated>
+<One line per command. Just the commands run, with the result if it's
+not "clean". E.g.: `npm run lint` clean / `npm run test` 20/20 pass.>
 
 ## Notes
-<from each checkin's "Notes for the PR" section, with `_(checkin NN)_` attribution if multi-checkin>
+<3–5 most-reviewer-relevant items. Pick: the trade-offs reviewers
+should pressure-test, the open questions, any `correction:` lines.
+Skip implementation details, restated motivation, victory laps.>
 
 ---
 Tracked by project substrate: <path to MANIFEST.md> — checkin{s} <NN list>
@@ -166,51 +181,48 @@ Tracked by project substrate: <path to MANIFEST.md> — checkin{s} <NN list>
 The marker MUST be the first line of the body. It is how staleness is
 detected on the next invocation.
 
-#### 4.3 Single-checkin Contract section
+**Section caps are hard.** If the source material wants to balloon a
+section, that's a sign the PR is doing too much — split it, or compress
+to fit. The reviewer will click into the checkin file for detail; the PR
+body's job is to make that click obvious and worth it.
+
+#### 4.3 Single-checkin Reference section
 
 ```markdown
-## Contract
+## Reference
 
-- **Goal**: <verbatim from checkin>
-- **Acceptance criteria**:
-  - <verbatim list>
+- **Goal**: <1–2 sentence distillation of the checkin Goal — paraphrase
+  if Goal is long. Strip "this is the first migration" framing if it's
+  in the Motivation already.>
+- **Checkin**: [<path to checkin file>](<path>) — full contract,
+  acceptance criteria, disqualifiers, scope, execution, evaluator
+  verdict.
 ```
 
-Acceptance criteria stay in the body for single-checkin PRs — they are
-reviewer-load-bearing.
+Do **not** paste the acceptance criteria verbatim into the PR body. The
+checkin file is in the repo and renders in GitHub one click away;
+duplicating it doubles the surface area reviewers have to track. The
+"Goal" sentence orients; the path link delivers depth.
 
-#### 4.4 Multi-checkin Contract section
+#### 4.4 Multi-checkin Reference section
 
-Use a heading `## Units` instead of `## Contract`.
+Use a heading `## Units` instead of `## Reference`. Same conciseness
+rule as single-checkin — link to checkins, don't paste their bodies.
 
-For 2 checkins, a per-checkin list with full criteria:
-
-```markdown
-## Units
-
-### Checkin 01 — <unit name>
-- **Goal**: <verbatim>
-- **Acceptance criteria**:
-  - <verbatim list>
-
-### Checkin 02 — <unit name>
-- **Goal**: <verbatim>
-- **Acceptance criteria**:
-  - <verbatim list>
-```
-
-For 3+ checkins, a table (criteria live in the checkin files; the
-footer's checkin paths give reviewers the way in):
+A `## Units` table for any `|D| ≥ 2`:
 
 ```markdown
 ## Units
 
-| # | Unit | Goal |
-|---|------|------|
-| 01 | <unit name> | <one-line distillation of the checkin Goal> |
-| 02 | <unit name> | <…> |
-| 03 | <unit name> | <…> |
+| # | Unit | Goal | Checkin |
+|---|------|------|---------|
+| 01 | <unit name> | <1-line distillation> | [link](<path>) |
+| 02 | <unit name> | <1-line distillation> | [link](<path>) |
 ```
+
+Reviewers click into the checkin file for the full contract,
+acceptance criteria, scope, execution, and evaluator verdict. The PR
+body stays focused on what changed across the set.
 
 ### 5. New PR
 
@@ -226,9 +238,7 @@ footer's checkin paths give reviewers the way in):
 4. Author the title and body per § 4.
 5. Create the PR via `mcp__github__create_pull_request` with base from
    `config.md` (default `main`).
-6. Invoke `/trout-autosave` with `--event=pr-opened --detail=#<N>`
-   and `--phase-update` reflecting the new PR number on the appropriate
-   phase row.
+6. Run `Bash("node .claude/scripts/trout/autosave.ts <slug> --event=pr-opened --detail=#<N> --phase-update=<N>:in-progress:pr=#<N> (open)")`.
 
 ### 6. Stale PR
 
@@ -236,7 +246,7 @@ footer's checkin paths give reviewers the way in):
 2. **Push** any new commits with the standard push-retry policy.
 3. Author fresh title and body per § 4.
 4. Update via `mcp__github__update_pull_request`.
-5. Invoke `/trout-autosave` with `--event=pr-updated --detail=#<N>`.
+5. Run `Bash("node .claude/scripts/trout/autosave.ts <slug> --event=pr-updated --detail=#<N>")`.
 
 ### Retry policy
 
@@ -266,6 +276,14 @@ loop owns commits; the human owns merges.
    material is thin, the skill stops and asks the user; it does not
    synthesize a Motivation paragraph from acceptance criteria or
    execution notes.
+7. **Concise over exhaustive.** PR body sections obey the caps in § 4.2
+   (Motivation 2-4 sentences; Summary 3-5 one-line bullets; Notes 3-5
+   reviewer-relevant items) and the total body caps at **500-600 words**.
+   Acceptance criteria, scope, execution, and evaluator verdict are NOT
+   pasted into the body — they live in the checkin file, linked from the
+   Reference / Units section. A PR body that wants to be longer than
+   600 words is signaling that the unit is doing too much or that the
+   author is over-explaining.
 
 ## Report
 
