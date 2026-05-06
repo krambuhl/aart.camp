@@ -4,7 +4,7 @@
 **Started**: 2026-05-02
 **Status**: active
 **Current branch**: ev.agent-guilds.phase-1-5-substrate-cleanup
-**Latest checkin**: checkins/ev.agent-guilds.replan-phase-1-5/02.md
+**Latest checkin**: checkins/ev.agent-guilds.phase-1-5-substrate-cleanup/01.md
 
 ## Strategy
 
@@ -15,7 +15,7 @@ Extract `guild-*` agent-panel substrate alongside trout/griot, thin ev-loop into
 | # | Name | Status | Branch | Latest checkin | PR |
 |---|------|--------|--------|----------------|----|
 | 1 | Substrate foundations | completed | ev.agent-guilds.substrate-foundations | 05 | #8 (merged) |
-| 1.5 | Substrate primitive cleanup | in-progress | ev.agent-guilds.phase-1-5-substrate-cleanup | — | — |
+| 1.5 | Substrate primitive cleanup | in-progress | ev.agent-guilds.phase-1-5-substrate-cleanup | 01 | — |
 | 2 | Antagonist evaluator panel | not-started | — | — | — |
 | 3 | Whiteboard mechanism + engineers | not-started | — | — | — |
 | 4 | Domain pairs | not-started | — | — | — |
@@ -57,3 +57,4 @@ Phase 1 merged via PR #8. Phase 1.5 split into two PRs after a post-merge audit 
 | 2026-05-05 22:41 | pr-updated | #9 (re-authored via new multi-checkin skill from checkins 01,02) |
 | 2026-05-05 23:59 | pr-merged | #9 |
 | 2026-05-05 23:59 | note | Phase 1.5 cleanup branch ev.agent-guilds.phase-1-5-substrate-cleanup cut from main post-#9-merge; deliverables 2-12 begin here |
+| 2026-05-06 02:12 | checkin-created | 01 on ev.agent-guilds.phase-1-5-substrate-cleanup |
