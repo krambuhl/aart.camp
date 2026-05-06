@@ -213,16 +213,33 @@ a revised contract rather than editing in place.
 ## PR marker
 
 Every PR authored by `/trout-pull-request` carries an HTML comment marker
-in its body:
+in its body, listing the checkin numbers the PR description was authored
+from:
 
 ```html
-<!-- project-pr-checkin: NN -->
+<!-- project-pr-checkins: NN[,NN,...] -->
 ```
 
-Where `NN` is the checkin number the PR description was authored from. A PR
-is **stale** when the latest checkin in `checkins/<branch>/` is numbered
-higher than the marker. `/trout-pull-request` is idempotent: stale → rewrite
-from the latest checkin and bump the marker; fresh → no-op.
+Single-checkin PRs use the same plural form with one entry, e.g.
+`<!-- project-pr-checkins: 01 -->`. The older singular form
+`<!-- project-pr-checkin: NN -->` is parsed as backward-compat
+(interpreted as the set `{NN}`); only the plural form is written.
+
+Let `M` = checkin numbers in the marker, `D` = checkin numbers on disk
+in `checkins/<branch>/`.
+
+- `M == D` → **fresh**. Skill is a no-op.
+- `M ⊂ D` (proper subset, including the no-marker / `M = ∅` case) →
+  **stale**. Skill rewrites the body from the full disk set and bumps
+  the marker.
+- `M ⊃ D`, OR sets diverge in both directions → **drift**. Skill
+  refuses to act and reports.
+
+`/trout-pull-request` is idempotent. PRs authored by the skill lead with
+a `## Motivation` section sourced from PLAN.md's `## Context` and
+per-checkin Goal rationale. When source material is thin, the skill
+stops and asks the user for motivation rather than synthesizing a
+placeholder.
 
 ## config.md format
 
