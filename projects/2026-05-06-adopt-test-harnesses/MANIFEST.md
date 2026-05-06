@@ -19,7 +19,7 @@ everything into CI).
 
 | # | Name | Status | Branch | Latest checkin | PR |
 |---|------|--------|--------|----------------|----|
-| 1 | Vitest harness | in-progress | ev.adopt-test-harnesses.vitest-harness | 02 | — |
+| 1 | Vitest harness | completed | ev.adopt-test-harnesses.vitest-harness | 02 | #11 (open) |
 | 2 | Storybook harness | not-started | — | — | — |
 | 3 | Playwright harness | not-started | — | — | — |
 | 4 | GitHub Actions CI | not-started | — | — | — |
@@ -31,11 +31,11 @@ everything into CI).
 
 ## Current state
 
-Phase 1, D2 complete: example test for wrapResponsive added at
-utilities/opaque-responsive.test.ts (3 cases), --passWithNoTests
-crutch removed from script. npm test (3 passed), npm run build, and
-npm run lint all green. Phase 1 deliverables done. Next: open PR via
-/trout-pull-request.
+Phase 1 complete: vitest harness + one example test landed in PR #11
+(open, awaiting review/merge). All Phase 1 acceptance criteria green:
+npm test (3 passed), npm run build, npm run lint. Phase 2 (Storybook
+harness) is independent of Phase 1 and could be started now via
+Graphite stack on top of this branch — or wait for #11 to merge.
 
 ## Events
 
@@ -44,3 +44,5 @@ npm run lint all green. Phase 1 deliverables done. Next: open PR via
 | 2026-05-06 01:56 | project-initialized | — |
 | 2026-05-06 02:41 | checkin-created | 01 on ev.adopt-test-harnesses.vitest-harness |
 | 2026-05-06 03:26 | checkin-created | 02 on ev.adopt-test-harnesses.vitest-harness |
+| 2026-05-06 04:05 | pr-opened | #11 |
+| 2026-05-06 04:05 | phase-completed | 1 |
