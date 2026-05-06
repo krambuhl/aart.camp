@@ -145,7 +145,11 @@ the user said yes to the follow-up).
 
 PR descriptions are reviewer-facing **summaries**, not exhaustive specs.
 The checkin file in the repo IS the exhaustive spec — the PR body's job
-is orientation. Every section has a hard cap.
+is orientation. Every section has a hard cap, and the body itself caps
+at **500-600 words total**. If the body wants to grow past 600 words,
+the unit is doing too much — either split it into multiple checkins
+shipping in a multi-checkin PR (the table gives reviewers a navigable
+overview) or compress the body harder.
 
 ```markdown
 <!-- project-pr-checkins: <comma-separated NN list> -->
@@ -274,11 +278,12 @@ loop owns commits; the human owns merges.
    execution notes.
 7. **Concise over exhaustive.** PR body sections obey the caps in § 4.2
    (Motivation 2-4 sentences; Summary 3-5 one-line bullets; Notes 3-5
-   reviewer-relevant items). Acceptance criteria, scope, execution, and
-   evaluator verdict are NOT pasted into the body — they live in the
-   checkin file, linked from the Reference / Units section. A PR body
-   that wants to be longer is signaling that the unit is doing too much
-   or that the author is over-explaining.
+   reviewer-relevant items) and the total body caps at **500-600 words**.
+   Acceptance criteria, scope, execution, and evaluator verdict are NOT
+   pasted into the body — they live in the checkin file, linked from the
+   Reference / Units section. A PR body that wants to be longer than
+   600 words is signaling that the unit is doing too much or that the
+   author is over-explaining.
 
 ## Report
 
