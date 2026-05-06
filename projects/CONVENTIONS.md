@@ -5,6 +5,65 @@ The `/trout-*` skill family and the `/ev-*` execution loops both read from
 and write to the shapes defined here. If you are a skill and you are unsure
 of a format, read this file first.
 
+## Substrate primitive shapes
+
+Four shapes of substrate work. The shape determines the primitive.
+
+| Shape | What it is | Primitive | Where it lives |
+|-------|------------|-----------|----------------|
+| **CRUD** | Read / edit / write files. Deterministic. No LLM judgment. | Node script (stdlib only) | `.claude/scripts/<family>/<verb>.js` |
+| **LLM** | Judgment, taste, narrative, classification. | Skill | `.claude/skills/<name>/SKILL.md` |
+| **Interactive** | Multi-turn user conversation. Must run in the main thread. | Skill | `.claude/skills/<name>/SKILL.md` |
+| **Orchestration** | Composes Skill + Agent in the same context. | Skill | `.claude/skills/<name>/SKILL.md` |
+
+LLM-shaped skills with a deterministic CRUD epilogue (write file, append
+manifest event, invoke other substrate) split: the skill body keeps the
+LLM portion as prose; the CRUD epilogue extracts to a script and the skill
+body invokes it via `Bash`. This is the **shell extraction** pattern.
+Apply only when the epilogue is non-trivial.
+
+### Why orchestration stays a skill
+
+Orchestration substrate invokes other skills via the `Skill` tool. The
+`Skill` tool is a model-initiated invocation. Empirically,
+`disable-model-invocation: true` on a skill blocks all model-initiated
+invocations of it, including transitive `Skill` tool calls from other
+skills. So a skill cannot be simultaneously "composable from another
+skill" and "blocked from ambient auto-discovery." The only path to
+composition-only behavior is a different primitive (script or subagent).
+Orchestration substrate must therefore stay discoverable.
+
+### `.claude/scripts/` directory layout
+
+```
+.claude/scripts/
+├── trout/                             ← project state primitives
+│   ├── autosave.js
+│   ├── autoload.js
+│   └── ...
+├── griot/                             ← learnings primitives
+│   ├── capture.js
+│   └── use.js
+└── guild/                             ← agent-panel primitives
+    └── parse-and-aggregate.js
+```
+
+Scripts are Node, stdlib only — no npm dependencies. Callers shell out
+via `Bash("node .claude/scripts/<family>/<verb>.js <args>")`.
+
+### Permissions
+
+Add one wildcard per family to project-wide `.claude/settings.json` as
+the family's first script lands:
+
+```jsonc
+"Bash(node .claude/scripts/trout/*)",
+"Bash(node .claude/scripts/griot/*)",
+"Bash(node .claude/scripts/guild/*)"
+```
+
+Per-script entries are not used; the family wildcard is narrow enough.
+
 ## Directory layout
 
 ```
