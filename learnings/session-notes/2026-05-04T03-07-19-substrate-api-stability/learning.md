@@ -1,0 +1,5 @@
+When authoring a substrate primitive whose interface shape is named in an approved design plan, do not narrow the documented input shape on YAGNI grounds — even if v1 callers don't exercise the dropped field. Substrate APIs are stable contracts that downstream callers build against; narrowing now means a breaking-shape change later. Document the full shape with v1 implementations populating empty/default values for unused fields.
+
+If the spec genuinely should narrow (e.g. the field is wrong, not just unused), **amend the contract first**, get user approval on the narrower shape, and only then implement. Do not let the artifact silently rewrite the contract via Execution-section rationale. The evaluator is correct to flag `contract-ask-drift` even when the rationale is reasonable engineering judgment — judgment calls about the spec belong in the contract, not in the implementation.
+
+Concrete: this applies to `.claude/skills/guild-*/SKILL.md`, agent file frontmatter shapes, evaluation packet shapes, and any other interface that downstream tooling will compose against.

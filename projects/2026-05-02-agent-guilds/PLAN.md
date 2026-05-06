@@ -40,6 +40,35 @@ Extract `evaluator-base.md` from existing `evaluator.md` (read-only, no praise, 
 
 **One PR.**
 
+### Phase 1.5: Substrate primitive cleanup
+
+Inserted post-Phase-1 from the post-merge architecture audit (`sessions/2026-05-05-a.md`). Establishes the "scripts for CRUD, skills for LLM-shaped work, orchestration stays skill" convention. Pure-CRUD substrate primitives migrate to Node scripts under `.claude/scripts/<family>/<verb>.js`; LLM-shaped skills with CRUD epilogues split into a thin LLM body + a script for the deterministic tail; orchestration skills stay as skills (they compose Skill + Agent in a shared context). Per-family wildcard permissions (`Bash(node .claude/scripts/<family>/*)`) added to project-wide `.claude/settings.json` as each family's first script lands.
+
+**Ordering:** sequential. Convention doc lands first (anchors the "why"); migrations follow; e2e verification closes.
+
+**Deliverables:**
+
+1. **Convention doc** → add a "Skills as interfaces vs workers" section to `projects/CONVENTIONS.md`. Document the four primitive shapes (CRUD / LLM / interactive / orchestration) and the rule for each. Reference the empirically-verified `disable-model-invocation` finding (a skill cannot be both composable-from-another-skill and blocked-from-ambient-discovery — the only path to composition-only behavior is a different primitive).
+2. **`trout-autosave` → script.** Author `.claude/scripts/trout/autosave.js` (Node, stdlib only). Same arg surface as the skill (`--phase-update`, `--current-state`, `--detail`, `--event`, `--init`). Update all call sites (`ev-loop-confidence`, `ev-loop-interactive`, `trout-plan`, `trout-pull-request`, `trout-archive`, `trout-save-session`, `ev-run`). Delete `.claude/skills/trout-autosave/`.
+3. **`trout-autoload` → script.** Author `.claude/scripts/trout/autoload.js`. Returns the briefing markdown to stdout. Update call sites. Delete `.claude/skills/trout-autoload/`.
+4. **`griot-capture` → script.** Author `.claude/scripts/griot/capture.js`. Same `--from-checkin=<path>` arg surface; derives the 5 session-note files. Update call sites. Delete `.claude/skills/griot-capture/`.
+5. **`guild-validate` parser extraction.** Author `.claude/scripts/guild/parse-and-aggregate.js`. Takes an array of `{agent, output}` entries, parses each verdict, aggregates findings, returns the locked output shape. Update `guild-validate` SKILL.md so its parse + aggregate steps shell out to the script. Skill body stays — it is the addressable orchestration handle.
+6. **`trout-pull-request` split.** Author `.claude/scripts/trout/pr-plumbing.js` (gh CLI calls, marker parsing, checkin parser, commit-pending-work helper). Update `trout-pull-request` SKILL.md so the LLM body authoring stays as prose; the plumbing prose becomes Bash invocations of the script. Skill body stays — it is the LLM-shaped body author.
+7. **`trout-archive` relocate split.** Author `.claude/scripts/trout/archive-relocate.js` (moves `projects/<slug>/` to `projects/archive/<slug>/`, updates the manifest's `Status` field). Update `trout-archive` SKILL.md so the relocate step shells out. Skill body stays — interview / retro / synthesis remain LLM-shaped.
+8. **`trout-save-session` finalize split.** Author `.claude/scripts/trout/save-session-finalize.js` (writes `sessions/YYYY-MM-DD-<letter>.md`, appends `session-saved` event to manifest, optionally invokes griot capture for correction lines). Update `trout-save-session` SKILL.md so narrative authoring stays as prose; the finalize tail becomes a Bash invocation. Skill body stays.
+9. **`trout-pr-respond` plumbing split.** Author `.claude/scripts/trout/pr-respond-plumbing.js` (gh CLI calls to fetch PR comments / reviews, classification scaffolding). Update `trout-pr-respond` SKILL.md so the LLM classification + response plan stays as prose; gh CLI plumbing becomes a Bash invocation. Skill body stays.
+10. **`trout-plan` scaffold split.** Author `.claude/scripts/trout/plan-scaffold.js` (creates `projects/<date>-<slug>/` directory tree, scaffolds initial MANIFEST.md / config.md / PLAN.md skeletons from interview output). Update `trout-plan` SKILL.md so the interview stays as prose; post-interview scaffold becomes a Bash invocation. Skill body stays.
+11. **`griot-use` → script.** Author `.claude/scripts/griot/use.js` (small — reads `learnings/rollup.md`, prints content + citation contract to stdout so the Bash tool result lands the load in conversation context). Inline the invocation into `/ev-run`'s setup step (`Step 1.5. Load learnings`) so it fires automatically at loop setup, not as a discoverable user skill. Delete `.claude/skills/griot-use/`.
+12. **End-to-end verification.** Scaffold a throwaway `phase-1-5-test` project via the migrated `/trout-plan`. Take it through one unit of work via `/ev-run` → `/ev-loop-interactive`. Save session via the migrated `/trout-save-session`. Confirm everything works through the migrated path. Archive the test project via the migrated `/trout-archive`.
+
+**Verification:**
+- `npm run lint` clean (Node scripts lint as JS via Biome).
+- `npm run build` clean.
+- `grep -rn "Skill(skill: \"trout-autosave\"" .claude/skills/` returns nothing (and the same grep for each migrated skill).
+- E2E test project (deliverable 12) runs without errors.
+
+**One PR.**
+
 ### Phase 2: Antagonist evaluator panel
 
 Author `evaluator-a11y` and `evaluator-nextjs` with full antipattern catalogs and CLI validators (axe-core / jsx-a11y; `'use client'` regex + AST + bundle checks). Author `evaluator-react-api`, `evaluator-tokens`, `evaluator-naming` with smaller advisory-only catalogs initially. Document precedence list and tokens-vs-naming boundary. Update ev-loop auto-derivation rules so panels assemble contextually from file types.
@@ -75,7 +104,8 @@ Extend `griot-capture` to accept `evaluator-finding:` shape (five classification
 ## Dependencies
 
 - Phase 1 must merge before any others.
-- Phases 2, 3, and 4 each only depend on Phase 1 — they can land in any order or in parallel.
+- Phase 1.5 depends on Phase 1 merged. Inserts post-Phase-1 to establish the substrate convention.
+- Phases 2, 3, and 4 each depend on Phase 1.5 merged (so the convention is in place before composition layers compose against it). They can land in any order or in parallel after that.
 - Phase 5 depends on Phase 2 (real evaluators with catalogs to capture from). Can start work earlier but should land last.
 
 ## Verification

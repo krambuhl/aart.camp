@@ -1,0 +1,1 @@
+correction: Initial draft dropped per_agent_context with YAGNI rationale; evaluator flagged contract-ask-drift; iteration restored the field. Lesson: substrate API stability trumps in-flight YAGNI calls when the design plan has already specified the shape. If the spec genuinely should narrow, amend the contract first, then iterate.
