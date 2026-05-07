@@ -282,7 +282,8 @@ loop:
   the generator defaulted to incorrectly, note it verbatim in the
   checkin's "Notes for the PR" section with a `correction:` prefix.
   `/trout-save-session` captures every such line to
-  `learnings/session-notes/` via `/griot-capture --from-checkin`
+  `learnings/session-notes/` via
+  `Bash("node .claude/scripts/griot/capture.ts --from-checkin=...")`
   at end of session; `/griot-compact` decides which get promoted.
   The loop itself never writes to `learnings/`.
 - **No emojis.**

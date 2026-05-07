@@ -34,11 +34,12 @@ records the emitted event.
    `checkin-created` give you their paths. Read each to get scope,
    verdict, and any `correction:` lines in "Notes for the PR".
 4. **Capture corrections.** For each `correction:` line found in step
-   3, invoke `/griot-capture` via the Skill tool with
-   `args: "--from-checkin=<checkin-path> --slug=<proposed-slug>"`.
-   Do this **before** writing the handoff so the handoff can report
-   actual counts. Don't apply a value gate here — the user marking a
-   line `correction:` is the gate, and `/griot-compact` is the
+   3, invoke the capture script via Bash:
+   `Bash("node .claude/scripts/griot/capture.ts --from-checkin=<checkin-path> --slug=<proposed-slug> [--correction-index=<n>]")`.
+   Pass `--correction-index` when the checkin has multiple corrections
+   (default is 0). Do this **before** writing the handoff so the handoff
+   can report actual counts. Don't apply a value gate here — the user
+   marking a line `correction:` is the gate, and `/griot-compact` is the
    value filter. Capture every correction.
 5. **Determine the filename.** Today's date is available via
    `date '+%Y-%m-%d'`. Start at letter `a`. If
@@ -98,11 +99,11 @@ For each correction line:
 
 1. Derive a 3–5 word kebab-case slug from the correction text or the
    checkin's Unit field.
-2. Invoke the `griot-capture` skill via the Skill tool:
-   - `skill`: `griot-capture`
-   - `args`: `--from-checkin=<checkin-path> --slug=<slug>`
-3. Capture returns a `captured: learnings/session-notes/<folder>/`
-   line. Collect those paths for the handoff's "Learnings captured"
+2. Invoke the capture script via Bash, passing the correction's index
+   when the checkin has multiple corrections (default index is 0):
+   `Bash("node .claude/scripts/griot/capture.ts --from-checkin=<checkin-path> --slug=<slug> [--correction-index=<n>]")`
+3. The script prints `captured: learnings/session-notes/<folder>/ from <checkin-path>`
+   to stdout. Collect those paths for the handoff's "Learnings captured"
    section.
 
 **Do not apply a value gate.** The user marking a line `correction:`
