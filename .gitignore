@@ -31,6 +31,9 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
+# storybook
+storybook-static/
+
 # vercel
 .vercel
 

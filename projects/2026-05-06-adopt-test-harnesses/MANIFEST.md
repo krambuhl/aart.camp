@@ -4,7 +4,7 @@
 **Started**: 2026-05-06
 **Status**: active
 **Current branch**: ev.adopt-test-harnesses.vitest-harness
-**Latest checkin**: checkins/ev.adopt-test-harnesses.vitest-harness/03.md
+**Latest checkin**: checkins/ev.adopt-test-harnesses.storybook-harness/03.md
 
 ## Strategy
 
@@ -20,7 +20,7 @@ everything into CI).
 | # | Name | Status | Branch | Latest checkin | PR |
 |---|------|--------|--------|----------------|----|
 | 1 | Vitest harness | completed | ev.adopt-test-harnesses.vitest-harness | 03 | #11 |
-| 2 | Storybook harness | not-started | — | — | — |
+| 2 | Storybook harness | completed | ev.adopt-test-harnesses.storybook-harness | 03 | #14 (open) |
 | 3 | Playwright harness | not-started | — | — | — |
 | 4 | GitHub Actions CI | not-started | — | — | — |
 
@@ -45,3 +45,8 @@ Phase 1 complete (post-rebase). Three checkins on the branch: 01 install + confi
 | 2026-05-06 07:47 | checkin-created | 03 on ev.adopt-test-harnesses.vitest-harness |
 | 2026-05-06 15:50 | pr-updated | #11 |
 | 2026-05-06 15:56 | session-saved | 2026-05-06-a |
+| 2026-05-06 16:48 | checkin-created | 01 on ev.adopt-test-harnesses.storybook-harness |
+| 2026-05-06 17:34 | checkin-created | 02 on ev.adopt-test-harnesses.storybook-harness |
+| 2026-05-06 18:40 | checkin-created | 03 on ev.adopt-test-harnesses.storybook-harness |
+| 2026-05-06 18:44 | pr-opened | #14 |
+| 2026-05-06 18:44 | phase-completed | 2 |
