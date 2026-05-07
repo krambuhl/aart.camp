@@ -6,5 +6,5 @@ import '../styles/tokens.css';
 import '../styles/globals.css';
 
 export default definePreview({
-  addons: [a11y],
+  addons: [a11y()],
 });
