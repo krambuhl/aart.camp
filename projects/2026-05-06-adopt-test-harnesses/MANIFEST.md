@@ -3,8 +3,8 @@
 **Slug**: 2026-05-06-adopt-test-harnesses
 **Started**: 2026-05-06
 **Status**: active
-**Current branch**: ev.adopt-test-harnesses.vitest-harness
-**Latest checkin**: checkins/ev.adopt-test-harnesses.storybook-harness/03.md
+**Current branch**: ev.adopt-test-harnesses.playwright-harness
+**Latest checkin**: checkins/ev.adopt-test-harnesses.playwright-harness/02.md
 
 ## Strategy
 
@@ -20,8 +20,8 @@ everything into CI).
 | # | Name | Status | Branch | Latest checkin | PR |
 |---|------|--------|--------|----------------|----|
 | 1 | Vitest harness | completed | ev.adopt-test-harnesses.vitest-harness | 03 | #11 |
-| 2 | Storybook harness | completed | ev.adopt-test-harnesses.storybook-harness | 03 | #14 (open) |
-| 3 | Playwright harness | not-started | — | — | — |
+| 2 | Storybook harness | completed | ev.adopt-test-harnesses.storybook-harness | 03 | #14 |
+| 3 | Playwright harness | completed | ev.adopt-test-harnesses.playwright-harness | 02 | #15 |
 | 4 | GitHub Actions CI | not-started | — | — | — |
 
 ## Dependencies
@@ -31,7 +31,18 @@ everything into CI).
 
 ## Current state
 
-Phase 1 complete (post-rebase). Three checkins on the branch: 01 install + configure vitest, 02 example test for wrapResponsive, 03 consolidate substrate tests under vitest after rebasing on main. npm test runs both surfaces (23 tests across 2 files), npm run test:agentic filters to substrate (20 tests). Lint + build green. PR #11 still open; ready to push the rebased history and re-author the body via /trout-pull-request using the new multi-checkin template.
+Phase 3 complete on `ev.adopt-test-harnesses.playwright-harness`.
+Playwright installed (Chromium-only); `playwright.config.ts` with
+`webServer` array (Next.js prod build for D1 route smoke; Storybook
+dev server for D2 screenshots). Two e2e tests: D1 route smoke for
+`/` asserting `<h1>Sketches</h1>` visible + no console/page errors;
+D2 auto-screenshots every Storybook story by iterating
+`storybook-static/index.json`, with one committed baseline
+(`shared-stack--default.png`). Vitest narrowed to `.test.*` glob,
+Playwright owns `.spec.*`. `.claude/settings.local.json` gitignored
+to stop testing-artifact churn. All verification green: 24 vitest
+tests, 2 e2e tests, lint clean, both builds clean. Ready to open
+phase 3 PR.
 
 ## Events
 
@@ -48,5 +59,11 @@ Phase 1 complete (post-rebase). Three checkins on the branch: 01 install + confi
 | 2026-05-06 16:48 | checkin-created | 01 on ev.adopt-test-harnesses.storybook-harness |
 | 2026-05-06 17:34 | checkin-created | 02 on ev.adopt-test-harnesses.storybook-harness |
 | 2026-05-06 18:40 | checkin-created | 03 on ev.adopt-test-harnesses.storybook-harness |
+| 2026-05-06 22:59 | pr-merged | #11 |
 | 2026-05-06 18:44 | pr-opened | #14 |
 | 2026-05-06 18:44 | phase-completed | 2 |
+| 2026-05-07 04:00 | pr-merged | #14 |
+| 2026-05-07 07:09 | checkin-created | 01 on ev.adopt-test-harnesses.playwright-harness |
+| 2026-05-07 09:05 | checkin-created | 02 on ev.adopt-test-harnesses.playwright-harness |
+| 2026-05-07 09:05 | phase-completed | 3 |
+| 2026-05-07 09:09 | pr-opened | #15 |
