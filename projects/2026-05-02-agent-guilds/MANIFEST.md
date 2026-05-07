@@ -75,3 +75,4 @@ Phase 1 merged via PR #8. Phase 1.5 split into a sequence of PRs after a post-me
 | 2026-05-07 01:12 | checkin-created | 05 on ev.agent-guilds.phase-1-5-substrate-cleanup-2 |
 | 2026-05-07 01:16 | pr-updated | #13 (re-authored multi-checkin from 01,02,03,04,05 — final shape before merge) |
 | 2026-05-07 03:18 | checkin-created | 06 on ev.agent-guilds.phase-1-5-substrate-cleanup-2 |
+| 2026-05-07 03:21 | pr-updated | #13 (re-authored from 01-06; final shape with dense-packet codification) |
