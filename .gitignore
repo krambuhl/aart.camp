@@ -34,8 +34,17 @@ yarn-error.log*
 # storybook
 storybook-static/
 
+# playwright
+/playwright-report/
+/test-results/
+/blob-report/
+/playwright/.cache/
+
 # vercel
 .vercel
+
+# claude code — per-machine local settings
+.claude/settings.local.json
 
 # typescript
 *.tsbuildinfo
