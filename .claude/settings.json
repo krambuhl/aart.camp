@@ -19,6 +19,7 @@
       "Skill(trout-archive)",
       "Skill(trout-archive:*)",
       "Bash(node .claude/scripts/griot/*)",
+      "Bash(node .claude/scripts/guild/*)",
       "Skill(griot-capture)",
       "Skill(griot-capture:*)",
       "Skill(griot-use)",

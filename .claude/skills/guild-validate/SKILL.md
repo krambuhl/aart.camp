@@ -98,41 +98,47 @@ depend on the shape:
    Do not pass `per_agent_context` — every evaluator sees the same packet
    by design. (A future caller wanting domain-specific hints could spawn
    evaluators with per-agent context; this skill does not.)
-3. **Parse each verdict.** For each `{agent, output}` entry returned by
-   `guild-spawn`:
-   - Locate the line starting with `VERDICT:`.
-   - If the line is `VERDICT: approved`, no findings are extracted from
-     this evaluator's output. Skip to the next entry.
-   - If the line is `VERDICT: flagged`, extract the Reasons section
-     (each reason becomes a finding) and the optional Suggested
-     remedies section.
-   - For each finding, determine severity:
-     - **v1 compatibility rule**: if the reason line does not include
-       an explicit `BLOCKING:` or `ADVISORY:` prefix, treat the finding
-       as `blocking`. (Today's `evaluator-contract-fit` and any other
-       evaluator inheriting just `evaluator-base.md` emit unprefixed
-       reasons; Phase 2 evaluators with antipattern catalogs will
-       emit explicit severity tags.)
-     - If the reason line begins with `BLOCKING:` or `ADVISORY:`, use
-       that severity.
-   - For each finding, look for a structured CLI runs section (a
-     fenced block under `## CLI runs` or similar). If present, append
-     entries to `cli_runs`. v1 evaluators do not emit this section;
-     it stays empty.
-   - If the verdict line is unparseable or missing, record a
-     `parse-failure` finding (severity: blocking) for that evaluator.
-4. **Aggregate.**
-   - Collect all blocking findings into `blocking_findings`, all
-     advisory into `advisory_findings`, all CLI runs into `cli_runs`.
-   - Detect conflicts (see "Conflict detection" below). Populate
-     `conflicts` if any are found.
-   - Determine `verdict`:
-     - If `conflicts` is non-empty → `flagged-conflict`.
-     - Else if `blocking_findings` is non-empty → `flagged`.
-     - Else → `approved`. (Advisory-only is still approved; the loop
-       sees the advisories in the output but they don't gate.)
-5. **Return** the structured output to the caller. This skill performs
-   no further work.
+3. **Parse and aggregate.** Build a JSON array of `{agent, output}`
+   entries from `guild-spawn`'s outputs and pipe it to
+   `.claude/scripts/guild/parse-and-aggregate.ts` via stdin. The script
+   returns the locked Result shape (`{verdict, blocking_findings,
+   advisory_findings, cli_runs, conflicts}`) on stdout. Bash invocation
+   uses a quoted heredoc so JSON content passes through verbatim:
+
+   ```bash
+   node .claude/scripts/guild/parse-and-aggregate.ts <<'GUILD_INPUT'
+   [
+     {"agent": "evaluator-contract-fit", "output": "...full evaluator output..."}
+   ]
+   GUILD_INPUT
+   ```
+
+   The script is the implementation; the rules below are the spec it
+   implements. They live in this skill body as the contract the script
+   honors:
+
+   - For each entry, locate `VERDICT:`. `approved` → no findings.
+     `flagged` → extract the Reasons section bullets as findings, plus
+     the optional Suggested remedies section (paired with reasons by
+     index). Missing or unparseable VERDICT line → one `parse-failure`
+     blocking finding.
+   - **v1 severity rule**: each reason is `blocking` by default. An
+     explicit `BLOCKING:` or `ADVISORY:` prefix on the reason line
+     overrides. (Today's evaluators emit unprefixed reasons; Phase 2
+     evaluators with antipattern catalogs will emit explicit prefixes.)
+   - Each finding has shape `{evaluator, code, evidence, remedy}`.
+     `code` defaults to `criterion-unmet`; if the evidence text starts
+     with `<word>(-<word>)*: ...` (kebab code prefix, optionally
+     backtick-wrapped, optionally with parenthetical context), the
+     prefix becomes `code` and the rest becomes `evidence`.
+   - CLI runs: v1 evaluators do not emit a `## CLI runs` section, so
+     `cli_runs` stays empty. Forward-compat infrastructure for Phase 2.
+   - Verdict precedence: `conflicts` non-empty → `flagged-conflict`;
+     else `blocking_findings` non-empty → `flagged`; else `approved`.
+     Advisory-only is still `approved` — advisories surface but do not
+     gate.
+4. **Return** the script's output (parsed back into a structured
+   value) to the caller. This skill performs no further work.
 
 ## Conflict detection (v1: future-work)
 
