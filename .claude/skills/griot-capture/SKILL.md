@@ -1,51 +1,44 @@
 ---
 name: griot-capture
 description: >-
-  Capture a correction as a candidate learning. Invoked either (a)
-  interactively by the user after a correction, or (b) by
-  /trout-save-session in --from-checkin mode, which replays a checkin
-  whose Notes for the PR contain a `correction:` line. Fast, synchronous,
-  writes files only — no LLM panel at capture time. The real value gate
-  is /griot-compact, not this skill.
+  Interactive capture of a correction as a candidate learning. Invoked by
+  the user in-session after Claude got something wrong and they corrected
+  it. Applies a capture gate, then writes a five-file folder under
+  learnings/session-notes/ via the Write tool. Fast, synchronous. The
+  real value gate is /griot-compact, not this skill. For programmatic
+  from-checkin captures (called by /trout-save-session), use the script
+  directly: Bash("node .claude/scripts/griot/capture.ts --from-checkin=...").
 user-invocable: true
-argument-hint: "[--from-checkin=<path> [--slug=<slug>]]"
+argument-hint: "(no args; uses live transcript)"
 allowed-tools: Bash, Read, Write
 ---
 
-# Learnings Capture
+# Learnings Capture (interactive mode)
 
-Write a new `session-notes/<ts>-<slug>/` folder with the five input files the
-judge panel will later need. This skill is **synchronous and fast**. It does
-not call any LLMs. It does not write `rubric.md` — that's the rubric-author
-agent's job during `/griot-compact`.
+Write a new `learnings/session-notes/<ts>-<slug>/` folder with the five input
+files the judge panel will later need. Interactive mode only — for
+programmatic captures from a checkin's `correction:` lines, the script
+`.claude/scripts/griot/capture.ts` handles that path (called automatically
+by `/trout-save-session`).
 
-## Two invocation modes
-
-**Interactive mode (default).** The user invokes `/griot-capture`
-explicitly after Claude got something wrong and they corrected it. The
-skill uses the live transcript as its material and applies the capture
-gate (see below).
-
-**From-checkin mode.** `/trout-save-session` invokes the skill with
-`--from-checkin=<path> [--slug=<slug>]`. The skill reads the named
-checkin and derives the five files from it. The capture gate is
-considered pre-applied — the user marked the correction when they put
-a `correction:` line in the checkin's "Notes for the PR". Capture
-liberally in this mode; compaction is the real value gate.
+This skill is **synchronous and fast**. It does not call any LLMs. It does
+not write `rubric.md` — that's the rubric-author agent's job during
+`/griot-compact`.
 
 ## When this runs
 
-- Interactively when the user explicitly invokes it.
-- Automatically from `/trout-save-session` for each `correction:`
-  line in the session's checkins.
+- Interactively when the user explicitly invokes `/griot-capture` after
+  Claude got something wrong and they corrected it in-conversation.
+- For from-checkin captures, do NOT invoke this skill — use the script:
+  `Bash("node .claude/scripts/griot/capture.ts --from-checkin=<path> --correction-text=\"<text>\" [--slug=<slug>]")`.
 
-Do not auto-invoke from anywhere else — no mid-session auto-triggers
-from vague context, no capture from Claude's own reasoning.
+Do not auto-invoke from anywhere else — no mid-session auto-triggers from
+vague context, no capture from Claude's own reasoning.
 
-## Gate — interactive mode only
+## Gate
 
-In **interactive mode**, before writing anything, decide: **would a
-reasonable Claude have gotten this wrong by default?**
+Before writing anything, decide: **would a reasonable Claude have gotten
+this wrong by default?**
 
 Capture if:
 - The mistake reflects a non-obvious project convention (e.g., "we migrated
@@ -62,52 +55,47 @@ Capture if:
 If in doubt, ask the user: "This looks like X. Should I capture it, or is it
 one-off?" If they say skip, stop — don't write files.
 
-In **from-checkin mode**, skip this gate. The user already applied it when
-they wrote `correction: <text>` in the checkin. Capture every correction
-line; `/griot-compact` is the value filter.
-
-## What to write
+## Folder + 5 files
 
 Create the folder:
 
 ```bash
 ts=$(date -u +"%Y-%m-%dT%H-%M-%S")
-slug="spacerwithcss-migration"   # fill in: 3-5 word kebab-case summary
+slug="spacerwithcss-migration"   # 3-5 word kebab-case summary of the situation
 mkdir -p "learnings/session-notes/${ts}-${slug}"
 ```
 
 - `<ts>` — UTC ISO-ish with colons replaced by dashes, e.g.,
   `2026-04-23T14-32-01`.
-- `<slug>` — 3-5 word kebab-case summary of the correction. Not the lesson
-  title; the situation. Examples: `spacerwithcss-migration`,
-  `stack-over-manual-flex`, `tokens-not-hex-codes`. In from-checkin mode,
-  use the `--slug` argument if provided; otherwise derive from the
-  checkin's Unit field.
+- `<slug>` — 3-5 word kebab-case summary of the **situation** (not the
+  lesson title). Examples: `spacerwithcss-migration`,
+  `stack-over-manual-flex`, `tokens-not-hex-codes`.
 
-Write exactly five files in that folder:
+Write exactly five files via the `Write` tool:
 
 ### `prompt.md`
 
-The triggering user turn, **distilled for replay**. This is the single
-Claude-facing prompt a future judge panel will use to reproduce the failure.
+The triggering user turn, **distilled for replay**. The single Claude-facing
+prompt a future judge panel will use to reproduce the failure.
 
 - Include enough context for a blind Claude to produce the same wrong answer.
 - Strip irrelevant chatter and scrollback.
 - If the real prompt depended on tool output or file contents, inline the
   essential bits as code blocks or quotes.
-- Aim for 50-300 words. Longer only if the task genuinely requires it.
+- 50-300 words. Longer only if the task genuinely requires it.
 
 ### `wrong.md`
 
 What Claude said or did. Be faithful — don't paraphrase the failure mode.
-If Claude wrote code, include the code. If Claude gave a suggestion, include
-the suggestion verbatim.
+If Claude wrote code, include the code. If Claude gave a suggestion,
+include the suggestion verbatim.
 
 ### `correction.md`
 
 The user's correction, verbatim or near-verbatim. This is the ground truth.
 If the correction came across multiple turns, concatenate the relevant
-corrective bits.
+corrective bits. Format the file as a single line prefixed `correction: `
+to match what the from-checkin script writes.
 
 ### `full_transcript.md`
 
@@ -119,26 +107,6 @@ Debugging aid only — nothing reads this automatically. Include turn markers.
 A draft of the lesson. One or two paragraphs. Concrete, actionable. Name the
 forbidden thing and the preferred thing. Do not explain the surrounding
 architecture — a good learning is narrow.
-
-### File derivation in from-checkin mode
-
-When invoked with `--from-checkin=<path>`:
-
-- `prompt.md` — distilled from the checkin's `## Contract` section
-  (Goal + Acceptance criteria + Inputs). Enough context for a blind
-  Claude to reproduce the same task setup.
-- `wrong.md` — the checkin's `## Execution` section as written before
-  the correction was applied. If Execution already reflects the
-  post-correction state, pull from the `## Changes since previous
-  checkin` and Evaluator verdict sections to reconstruct what went
-  wrong.
-- `correction.md` — the text of the `correction:` line(s) in the
-  checkin's `## Notes for the PR` section, verbatim, one line per
-  correction found.
-- `full_transcript.md` — the entire checkin content, unmodified.
-- `learning.md` — a one- to two-paragraph draft synthesized from the
-  correction text. Narrow and actionable. The compaction pipeline can
-  rewrite it if the judges don't accept the draft.
 
 Good shape:
 
@@ -166,19 +134,12 @@ version during compaction if the judges don't accept this one.
 
 ## After writing
 
-In interactive mode, tell the user:
+Tell the user:
 
 ```
 Captured to learnings/session-notes/<folder>/.
 
 Run /griot-compact when you want to process pending captures.
-```
-
-In from-checkin mode, emit a single machine-readable line so
-`/trout-save-session` can roll up the count:
-
-```
-captured: learnings/session-notes/<folder>/ from <checkin-path>
 ```
 
 Then stop. Do not continue to other work unless asked.
@@ -188,7 +149,11 @@ told where. Do not also write `rubric.md`.
 
 ## Notes
 
-- If `/griot-capture` is invoked when there's nothing to capture (user
-  made a mistake, no clear correction), say so and stop. Don't invent.
+- If `/griot-capture` is invoked when there's nothing to capture (user made
+  a mistake but no clear correction), say so and stop. Don't invent.
 - Paths are relative to the repo root. Use `git rev-parse --show-toplevel`
-  if the cwd is ambiguous.
+  if cwd is ambiguous.
+- The five-file shape MUST match what the from-checkin script writes
+  (`.claude/scripts/griot/capture.ts`) — `/griot-compact`'s judges expect a
+  consistent shape across both invocation paths. If you find yourself
+  diverging, the script's builders are the spec.

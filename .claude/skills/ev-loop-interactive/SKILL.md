@@ -17,7 +17,8 @@ Execute one phase of a project as a human-paired loop: discrete
 deliverables, per-deliverable contract and checkpoint. The human drives
 order when ordering is free; the loop keeps the substrate honest.
 
-**Composes**: `.claude/scripts/trout/autosave.ts` (via Bash),
+**Composes**: `.claude/scripts/trout/autosave.ts`,
+`.claude/scripts/trout/autoload.ts` (both via Bash),
 `/trout-pull-request`, `/guild-validate`.
 **Does not compose**: other loops.
 
@@ -57,7 +58,7 @@ If PLAN.md doesn't specify, default to **free** and ask.
 
 ### Step 0. Pre-flight
 
-- `/trout-autoload <slug>` to refresh state.
+- `Bash("node .claude/scripts/trout/autoload.ts <slug>")` to refresh state.
 - Working tree clean, branch matches MANIFEST, verification baseline.
 
 ### Step 1. Enumerate deliverables
@@ -83,9 +84,61 @@ For each deliverable (picked per the ordering rule):
    the antagonist panel against this unit. v1 panels are single-
    evaluator lists; Phase 2+ phases will name larger panels in PLAN.md.
    - `agents`: `evaluator-contract-fit`
-   - `packet`: the Contract section verbatim, the artifact (files
-     changed + Execution section), and the original ask (the
-     deliverable's line from PLAN.md).
+   - `packet`: build a **dense packet** (see shape below). The substrate
+     default is dense — verbose packets correlate with budget-exhaustion
+     failures under `evaluator-contract-fit`'s `maxTurns=5`. Live
+     examples in PR #13's checkins 02-06.
+
+   **Dense packet shape** (three sections, in this order):
+
+   ```
+   ## How to evaluate efficiently
+
+   You have a tight tool-use budget (maxTurns=5). Pre-computed
+   verification below is authoritative — do not re-run lint/build/
+   test/grep unless you find specific evidence the artifact summary
+   contradicts itself. Spot-check at most ONE or TWO criteria with
+   targeted reads, then emit `VERDICT:`. If you cannot reach a verdict
+   within budget, emit `VERDICT: flagged` with `parse-failure:
+   budget-exhausted` so the loop escalates rather than no-ops.
+
+   ## Contract (paraphrased)
+
+   <Goal in 1-3 sentences. Acceptance criteria as a numbered list,
+   condensed (full text in <checkin path>). Disqualifiers as a
+   single-line summary. Inputs as a bulleted list of paths.>
+
+   ## Artifact
+
+   **Files** (created/modified/deleted): <bulleted paths>
+
+   **Pre-computed verification (authoritative — do not re-run)**:
+   - `npm run lint` → <result>
+   - `npm run build` → <result>
+   - `npm run test` → <result>
+   - <other verification: grep results, smoke test outputs, etc.>
+
+   **Direct mappings to acceptance criteria** (for spot-check
+   efficiency): <AC N → file:line ranges or section pointers>
+
+   **Iteration story** (if applicable): <prior panel runs and what
+   was addressed; helps the evaluator avoid re-flagging fixed issues>
+
+   ## Original ask
+
+   <verbatim from PLAN.md or the triggering message>
+
+   ## Suggested spot-check (one tool use)
+
+   <the most efficient single read for confirming the most-suspicious
+   criterion; optional but reduces investigation thrashing>
+   ```
+
+   Pass the contract as a paraphrased summary plus the checkin file
+   path link, not verbatim — the checkin file is in the repo and
+   renders one click away. The packet's job is orientation; the depth
+   is one click away.
+
    The skill returns a structured verdict (`approved` | `flagged` |
    `flagged-conflict`) with `blocking_findings`, `advisory_findings`,
    `cli_runs`, and `conflicts` lists. See
@@ -147,7 +200,8 @@ For "address feedback on #N":
   the generator defaulted to incorrectly, note it verbatim in the
   checkin's "Notes for the PR" section with a `correction:` prefix.
   `/trout-save-session` captures every such line to
-  `learnings/session-notes/` via `/griot-capture --from-checkin`
+  `learnings/session-notes/` via
+  `Bash("node .claude/scripts/griot/capture.ts --from-checkin=...")`
   at end of session; `/griot-compact` decides which get promoted.
   The loop itself never writes to `learnings/`.
 - **No emojis.**
