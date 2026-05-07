@@ -240,10 +240,14 @@ test('learning.md is a draft template with correction text + provenance footer',
   fx.cleanup();
 });
 
-test('multi-correction checkin: --correction-index=0 captures the first', () => {
+test('multi-correction checkin: --correction-text exact match captures the right one', () => {
   const fx = makeFixture();
   const path = writeCheckin(fx.root, 'checkin.md', MULTI_CORRECTION_CHECKIN);
-  const res = run([`--from-checkin=${path}`, '--correction-index=0', '--slug=first'], fx.root);
+  const res = run([
+    `--from-checkin=${path}`,
+    '--correction-text=first correction line about pattern A.',
+    '--slug=first',
+  ], fx.root);
   assert.equal(res.status, 0, `stderr: ${res.stderr}`);
   const folder = readdirSync(join(fx.root, 'learnings', 'session-notes'))[0];
   const correction = readFileSync(join(fx.root, 'learnings', 'session-notes', folder, 'correction.md'), 'utf-8');
@@ -251,24 +255,41 @@ test('multi-correction checkin: --correction-index=0 captures the first', () => 
   fx.cleanup();
 });
 
-test('multi-correction checkin: --correction-index=1 captures the second (wrapped)', () => {
+test('--correction-text matches a wrapped correction after whitespace normalization', () => {
   const fx = makeFixture();
   const path = writeCheckin(fx.root, 'checkin.md', MULTI_CORRECTION_CHECKIN);
-  const res = run([`--from-checkin=${path}`, '--correction-index=1', '--slug=second'], fx.root);
+  // Caller passes the joined-line form (no internal newlines); script collapses
+  // both sides to single-spaces and matches.
+  const res = run([
+    `--from-checkin=${path}`,
+    '--correction-text=second correction line about pattern B that wraps onto a second line for readability and should still be captured as one logical correction.',
+    '--slug=second',
+  ], fx.root);
   assert.equal(res.status, 0, `stderr: ${res.stderr}`);
   const folder = readdirSync(join(fx.root, 'learnings', 'session-notes'))[0];
   const correction = readFileSync(join(fx.root, 'learnings', 'session-notes', folder, 'correction.md'), 'utf-8');
-  assert.match(correction, /^correction: second correction line about pattern B that wraps onto a second line/);
+  assert.match(correction, /^correction: second correction line about pattern B that wraps/);
   fx.cleanup();
 });
 
-test('--correction-index out of range fails with valid range listed', () => {
+test('--correction-text not found fails with available list', () => {
   const fx = makeFixture();
-  const path = writeCheckin(fx.root, 'checkin.md', SINGLE_CORRECTION_CHECKIN);
-  const res = run([`--from-checkin=${path}`, '--correction-index=5'], fx.root);
+  const path = writeCheckin(fx.root, 'checkin.md', MULTI_CORRECTION_CHECKIN);
+  const res = run([`--from-checkin=${path}`, '--correction-text=does not match anything'], fx.root);
   assert.equal(res.status, 1);
-  assert.match(res.stderr, /--correction-index out of range/);
-  assert.match(res.stderr, /valid: 0-0/);
+  assert.match(res.stderr, /correction text not found in checkin/);
+  assert.match(res.stderr, /available:/);
+  assert.match(res.stderr, /first correction line/);
+  fx.cleanup();
+});
+
+test('multi-correction checkin without --correction-text fails as ambiguous', () => {
+  const fx = makeFixture();
+  const path = writeCheckin(fx.root, 'checkin.md', MULTI_CORRECTION_CHECKIN);
+  const res = run([`--from-checkin=${path}`], fx.root);
+  assert.equal(res.status, 1);
+  assert.match(res.stderr, /ambiguous: checkin has 2 correction lines/);
+  assert.match(res.stderr, /pass --correction-text=/);
   fx.cleanup();
 });
 

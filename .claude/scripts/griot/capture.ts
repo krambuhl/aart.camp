@@ -15,7 +15,24 @@ type Checkin = {
 
 const SESSION_NOTES_ROOT = resolve(process.cwd(), 'learnings/session-notes');
 
-const ARG_HINT = '--from-checkin=<path> [--slug=<slug>] [--correction-index=<n>]';
+const ARG_HINT = '--from-checkin=<path> [--slug=<slug>] [--correction-text=<text>]';
+
+function normalizeWhitespace(s: string): string {
+  return s.replace(/\s+/g, ' ').trim();
+}
+
+function selectCorrection(corrections: string[], requestedText: string | undefined): string {
+  if (requestedText === undefined) {
+    if (corrections.length === 1) return corrections[0];
+    const preview = corrections.map((c) => c.slice(0, 60)).map((p) => `"${p}${p.length === 60 ? '…' : ''}"`).join(', ');
+    throw new CaptureError(`ambiguous: checkin has ${corrections.length} correction lines; pass --correction-text=<one of: ${preview}>`);
+  }
+  const requested = normalizeWhitespace(requestedText);
+  const match = corrections.find((c) => normalizeWhitespace(c) === requested);
+  if (match !== undefined) return match;
+  const available = corrections.map((c) => c.slice(0, 30)).map((p) => `"${p}${p.length === 30 ? '…' : ''}"`).join(', ');
+  throw new CaptureError(`correction text not found in checkin; available: ${available}`);
+}
 
 class CaptureError extends Error {}
 
@@ -134,7 +151,7 @@ function main(): void {
       options: {
         'from-checkin': { type: 'string' },
         'slug': { type: 'string' },
-        'correction-index': { type: 'string' },
+        'correction-text': { type: 'string' },
       },
       allowPositionals: false,
       args: process.argv.slice(2),
@@ -160,12 +177,14 @@ function main(): void {
     fail(`no correction: lines found in ${checkinPath}`);
   }
 
-  const indexRaw = values['correction-index'] as string | undefined;
-  const correctionIndex = indexRaw === undefined ? 0 : Number(indexRaw);
-  if (!Number.isInteger(correctionIndex) || correctionIndex < 0 || correctionIndex >= corrections.length) {
-    fail(`--correction-index out of range; checkin has ${corrections.length} correction(s) (valid: 0-${corrections.length - 1})`);
+  const requestedText = values['correction-text'] as string | undefined;
+  let correction: string;
+  try {
+    correction = selectCorrection(corrections, requestedText);
+  } catch (err) {
+    if (err instanceof CaptureError) fail(err.message);
+    throw err;
   }
-  const correction = corrections[correctionIndex];
 
   const explicitSlug = values.slug as string | undefined;
   const slug = explicitSlug ?? kebabize(checkin.unit);

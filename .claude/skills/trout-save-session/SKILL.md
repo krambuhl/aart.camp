@@ -35,12 +35,15 @@ records the emitted event.
    verdict, and any `correction:` lines in "Notes for the PR".
 4. **Capture corrections.** For each `correction:` line found in step
    3, invoke the capture script via Bash:
-   `Bash("node .claude/scripts/griot/capture.ts --from-checkin=<checkin-path> --slug=<proposed-slug> [--correction-index=<n>]")`.
-   Pass `--correction-index` when the checkin has multiple corrections
-   (default is 0). Do this **before** writing the handoff so the handoff
-   can report actual counts. Don't apply a value gate here — the user
-   marking a line `correction:` is the gate, and `/griot-compact` is the
-   value filter. Capture every correction.
+   `Bash("node .claude/scripts/griot/capture.ts --from-checkin=<checkin-path> --slug=<proposed-slug> --correction-text=\"<exact text>\"")`.
+   The exact text should be the correction line content with the
+   `correction: ` prefix stripped; whitespace is normalized on both sides
+   so callers don't have to reproduce exact line-wrap. When a checkin has
+   only one correction, `--correction-text` may be omitted (zero-config
+   single-correction case). Do this **before** writing the handoff so
+   the handoff can report actual counts. Don't apply a value gate here —
+   the user marking a line `correction:` is the gate, and `/griot-compact`
+   is the value filter. Capture every correction.
 5. **Determine the filename.** Today's date is available via
    `date '+%Y-%m-%d'`. Start at letter `a`. If
    `sessions/YYYY-MM-DD-a.md` already exists, try `b`, then `c`, etc. If
@@ -99,9 +102,11 @@ For each correction line:
 
 1. Derive a 3–5 word kebab-case slug from the correction text or the
    checkin's Unit field.
-2. Invoke the capture script via Bash, passing the correction's index
-   when the checkin has multiple corrections (default index is 0):
-   `Bash("node .claude/scripts/griot/capture.ts --from-checkin=<checkin-path> --slug=<slug> [--correction-index=<n>]")`
+2. Invoke the capture script via Bash, passing the correction line's
+   text (with the leading `correction: ` prefix stripped). When the
+   checkin has multiple correction lines, `--correction-text` is required
+   to disambiguate; when there's only one, it may be omitted:
+   `Bash("node .claude/scripts/griot/capture.ts --from-checkin=<checkin-path> --slug=<slug> --correction-text=\"<exact text>\"")`
 3. The script prints `captured: learnings/session-notes/<folder>/ from <checkin-path>`
    to stdout. Collect those paths for the handoff's "Learnings captured"
    section.
