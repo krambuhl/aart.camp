@@ -260,9 +260,12 @@ function parseRepoFromGitRemote(): { owner: string; name: string } {
   if (res.status !== 0) fail('repo-unresolved', `git remote origin not set`);
   const url = res.stdout.trim();
   // Match git@github.com:owner/repo.git OR https://github.com/owner/repo(.git)
-  const ssh = url.match(/^[^:]+:([^/]+)\/([^/.]+)(?:\.git)?$/);
+  // Repo name may contain dots (e.g. aart.camp), so strip a trailing .git first
+  // and then accept any non-slash characters.
+  const stripped = url.replace(/\.git$/, '');
+  const ssh = stripped.match(/^[^:]+:([^/]+)\/([^/]+)$/);
   if (ssh) return { owner: ssh[1], name: ssh[2] };
-  const https = url.match(/github\.com\/([^/]+)\/([^/.]+)(?:\.git)?$/);
+  const https = stripped.match(/github\.com\/([^/]+)\/([^/]+)$/);
   if (https) return { owner: https[1], name: https[2] };
   fail('repo-unresolved', `cannot parse repo from remote URL: ${url}`);
 }
