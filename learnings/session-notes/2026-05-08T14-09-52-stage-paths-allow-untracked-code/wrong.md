@@ -1,0 +1,22 @@
+# What Claude produced
+
+**Step 1 — Verification baseline.** `npm run lint` clean (2 pre-existing broken-symlink warnings on skills, unrelated). `npm run build` clean. `npm run test` 75/75 pass before changes.
+
+**Step 2 — Read SKILL.md** (`.claude/skills/trout-pull-request/SKILL.md`) once to map the script's verb surface against the existing prose. Sections 1, 2, 3, 5, 6 of the skill are the plumbing extracted; sections 4 (title/body authoring) stay in the LLM-shaped skill body for checkin 08. The motivation-prompt prose stays in the skill (the script returns `{thin, sourceSummary}`).
+
+**Step 3 — Author `pr-plumbing.ts`.** Four verbs:
+- `inspect <slug> <branch>` — emits one JSON document with `state` / `disk` / `markerSet` / `checkins` / `pr` / `whyCheck` / `repo` / `base`. Resolves repo from `git config --get remote.origin.url`, base from `config.md` (falls back to `main`).
+- `commit <slug> <branch> --message=<msg> [--no-push]` — uses `git diff --name-only HEAD` (tracked-modified) + `git ls-files --others --exclude-standard` (untracked) to compute the change set. `selectStagePaths` filters via STAGE_EXCLUDES (`.claude/settings.local.json`, `next-env.d.ts`); untracked files outside `projects/` are stageable as new code/skill/script files; untracked files inside `projects/` only stage if they match the active branch's `checkins/<branch>/NN.md` pattern. After commit, pushes by default; `--no-push` opts out.
+- `push <branch>` — escape-hatch standalone push; standard 4-retry backoff (2/4/8/16s, env-fast-mode = 0/0/0/0). Detects network errors via stderr regex (`Could not resolve host`, `Connection (reset|refused|timed out)`, `network`, `temporarily unavailable`, `TLS handshake`); auth/permission errors fail fast.
+- `submit <slug> <branch> --title=<t> --body-file=<p> [--phase-update=<u>]` — atomic chain: `gh pr list/create` (or `gh pr edit` if PR exists) → `node autosave.ts ... --event=pr-opened|pr-updated` → `git add MANIFEST.md` → `git commit -m "Track PR ... in MANIFEST"` → `pushWithRetry`. Tracking-commit messages match the existing PR #13 convention: `Track PR #<N> opened from checkin{s} <list> in MANIFEST` for new PRs, `Track PR #<N> re-author for checkin{s} <list> in MANIFEST` for updates.
+
+**Step 4 — Author `pr-plumbing.test.ts`.** Test infrastructure: `setupFixture` builds a tempdir with a real git repo, a separate bare repo as origin (so real `git push` works), a `.gitignore` excluding test-only artifacts (`.mocks/`, `body.md`, `.push-counter`), and PATH-shimmed mock binaries (`mocks/gh` for all gh subcommands, `mocks/git` that intercepts only `push` for retry tests and forwards everything else to real git). 42 tests organized: 22 pure-helper tests (parseMarker / compareState / checkRationale / analyzeWhyCheck / enumerateCheckinFiles / parseCheckin) imported directly; 6 inspect integration tests covering the four state cases plus missing-marker and substantive why-check; 5 commit tests (no-op, default-push, --no-push, exclusion list, empty message rejection); 3 push tests (success, retry, exhausted budget); 4 submit tests (create-path atomicity, edit-path atomicity, missing body file, gh-create failure does not autosave); plus tests asserting the call sequence and tracking-commit message format.
+
+**Step 5 — Iteration.** Two test failures discovered and fixed during execution:
+1. `git status --porcelain` collapses untracked subdirectories with single contents into directory-level entries (`?? checkins/` instead of `?? checkins/<branch>/01.md`), breaking the path-prefix match. Switched the change-detection to `git diff --name-only HEAD` (tracked) + `git ls-files --others --exclude-standard` (untracked, individual files). Per global guidance, `-uall` was avoided.
+2. The autosave script path was being resolved relative to `process.cwd()`, which is the test fixture in tests but should be the script's own directory. Switched to `import.meta.url`-based resolution so tests find the real autosave regardless of cwd.
+3. The mocks dir initially lived at repo root and got picked up by `git ls-files --others`, polluting the no-op test. Solution: `.gitignore` the mock paths in the fixture so the script's own change-detection respects the test boundary.
+
+**Step 6 — Verification (post-execution).** `npm run lint` clean. `npm run build` clean. `npm run test` 117/117 pass (75 prior + 42 new).
+
+**Step 7 — Pre-evaluation `git status`.** Reverted spurious `next-env.d.ts` modification (carry-over lesson). Working tree shows only the three new files for this checkin.

@@ -1,0 +1,1 @@
+correction: JavaScript regex does not support `\Z` (end-of-string anchor) — same gotcha as the autoload line-wrap bug in checkin 01. The pattern that works is index-based slicing (find header position, slice to next end-marker or `string.length`). Avoid Perl-style anchors in any future substrate parsers; always use position-based slicing instead.
