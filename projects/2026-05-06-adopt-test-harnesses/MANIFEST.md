@@ -22,7 +22,7 @@ everything into CI).
 | 1 | Vitest harness | completed | ev.adopt-test-harnesses.vitest-harness | 03 | #11 |
 | 2 | Storybook harness | completed | ev.adopt-test-harnesses.storybook-harness | 03 | #14 |
 | 3 | Playwright harness | completed | ev.adopt-test-harnesses.playwright-harness | 02 | #15 (merged) |
-| 4 | GitHub Actions CI | in-progress | ev.adopt-test-harnesses.github-actions-ci | 01 | — |
+| 4 | GitHub Actions CI | in-progress | ev.adopt-test-harnesses.github-actions-ci | 01 | #17 (open) |
 
 ## Dependencies
 - Phase 3 requires Phase 2 merged
@@ -69,3 +69,4 @@ phase 3 PR.
 | 2026-05-07 09:09 | pr-opened | #15 |
 | 2026-05-07 22:06 | pr-merged | #15 |
 | 2026-05-07 23:06 | checkin-created | 01 on ev.adopt-test-harnesses.github-actions-ci |
+| 2026-05-08 07:13 | pr-opened | #17 |
