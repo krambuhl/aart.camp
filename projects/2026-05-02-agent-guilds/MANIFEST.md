@@ -88,3 +88,4 @@ Phase 1 merged via PR #8. Phase 1.5 split into a sequence of PRs after a post-me
 | 2026-05-08 08:37 | pr-opened | #18 |
 | 2026-05-08 08:38 | note | correction: trout-pull-request SKILL.md prose incorrectly claimed pr-plumbing.ts submit substitutes <N> in --phase-update; it does not. Phase row now shows literal #<N> (open) — correcting to #18 (open) |
 | 2026-05-08 09:03 | session-saved | 2026-05-08-b |
+| 2026-05-08 15:26 | pr-updated | #18 |
