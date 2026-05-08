@@ -80,3 +80,4 @@ Phase 1 merged via PR #8. Phase 1.5 split into a sequence of PRs after a post-me
 | 2026-05-08 00:25 | pr-opened | #16 |
 | 2026-05-08 07:05 | pr-merged | #13 |
 | 2026-05-08 07:05 | note | Phase row corrected: pr=#16 (was incorrectly recorded as #13 due to typo in submit invocation) |
+| 2026-05-08 07:11 | session-saved | 2026-05-08-a |
