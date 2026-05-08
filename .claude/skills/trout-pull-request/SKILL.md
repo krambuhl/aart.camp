@@ -237,12 +237,20 @@ pending the script emits `no-op` and exits 0 — proceed to § 3.2.
 
 **Step 3.2 — Submit the PR.** Compose the `--phase-update` argument:
 
-- New PR (`state == 'new'`): `<N>:in-progress:pr=#<N> (open)`. The PR
-  number is unknown until `gh pr create` returns; the script resolves
-  `<N>` from the gh response and substitutes it before invoking
-  autosave. Pass the template literally: `1.5:in-progress:pr=#<N> (open)`.
-- Stale PR (`state == 'stale'`): omit `--phase-update`. The script emits
-  a `pr-updated` event without mutating the phase row.
+- New PR (`state == 'new'`): the PR number is unknown until `gh pr
+  create` returns. Two-step pattern: (a) invoke `submit` **without**
+  `--phase-update`; (b) parse the new PR number from `submit`'s
+  terminal-state line (`pr: created #<N>, ...`); (c) run a follow-up
+  `Bash("node .claude/scripts/trout/autosave.ts <slug>
+  --event=note --detail='phase-row PR field updated post-submit'
+  --phase-update=<phase>:in-progress:pr=#<N> (open)")` to set the
+  phase row's PR field. (A future enhancement to `submit` will accept
+  a `<N>` placeholder and substitute the gh-returned number; until
+  then, the two-step pattern is the workflow.)
+- Stale PR (`state == 'stale'`): omit `--phase-update` from `submit`.
+  The script emits a `pr-updated` event without mutating the phase
+  row, which is correct — the PR number is already in the row from
+  the original `pr-opened` event.
 
 Then run:
 
