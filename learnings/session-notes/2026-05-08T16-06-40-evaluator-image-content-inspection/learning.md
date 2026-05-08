@@ -1,0 +1,5 @@
+# Learning draft
+
+initial baseline captured against `serve storybook-static` was Storybook's "No Preview" error panel rather than a rendered Stack component — evaluator caught the visual content during a baseline image inspection that wasn't part of the original verification list. Root cause: Storybook v10 + `nextjs-vite` static iframe never loaded the story chunk despite fetching `index.json` (network request log confirmed). Rather than block on debugging the framework's static-build behavior, pivoted webServer to the validated `npm run storybook` dev path, captured a baseline showing actual Stack rendering (three placeholder boxes), reverified determinism via re-run. Future phase can revisit static-build determinism if dev-server overhead in CI becomes a concern.
+
+_Draft auto-generated from `projects/2026-05-06-adopt-test-harnesses/checkins/ev.adopt-test-harnesses.playwright-harness/02.md` § Notes for the PR. The compaction pipeline (`/griot-compact`) will refine this draft if the judges don't accept it as-is._

@@ -1,0 +1,1 @@
+correction: user redirected the tool choice from PLAN's literal `@storybook/test-runner` to vanilla Playwright + index.json iteration, with rationale: scope ("simple over clever", "intentionally simple stack"), and that interaction testing via play functions is a deferred goal. Future phases can revisit if that goal materializes.

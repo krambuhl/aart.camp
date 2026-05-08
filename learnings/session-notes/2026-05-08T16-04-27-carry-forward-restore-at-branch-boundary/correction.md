@@ -1,0 +1,1 @@
+correction: user instructed (during /ev-run pre-flight) to throw away the carry-forward `next-env.d.ts` and `.claude/settings.local.json` diffs that show up between branches as "testing artifacts." Future loops should `git restore` these auto-regenerated files at branch boundaries rather than carrying them forward.
