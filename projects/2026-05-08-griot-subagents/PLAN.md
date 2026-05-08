@@ -12,8 +12,9 @@ We're moving it to a subagent-driven pipeline orchestrated inside the
 `/griot-compact` skill itself. The Agent tool only runs inside Claude
 Code, so the orchestrator dissolves into the skill — most of
 `scripts/learnings-compact/` goes away, replaced by parallel subagent
-calls and a small parse-and-aggregate helper at
-`.claude/scripts/griot/aggregate-verdicts.ts`.
+calls and two small deterministic helpers under
+`.claude/scripts/griot/`. The split follows the agent-guilds rule:
+LLM work lives in subagents, deterministic work lives in scripts.
 
 The judge panel is reframed as tier-based (current Opus / Sonnet /
 Haiku) rather than version-pinned. We accept losing the previous-gen
@@ -28,13 +29,18 @@ consumer appears later, we extract primitives then.
 ## Scope
 
 **In:**
-- New griot-specific subagent types under `.claude/agents/`
-  (judge, rubric-author, rewriter, mediator)
+- Five new griot-specific subagent types under `.claude/agents/`:
+  `griot-judge`, `griot-rubric-author`, `griot-rewriter`,
+  `griot-debate-summarizer`, `griot-operator`. (`debate-summarizer`
+  is the LLM slice of the old mediator role; the rest of mediator's
+  work moves to a deterministic script.)
 - Tier-based panel config in `learnings/config.yaml`
-- Parse-and-aggregate helper at
-  `.claude/scripts/griot/aggregate-verdicts.ts`
+- Two deterministic helpers under `.claude/scripts/griot/`:
+  `mediate-panel.ts` (parse verdicts, tally, threshold, tier-split,
+  consensus picking) and `operator-checks.ts` (rubric-tampering
+  detection, attempt counting, JSONL logging)
 - `/griot-compact` SKILL.md rewritten to inline-orchestrate the
-  pipeline directly (parallel Agent calls + parse helper)
+  pipeline directly (parallel Agent calls + helper scripts)
 - Removing `ANTHROPIC_API_KEY` prereq from skill docs
 - Deleting `scripts/learnings-compact/` and its npm script
 - Bench-history schema adjusted (sparser rows, no per-call token
@@ -54,12 +60,23 @@ consumer appears later, we extract primitives then.
 ## Phases
 
 ### Phase 1: Substrate
-Define griot-specific subagent types under `.claude/agents/` (judge,
-rubric-author, rewriter, mediator). Update `learnings/config.yaml` to
-a tier-based schema. Add the parse-and-aggregate helper at
-`.claude/scripts/griot/aggregate-verdicts.ts`. Skill still calls the
-Node script — old path keeps working, no behavior change. Verified by
-`npm run lint` + `npm run build`.
+Four deliverables, sequential:
+1. **Subagent types** — five files under `.claude/agents/`:
+   `griot-judge`, `griot-rubric-author`, `griot-rewriter`,
+   `griot-debate-summarizer`, `griot-operator`.
+2. **Tier-based panel config** — restructure `learnings/config.yaml`
+   judges section from version-pinned to tier-based.
+3. **`mediate-panel.ts`** — deterministic helper at
+   `.claude/scripts/griot/mediate-panel.ts` plus tests. Absorbs the
+   old mediator's procedural logic: parse verdicts, tally, threshold
+   check, tier-split detection, consensus picking.
+4. **`operator-checks.ts`** — deterministic helper at
+   `.claude/scripts/griot/operator-checks.ts` plus tests. Absorbs the
+   operator's invariant work: rubric-tampering detection, JSONL
+   logging.
+
+Skill still calls the Node script — old path keeps working, no
+behavior change. Verified by `npm run lint` + `npm run build`.
 
 ### Phase 2: Migration
 Rewrite `/griot-compact` SKILL.md to drive the pipeline directly. The
