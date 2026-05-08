@@ -1,4 +1,4 @@
-import { test } from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -311,13 +311,18 @@ test('wrong.md falls back to Changes/Verdict when Execution is empty', () => {
 test('folder collision fails rather than overwriting', () => {
   const fx = makeFixture();
   const path = writeCheckin(fx.root, 'checkin.md', SINGLE_CORRECTION_CHECKIN);
-  // Pre-create a folder matching what the script would generate this second.
-  const ts = (() => {
-    const d = new Date();
+  // Pre-create a 5-second window of collision folders. The script computes its own
+  // UTC-second timestamp at subprocess start; if we only pre-create the current
+  // second's folder, slow CI runners can land the subprocess in a later second and
+  // miss the collision. Five seconds covers any reasonable Node startup latency.
+  const tsAt = (offsetSeconds: number): string => {
+    const d = new Date(Date.now() + offsetSeconds * 1000);
     const pad = (n: number) => String(n).padStart(2, '0');
     return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}T${pad(d.getUTCHours())}-${pad(d.getUTCMinutes())}-${pad(d.getUTCSeconds())}`;
-  })();
-  mkdirSync(join(fx.root, 'learnings', 'session-notes', `${ts}-collide`), { recursive: true });
+  };
+  for (let offset = 0; offset < 5; offset++) {
+    mkdirSync(join(fx.root, 'learnings', 'session-notes', `${tsAt(offset)}-collide`), { recursive: true });
+  }
   const res = run([`--from-checkin=${path}`, '--slug=collide'], fx.root);
   assert.equal(res.status, 1);
   assert.match(res.stderr, /folder already exists/);
