@@ -2,7 +2,7 @@
 
 **Slug**: 2026-05-06-adopt-test-harnesses
 **Started**: 2026-05-06
-**Status**: active
+**Status**: archived
 **Current branch**: ev.adopt-test-harnesses.playwright-harness
 **Latest checkin**: checkins/ev.adopt-test-harnesses.github-actions-ci/01.md
 
@@ -22,7 +22,7 @@ everything into CI).
 | 1 | Vitest harness | completed | ev.adopt-test-harnesses.vitest-harness | 03 | #11 |
 | 2 | Storybook harness | completed | ev.adopt-test-harnesses.storybook-harness | 03 | #14 |
 | 3 | Playwright harness | completed | ev.adopt-test-harnesses.playwright-harness | 02 | #15 (merged) |
-| 4 | GitHub Actions CI | completed | ev.adopt-test-harnesses.github-actions-ci | 01 | #17 (open) |
+| 4 | GitHub Actions CI | completed | ev.adopt-test-harnesses.github-actions-ci | 01 | #17 (merged) |
 
 ## Dependencies
 - Phase 3 requires Phase 2 merged
@@ -72,3 +72,5 @@ phase 3 PR.
 | 2026-05-08 07:13 | pr-opened | #17 |
 | 2026-05-08 07:24 | phase-completed | 4 |
 | 2026-05-08 07:30 | session-saved | 2026-05-08-a |
+| 2026-05-08 08:13 | pr-merged | #17 |
+| 2026-05-08 09:30 | archived | projects/archive/2026-05-06-adopt-test-harnesses/ |

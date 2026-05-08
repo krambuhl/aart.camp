@@ -27,7 +27,30 @@
       "Skill(guild-spawn)",
       "Skill(guild-spawn:*)",
       "Skill(guild-validate)",
-      "Skill(guild-validate:*)"
+      "Skill(guild-validate:*)",
+      "Bash(npm test *)",
+      "Bash(npm run lint *)",
+      "Bash(npm run build *)",
+      "Bash(npm run build-storybook *)",
+      "Bash(npm run test:agentic *)",
+      "Bash(npm run test:e2e *)",
+      "Bash(npx playwright test *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git stash *)",
+      "Bash(git push origin *)",
+      "Bash(git checkout -b *)",
+      "Bash(git restore --staged *)",
+      "Bash(npx playwright install *)",
+      "Bash(mkdir -p *)"
+    ],
+    "deny": [
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git push origin --force*)",
+      "Bash(git push origin -f*)",
+      "Bash(git push -u origin --force*)",
+      "Bash(git push -u origin -f*)"
     ]
   }
 }
