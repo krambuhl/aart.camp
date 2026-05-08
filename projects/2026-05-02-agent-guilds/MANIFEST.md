@@ -3,8 +3,8 @@
 **Slug**: 2026-05-02-agent-guilds
 **Started**: 2026-05-02
 **Status**: active
-**Current branch**: ev.agent-guilds.phase-1-5-substrate-cleanup-2
-**Latest checkin**: checkins/ev.agent-guilds.phase-1-5-substrate-cleanup-2/07.md
+**Current branch**: ev.agent-guilds.phase-1-5-substrate-cleanup-3
+**Latest checkin**: checkins/ev.agent-guilds.phase-1-5-substrate-cleanup-3/08.md
 
 ## Strategy
 
@@ -15,7 +15,7 @@ Extract `guild-*` agent-panel substrate alongside trout/griot, thin ev-loop into
 | # | Name | Status | Branch | Latest checkin | PR |
 |---|------|--------|--------|----------------|----|
 | 1 | Substrate foundations | completed | ev.agent-guilds.substrate-foundations | 05 | #8 (merged) |
-| 1.5 | Substrate primitive cleanup | in-progress | ev.agent-guilds.phase-1-5-substrate-cleanup-2 | 07 | #16 (open) |
+| 1.5 | Substrate primitive cleanup | in-progress | ev.agent-guilds.phase-1-5-substrate-cleanup-3 | 08 | — |
 | 2 | Antagonist evaluator panel | not-started | — | — | — |
 | 3 | Whiteboard mechanism + engineers | not-started | — | — | — |
 | 4 | Domain pairs | not-started | — | — | — |
@@ -82,3 +82,6 @@ Phase 1 merged via PR #8. Phase 1.5 split into a sequence of PRs after a post-me
 | 2026-05-08 07:05 | note | Phase row corrected: pr=#16 (was incorrectly recorded as #13 due to typo in submit invocation) |
 | 2026-05-08 07:11 | session-saved | 2026-05-08-a |
 | 2026-05-08 07:17 | pr-updated | #16 (transparency note added re: stray session-notes) |
+| 2026-05-08 07:24 | pr-merged | #16 (cleanup-2 deliverables D3-D5 + D6-script-half) |
+| 2026-05-08 07:26 | note | Third cleanup branch ev.agent-guilds.phase-1-5-substrate-cleanup-3 cut from main post-#16-merge; deliverables D6-rest, D7-D12 begin here |
+| 2026-05-08 08:24 | checkin-created | 08 on ev.agent-guilds.phase-1-5-substrate-cleanup-3 |
