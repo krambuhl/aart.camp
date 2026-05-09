@@ -89,10 +89,13 @@ behavior change. Verified by `npm run lint` + `npm run build`.
 Rewrite `/griot-compact` SKILL.md to drive the pipeline directly. The
 skill becomes the orchestrator: reads session-notes, dispatches the
 judge panel via parallel Agent tool calls in one message, runs
-rubric-author / rewriter / mediator as individual subagent
-invocations, calls the aggregate-verdicts helper to parse, writes
-rollup, archives notes, appends bench-history. Verified by running the
-new pipeline against real session-notes and reviewing the rollup diff.
+rubric-author / rewriter / debate-summarizer / operator as
+individual subagent invocations, pipes judge outputs through
+`mediate-panel.ts` for parsing / tally / threshold / tiebreak, uses
+`operator-checks.ts` for rubric-tampering detection and intervention
+logging, writes rollup, archives notes, appends bench-history.
+Verified by running the new pipeline against real session-notes and
+reviewing the rollup diff.
 
 ### Phase 3: Cleanup
 Delete `scripts/learnings-compact/`. Drop the `learnings:compact` npm
@@ -125,8 +128,8 @@ new path works.
   note. Harness limits or rate-limiting could surface; if so, we
   serialize across notes and keep the per-note panel parallel.
 - **Structured output brittleness.** Subagents return text, not
-  tool-use JSON. The aggregate-verdicts helper carries the parsing
-  load; it needs to be lenient about formatting variation.
+  tool-use JSON. `mediate-panel.ts` carries the parsing load; it
+  needs to be lenient about formatting variation.
 
 ## Open questions
 
