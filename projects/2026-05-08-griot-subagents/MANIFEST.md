@@ -4,7 +4,7 @@
 **Started**: 2026-05-08
 **Status**: active
 **Current branch**: —
-**Latest checkin**: checkins/ev.griot-subagents.mediate-panel/01.md
+**Latest checkin**: checkins/ev.griot-subagents.operator-checks/01.md
 
 ## Strategy
 
@@ -14,7 +14,7 @@ interactive
 
 | # | Name | Status | Branch | Latest checkin | PR |
 |---|------|--------|--------|----------------|----|
-| 1 | Substrate | in-progress | ev.griot-subagents.mediate-panel | 01 | #24 (open) |
+| 1 | Substrate | completed | ev.griot-subagents.operator-checks | 01 | #25 (open) |
 | 2 | Migration | not-started | — | — | — |
 | 3 | Cleanup | not-started | — | — | — |
 
@@ -37,3 +37,6 @@ Project initialized. No work started yet.
 | 2026-05-08 19:13 | pr-opened | #22 |
 | 2026-05-08 19:30 | checkin-created | 01 on ev.griot-subagents.mediate-panel |
 | 2026-05-08 19:31 | pr-opened | #24 |
+| 2026-05-08 20:05 | checkin-created | 01 on ev.griot-subagents.operator-checks |
+| 2026-05-08 20:12 | pr-opened | #25 |
+| 2026-05-08 21:33 | phase-completed | 1 |
