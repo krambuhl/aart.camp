@@ -108,3 +108,4 @@ Phase 1 merged via PR #8. Phase 1.5 split into a sequence of PRs after a post-me
 | 2026-05-09 02:17 | session-saved | 2026-05-09-a |
 | 2026-05-09 02:36 | note | Seventh cleanup branch ev.agent-guilds.phase-1-5-substrate-cleanup-7 cut from main post-#28-merge; deliverables D10-D12 begin here |
 | 2026-05-09 04:23 | checkin-created | 12 on ev.agent-guilds.phase-1-5-substrate-cleanup-7 |
+| 2026-05-09 04:27 | pr-opened | #30 |
