@@ -29,12 +29,18 @@ consumer appears later, we extract primitives then.
 ## Scope
 
 **In:**
-- Five new griot-specific subagent types under `.claude/agents/`:
-  `griot-judge`, `griot-rubric-author`, `griot-rewriter`,
-  `griot-debate-summarizer`, `griot-operator`. (`debate-summarizer`
-  is the LLM slice of the old mediator role; the rest of mediator's
-  work moves to a deterministic script.)
-- Tier-based panel config in `learnings/config.yaml`
+- Six new griot-specific subagent files under `.claude/agents/`: a
+  shared `griot-base.md` (stance, output framing, "what you never
+  do") plus five role files (`griot-judge`, `griot-rubric-author`,
+  `griot-rewriter`, `griot-debate-summarizer`, `griot-operator`).
+  Mirrors the `evaluator-base` / `evaluator-*` pattern internally to
+  griot, but shares no code or files with the `guild-*` or
+  `evaluator-*` systems. (`debate-summarizer` is the LLM slice of the
+  old mediator role; the rest of mediator's work moves to a
+  deterministic script.)
+- Tier-based panel config in `learnings/config.yaml`. Reduced panel:
+  2 Opus, 1 Sonnet, 1 Haiku (4 judges total, down from 7). New
+  consensus thresholds to be designed during D2/D3.
 - Two deterministic helpers under `.claude/scripts/griot/`:
   `mediate-panel.ts` (parse verdicts, tally, threshold, tier-split,
   consensus picking) and `operator-checks.ts` (rubric-tampering
@@ -61,9 +67,10 @@ consumer appears later, we extract primitives then.
 
 ### Phase 1: Substrate
 Four deliverables, sequential:
-1. **Subagent types** — five files under `.claude/agents/`:
-   `griot-judge`, `griot-rubric-author`, `griot-rewriter`,
-   `griot-debate-summarizer`, `griot-operator`.
+1. **Subagent types** — six files under `.claude/agents/`: shared
+   `griot-base.md` plus five role files (`griot-judge`,
+   `griot-rubric-author`, `griot-rewriter`, `griot-debate-summarizer`,
+   `griot-operator`). Each role file references the base.
 2. **Tier-based panel config** — restructure `learnings/config.yaml`
    judges section from version-pinned to tier-based.
 3. **`mediate-panel.ts`** — deterministic helper at
