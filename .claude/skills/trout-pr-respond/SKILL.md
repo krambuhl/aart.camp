@@ -7,7 +7,7 @@ description: >-
   execute it. Does not write code or reply on GitHub.
 argument-hint: "<project-slug-or-path> <pr-number>"
 user-invocable: false
-allowed-tools: Read, Write, Glob, Bash(ls:*), Bash(git branch:*), mcp__github__pull_request_read, mcp__github__list_pull_requests
+allowed-tools: Read, Bash(node .claude/scripts/trout/*)
 ---
 
 # /trout-pr-respond
@@ -15,35 +15,33 @@ allowed-tools: Read, Write, Glob, Bash(ls:*), Bash(git branch:*), mcp__github__p
 Turn a pile of PR feedback into a structured response plan. Does not
 modify code or reply; its output is consumed by the originating loop.
 
+The gh CLI plumbing (PR fetch, item normalization, response-NN.md
+write) lives in `.claude/scripts/trout/pr-respond-plumbing.ts` —
+verbs `fetch` and `write-plan`. This skill orchestrates: invoke
+`fetch`, classify per the taxonomy, author the plan, invoke
+`write-plan`.
+
 ## Arguments
 
-- `<project-slug-or-path>` — resolved like `.claude/scripts/trout/autosave.ts`
-  (exact slug → suffix match → full path).
-- `<pr-number>` — the PR to respond to. Must belong to the project
-  (cross-check via branch → `checkins/<branch>` existence).
+- `<project-slug-or-path>` — resolved like `.claude/scripts/trout/autosave.ts`.
+- `<pr-number>` — the PR. Must belong to the project; the script's
+  cross-project guard refuses if the PR's branch has no
+  `checkins/<branch>/` directory under the resolved project.
 
 ## Process
 
 ### 1. Fetch
 
-- Resolve the project directory from `$1`:
-  - If `$1` is a path, use it directly.
-  - Otherwise treat as a slug under `projects/<slug>/`.
-  - Confirm `projects/<slug>/checkins/` exists; if not, stop and report.
-- Fetch PR metadata for `$2` via `mcp__github__pull_request_read`
-  (with method variants for `getComments`, `getReviews`,
-  `getReviewComments` as needed):
-  - Issue comments on the PR conversation
-  - Review summaries (approved, changes requested, comment-only)
-  - Inline review comments on code
-  - CI check status (if available)
-- Record the PR's branch name. Verify
-  `projects/<slug>/checkins/<branch>/` exists — if not, the PR belongs
-  to a different project; stop and report.
+`Bash("node .claude/scripts/trout/pr-respond-plumbing.ts fetch <slug> <pr>")`.
+The script emits one JSON document with `pr` (number, url, state,
+branch, title), `items[]` (kind ∈ issue-comment | review |
+review-comment | ci-failure; source, body, location, url),
+`next_response_number`, and `response_path`. Items are emitted in
+deterministic order: issue-comments → reviews → review-comments →
+ci-failures. Only failure-class CI conclusions (FAILURE / CANCELLED /
+TIMED_OUT) appear; SUCCESS and NEUTRAL are filtered out.
 
 ### 2. Classify each item
-
-Use this taxonomy:
 
 | Class | Meaning | Response style |
 |-------|---------|----------------|
@@ -55,21 +53,14 @@ Use this taxonomy:
 | **Off-topic** | Not about this PR's scope | Park for follow-up project or defer |
 | **CI failure** | A required check is failing | Treat as Blocker; one item per failing check |
 
-When the same issue is raised by multiple reviewers, collapse to one row
-and note the multiplicity.
+When the same issue is raised by multiple reviewers, collapse to one
+row and note the multiplicity. `kind: "ci-failure"` items are
+auto-Blockers; the LLM still chooses how to address them.
 
-### 3. Produce the response plan
+### 3. Author and land the response plan
 
-Write the plan to
-`projects/<slug>/checkins/<branch>/response-<NN>.md` where `NN` is
-two-digit zero-padded, computed as
-`max(existing NN in checkins/<branch>/) + 1` considering both `<NN>.md`
-and `response-<NN>.md` files. This is a **plan**, not a checkin — when
-the loop executes the plan and finishes a unit of work, it writes a
-fresh checkin at the same `<NN>.md` with the usual contract. The paired
-`response-<NN>.md` and later `<NN>.md` intentionally share the number.
-
-Structure:
+**3a (LLM).** Author content using the template below. Write to a
+temp file at `/tmp/pr-respond-plan-<slug>-<pr>-<timestamp>.md`.
 
 ```markdown
 # PR #<N> response plan — generated <YYYY-MM-DD HH:MM>
@@ -86,29 +77,34 @@ Structure:
 ### Item 2 — …
 ```
 
-End the plan with a "Recommended next unit" line: the single most
-important work item the loop should take up next.
+End the plan with a "Recommended next unit" line.
+
+**3b (script).** `Bash("node .claude/scripts/trout/pr-respond-plumbing.ts write-plan <slug> <pr> --content-file=<temp-file>")`.
+The script computes the next NN (max across `<NN>.md` and
+`response-<NN>.md`; defaults to 01) and writes to
+`projects/<slug>/checkins/<branch>/response-<NN>.md`. The
+`response-<NN>.md` file is intentionally distinct from the eventual
+`<NN>.md` checkin — plan and executed work share the number, separate
+files. The loop writes the matching `<NN>.md` after executing.
 
 ### 4. Route
 
-Do not execute the plan. Do not post replies. Report the plan path and
-the recommended next unit to the caller. The router (`/ev-run`) or the
-originating loop is responsible for picking it up.
+Do not execute or post replies. Report the plan path and recommended
+next unit to the caller. The router or originating loop picks it up.
 
 ## Quality bar
 
-- Classify **every** item. Never leave comments uncategorized.
-- If a reviewer's point is ambiguous, mark it a Question and draft a
-  clarifying reply — do not guess.
-- Keep the plan short enough to scan in 30 seconds. Defer deep
-  engineering analysis to the checkin that follows execution.
+- Classify every item from `items[]`. No entries uncategorized.
+- Ambiguous reviewer point → mark Question and draft a clarifying
+  reply; do not guess.
+- Plan scannable in 30 seconds; deeper analysis goes in the checkin.
 
 ## Failure modes
 
-- PR not found or belongs to a different project → stop and report.
-- Zero feedback on the PR → produce a trivially short plan noting that,
-  and recommend no action.
-- CI is red with no human comments → create a Blocker item for each
-  failing check.
-- MCP fetch error or partial result → stop, report which endpoints
-  failed, do not write a partial plan.
+- Project not found, or PR's branch has no matching
+  `checkins/<branch>/` directory → script refuses; stop and report.
+- PR not found in repo → script surfaces gh's stderr verbatim.
+- Zero feedback → trivially short plan recommending no action.
+- gh CLI not on PATH → install GitHub CLI and re-invoke.
+- `write-plan` fails → temp file is preserved at the path the skill
+  authored; user can recover.
