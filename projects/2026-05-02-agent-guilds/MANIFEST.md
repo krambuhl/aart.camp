@@ -102,3 +102,4 @@ Phase 1 merged via PR #8. Phase 1.5 split into a sequence of PRs after a post-me
 | 2026-05-08 22:28 | pr-merged | #26 (cleanup-5 deliverable D8: trout-save-session finalize split) |
 | 2026-05-08 22:29 | note | Sixth cleanup branch ev.agent-guilds.phase-1-5-substrate-cleanup-6 cut from main post-#26-merge; deliverables D9-D12 begin here |
 | 2026-05-08 23:47 | checkin-created | 11 on ev.agent-guilds.phase-1-5-substrate-cleanup-6 |
+| 2026-05-08 23:50 | pr-opened | #28 |
