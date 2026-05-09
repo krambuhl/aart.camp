@@ -1,70 +1,67 @@
-# Single source of truth for learnings system thresholds, tiers, and model IDs.
-# Edit here, not in scripts. Scripts read this at startup.
+# Single source of truth for the learnings panel composition,
+# consensus thresholds, and operational knobs. The /griot-compact
+# skill reads this at startup and dispatches subagents accordingly.
+# Edit here, not in scripts.
 
 # ─── Judge panel ────────────────────────────────────────────────────────────
-# Seven stateless Claude calls per panel round. "weight" is used only for the
-# tier-weighted tiebreak when an even split occurs. Every judge counts as one
-# vote toward the consensus threshold otherwise.
+# Four stateless griot-judge subagents per panel round, dispatched in
+# parallel by /griot-compact via the Agent tool. The tool's `model`
+# parameter accepts tier names only (opus / sonnet / haiku); specific
+# version pinning is intentionally not supported in the subagent path.
+# Composition (2 Opus / 1 Sonnet / 1 Haiku) keeps tier diversity while
+# matching the smaller pooled-token budget.
 judges:
-  - id: opus-4.7-A
-    model: claude-opus-4-7
-    tier: top-current
-    weight: 2
-  - id: opus-4.7-B
-    model: claude-opus-4-7
-    tier: top-current
-    weight: 2
-  - id: opus-4.6
-    model: claude-opus-4-6    # TODO: confirm exact previous-gen Opus id before first real run
-    tier: top-previous
-    weight: 1
-  - id: sonnet-4.6
-    model: claude-sonnet-4-6
-    tier: mid-current
-    weight: 1
-  - id: sonnet-4.5
-    model: claude-sonnet-4-5  # TODO: confirm exact previous-gen Sonnet id
-    tier: mid-previous
-    weight: 1
-  - id: haiku-4.5
-    model: claude-haiku-4-5-20251001
-    tier: fast-current
-    weight: 1
-  - id: haiku-prev
-    model: claude-haiku-4-0   # TODO: confirm exact previous-gen Haiku id
-    tier: fast-previous
-    weight: 1
+  - id: opus-A
+    tier: opus
+  - id: opus-B
+    tier: opus
+  - id: sonnet
+    tier: sonnet
+  - id: haiku
+    tier: haiku
 
-# ─── Agents ─────────────────────────────────────────────────────────────────
+# ─── Other griot subagents ──────────────────────────────────────────────────
+# Per-role tier assignments for the non-judge griot agents. The
+# orchestrator passes tier as the Agent tool's `model` override at spawn
+# time. max_tokens and other harness concerns are owned by the subagent
+# definition under .claude/agents/, not by config.
 agents:
   rubric_author:
-    model: claude-opus-4-7
-    max_tokens: 2000
+    tier: opus
   rewriter:
-    model: claude-opus-4-7
-    max_tokens: 2000
-  mediator:
-    # Mediator is a pure router — no content evaluation, no LLM call for the
-    # routing itself. Debate-round summarization uses this model.
-    model: claude-sonnet-4-6
-    max_tokens: 1500
+    tier: opus
+  debate_summarizer:
+    # The LLM slice of what used to be "mediator". Summarises the prior
+    # round's per-judge verdicts into a brief the next round sees.
+    tier: sonnet
   operator:
-    model: claude-opus-4-7
-    max_tokens: 2000
+    tier: opus
 
 # ─── Test subject ───────────────────────────────────────────────────────────
-# Model used to generate control (no rollup) and treatment (with candidate
-# learning injected) outputs that the judge panel compares. Pick the model
+# Tier used to generate control (no rollup) and treatment (with candidate
+# learning injected) outputs that the judge panel compares. Pick the tier
 # that best represents "the Claude your users actually use."
 test_subject:
-  model: claude-opus-4-7
-  max_tokens: 3000
+  tier: opus
 
 # ─── Consensus thresholds ───────────────────────────────────────────────────
+# Two rounds. Round 1 starts blind; round 2 sees a debate-summarizer brief
+# of the prior round's per-judge verdicts. If round 2 fails to reach 3/4
+# and the panel is split 2-2 with both Opus judges agreeing, the Opus
+# verdict wins (see `tiebreak` below). Otherwise the case escalates to
+# the operator for stuck-learning diagnosis.
 consensus:
-  round_1_blind: 7        # 7/7 required
-  round_2_debate: 6       # 6/7 required
-  round_3_final: 5        # 5/7 required; below → operator
+  round_1_blind: 4        # 4/4 unanimous required
+  round_2_debate: 3       # 3/4 supermajority required; below → tiebreak / operator
+
+# ─── Tiebreak ───────────────────────────────────────────────────────────────
+# Applies only when round 2 finishes without reaching the supermajority
+# threshold AND the panel is exactly split. The named top tier's judges
+# must agree unanimously among themselves; their shared verdict wins.
+# If they disagree, no tiebreak fires and the case goes to operator.
+tiebreak:
+  rule: top_tier_consensus
+  top_tier: opus
 
 # ─── Rewrite loop ───────────────────────────────────────────────────────────
 rewrite:
@@ -74,15 +71,6 @@ rewrite:
 alerts:
   did_not_reproduce_rate_max: 0.30   # >30% means benchmark is theatre
   operator_interventions_per_run_max: 3
-
-# ─── Execution knobs ────────────────────────────────────────────────────────
-execution:
-  # Concurrency for judge calls within a single panel round.
-  judge_parallelism: 7
-  # Timeout for a single judge call, ms.
-  judge_timeout_ms: 120000
-  # Timeout for agent calls (rubric-author, rewriter, operator), ms.
-  agent_timeout_ms: 180000
 
 # ─── Paths (relative to repo root) ──────────────────────────────────────────
 paths:
