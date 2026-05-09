@@ -6,7 +6,7 @@ description: >-
   records the session-saved event. Use at session end when there is state
   worth handing off to the next session.
 argument-hint: "<project-slug-or-path>"
-allowed-tools: Read, Write, Bash(date:*), Skill
+allowed-tools: Read, Skill, Bash(node .claude/scripts/trout/*)
 ---
 
 # /trout-save-session
@@ -20,46 +20,42 @@ trade-offs considered, what's brittle, what to watch for next time.
 repo-relative). Pairs with `.claude/scripts/trout/autosave.ts`, which
 records the emitted event.
 
+The deterministic finalize tail (filename determination, file write, and
+correction-capture invocations) lives in
+`.claude/scripts/trout/save-session-finalize.ts`. Narrative authoring
+stays in this skill body — that's the LLM-shaped heart of the handoff.
+
 ## Process
 
 1. **Resolve the project directory.** `$ARGUMENTS` is the project slug or
    path (resolution rules as in `.claude/scripts/trout/autoload.ts`).
-   If omitted, resolve
-   from the current working directory; if resolution fails, surface the
-   error and stop.
+   If omitted, resolve from the current working directory; if resolution
+   fails, surface the error and stop.
 2. **Read the manifest** to get the list of events emitted during this
    session. A session is "events since the last `session-saved` event" —
    if no prior one exists, use the whole event log.
-3. **Read the checkins touched this session.** The manifest events
-   `checkin-created` give you their paths. Read each to get scope,
-   verdict, and any `correction:` lines in "Notes for the PR".
-4. **Capture corrections.** For each `correction:` line found in step
-   3, invoke the capture script via Bash:
-   `Bash("node .claude/scripts/griot/capture.ts --from-checkin=<checkin-path> --slug=<proposed-slug> --correction-text=\"<exact text>\"")`.
-   The exact text should be the correction line content with the
-   `correction: ` prefix stripped; whitespace is normalized on both sides
-   so callers don't have to reproduce exact line-wrap. When a checkin has
-   only one correction, `--correction-text` may be omitted (zero-config
-   single-correction case). Do this **before** writing the handoff so
-   the handoff can report actual counts. Don't apply a value gate here —
-   the user marking a line `correction:` is the gate, and `/griot-compact`
-   is the value filter. Capture every correction.
-5. **Determine the filename.** Today's date is available via
-   `date '+%Y-%m-%d'`. Start at letter `a`. If
-   `sessions/YYYY-MM-DD-a.md` already exists, try `b`, then `c`, etc. If
-   `z` is already taken, stop and ask the user — that's a sign something
-   has gone wrong.
-6. **Draft the handoff** using the template below. Keep it tight —
+3. **Read the checkins touched this session** to inform the narrative —
+   what shipped, what got flagged, what felt brittle. Don't inventory
+   `correction:` lines manually; the finalize script captures them.
+4. **Draft the narrative.** Use the template below. Keep it tight —
    2–6 sentences for "What happened", a short list for "Open threads".
-   Don't repeat the event log; synthesize. If step 4 produced captures,
-   list the session-notes paths under **Learnings captured**; otherwise
-   omit that section.
-7. **Write the file.** Do not commit.
-8. **Run** `Bash("node .claude/scripts/trout/autosave.ts <slug> --event=session-saved --detail=<filename>")` to log the event.
+   Synthesize, don't log-dump. Write to a temp file at
+   `/tmp/session-handoff-<slug>-<timestamp>.md`.
+5. **Finalize.** Run
+   `Bash("node .claude/scripts/trout/save-session-finalize.ts <slug> --content-file=<temp-file>")`.
+   The script picks the next available `<YYYY-MM-DD>-<letter>.md` under
+   `<project>/sessions/`, writes the content, walks manifest events
+   backward to the previous `session-saved` (or table start) to find
+   this session's checkins, and invokes `griot/capture.ts` per
+   `correction:` line found. Stdout: `session-saved: <relative-path>`.
+6. **Record the event.** Run
+   `Bash("node .claude/scripts/trout/autosave.ts <slug> --event=session-saved --detail=<filename>")`.
+   Autosave stays separate so its event vocabulary, permission, and
+   test surface remain independent of session-handoff specifics.
 
 ## Report
 
-After writing, respond with exactly four lines:
+After step 6, respond with exactly four lines:
 
 ```
 session: <path of handoff file>
@@ -67,6 +63,9 @@ touched: phases=<list>, checkins=<NN list>, PR=<#N or none>
 captured: <N learnings to session-notes/ — run /griot-compact to process, or "none">
 open-threads: <comma-separated, or "none">
 ```
+
+For the `captured` count, list `learnings/session-notes/` after step 5
+returns and count folders newer than the prior session-saved event.
 
 ## Template
 
@@ -85,41 +84,12 @@ open-threads: <comma-separated, or "none">
 - <known risk or unresolved question>
 
 ## Learnings captured
-<Omit this section entirely if step 4 captured nothing.>
+<Omit this section entirely if step 5 captured nothing.>
 - `learnings/session-notes/<folder>/` — from `<checkin-path>`.
 
 ## Notes
 <anything not captured elsewhere — one-off observations, references, etc.>
 ```
-
-## Capturing corrections (step 4, in detail)
-
-In step 3, when you read each checkin, collect every line in
-`## Notes for the PR` that starts with `correction:`. Each such line
-is a capture.
-
-For each correction line:
-
-1. Derive a 3–5 word kebab-case slug from the correction text or the
-   checkin's Unit field.
-2. Invoke the capture script via Bash, passing the correction line's
-   text (with the leading `correction: ` prefix stripped). When the
-   checkin has multiple correction lines, `--correction-text` is required
-   to disambiguate; when there's only one, it may be omitted:
-   `Bash("node .claude/scripts/griot/capture.ts --from-checkin=<checkin-path> --slug=<slug> --correction-text=\"<exact text>\"")`
-3. The script prints `captured: learnings/session-notes/<folder>/ from <checkin-path>`
-   to stdout. Collect those paths for the handoff's "Learnings captured"
-   section.
-
-**Do not apply a value gate.** The user marking a line `correction:`
-is the gate. `/griot-compact` is the value filter — it runs the
-judge panel and decides which captures get promoted to `rollup.md`.
-Save-session's job is to not lose correction signal, not to decide
-what's worth keeping.
-
-If a checkin has multiple `correction:` lines, invoke capture once per
-line with distinct slugs (e.g. `unit-7-corr-a`, `unit-7-corr-b`).
-Multiple captures from the same checkin is fine.
 
 ## Quality bar
 
@@ -132,8 +102,18 @@ Multiple captures from the same checkin is fine.
 
 ## Failure modes
 
-- Project not found → surface the error from `.claude/scripts/trout/autosave.ts`
-  resolution; do not create anything.
-- No new events since last session-saved → write a short file that says
-  "No substantive work this session" and still record the event, unless
-  there were truly zero events at all, in which case stop and report it.
+- Project not found → the finalize script surfaces the error from
+  `resolveProject`; do not create anything else.
+- No new events since last session-saved → write a short narrative that
+  says "No substantive work this session" and still record the event,
+  unless there were truly zero events at all, in which case stop and
+  report it.
+- All letters a-z taken for today's date → the finalize script fails
+  with `save-session-finalize-error: all letters a-z taken for <date>`.
+  Stop and ask the user — that's a sign something has gone wrong.
+- Capture sub-invocation fails → the finalize script surfaces the
+  capture error verbatim and exits non-zero. The session file is
+  written before captures run, so a capture failure leaves a session
+  file on disk; resolve the underlying issue and re-invoke is not
+  idempotent (the next-letter pick will advance). Manual cleanup may
+  be needed.
