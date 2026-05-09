@@ -6,7 +6,7 @@ description: >-
   born. Use when the user wants to start a new long-running, multi-PR
   effort that should be tracked by the project substrate.
 argument-hint: "<topic or short description>"
-allowed-tools: Read, Write, Bash, Skill
+allowed-tools: Read, Bash
 ---
 
 # /trout-plan
@@ -104,15 +104,21 @@ Ask for, in one batch:
 
 ### 6. Scaffold
 
-1. Run `date '+%Y-%m-%d'` to get the start date.
-2. Create `./projects/<date>-<slug>/`.
-3. Write `PLAN.md`.
-4. Write `config.md` from the values collected, plus a
-   `## Worker bindings` section noting the preferred loop.
-5. Run `Bash("node .claude/scripts/trout/autosave.ts <slug> --init --detail='{...}'")`
-   where the JSON carries `title`, `slug`, `started`, `strategy`,
-   `phases[]`. The `--init` path creates `sessions/`, `checkins/`, and
-   the first `MANIFEST.md`.
+1. Get today's date via `date '+%Y-%m-%d'`. Directory name is
+   `<date>-<slug>`.
+2. Author three temp files:
+   - `/tmp/plan-scaffold-plan-<slug>.md` — approved PLAN.md from Step 4.
+   - `/tmp/plan-scaffold-config-<slug>.md` — config.md from Step 5
+     (Verification, PR settings, Worker bindings).
+   - `/tmp/plan-scaffold-manifest-<slug>.json` —
+     `{title, started, strategy, phases:[{name, dependencies?}]}`.
+     `strategy` is a one-paragraph distillation of PLAN.md Context+Scope.
+3. `Bash("node .claude/scripts/trout/plan-scaffold.ts <date>-<slug>
+   --plan-file=<plan-tmp> --config-file=<config-tmp>
+   --manifest-init-file=<manifest-tmp>")`. The script creates
+   `projects/<date>-<slug>/` + subdirs, writes all three artifacts, and
+   seeds the `project-initialized` manifest event. Stdout returns the
+   relative path for Step 7.
 
 ### 7. Report
 
