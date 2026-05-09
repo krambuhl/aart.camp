@@ -4,7 +4,7 @@
 **Started**: 2026-05-08
 **Status**: active
 **Current branch**: —
-**Latest checkin**: checkins/ev.griot-subagents.skill-skeleton/01.md
+**Latest checkin**: checkins/ev.griot-subagents.rewrite-loop/01.md
 
 ## Strategy
 
@@ -15,7 +15,7 @@ interactive
 | # | Name | Status | Branch | Latest checkin | PR |
 |---|------|--------|--------|----------------|----|
 | 1 | Substrate | completed | ev.griot-subagents.operator-checks | 01 | #25 (open) |
-| 2 | Migration | in-progress | ev.griot-subagents.skill-skeleton | 01 | #27 (open) |
+| 2 | Migration | in-progress | ev.griot-subagents.rewrite-loop | 01 | #29 (open) |
 | 3 | Cleanup | not-started | — | — | — |
 
 ## Dependencies
@@ -42,3 +42,5 @@ Project initialized. No work started yet.
 | 2026-05-08 21:33 | phase-completed | 1 |
 | 2026-05-08 22:29 | checkin-created | 01 on ev.griot-subagents.skill-skeleton |
 | 2026-05-08 22:31 | pr-opened | #27 |
+| 2026-05-08 23:57 | checkin-created | 01 on ev.griot-subagents.rewrite-loop |
+| 2026-05-09 02:16 | pr-opened | #29 |

@@ -9,7 +9,11 @@ description: >-
   mediates consensus through .claude/scripts/griot/mediate-panel.ts,
   attempts up to config.rewrite.max_attempts rewrites on
   UNCHANGED/REGRESSED outcomes, and escalates stuck notes to
-  griot-operator for diagnosis. All JSONL writes go through
+  griot-operator for diagnosis. After per-note processing, re-runs
+  every existing rollup entry through a single-judge pass-check to
+  detect regressions, then composes a markdown PR body summarizing
+  the run (delivered via the skill response — copy-paste into a
+  GitHub PR). All JSONL writes go through
   .claude/scripts/griot/operator-checks.ts log-intervention.
 user-invocable: true
 disable-model-invocation: true
@@ -51,8 +55,14 @@ does nothing.
 - `.claude/scripts/griot/operator-checks.ts` — two modes:
   `verify-rubric` (rubric tampering detection, called between
   rewrite attempts) and `log-intervention` (sole writer for all
-  JSONL appends in this pipeline: `operator-log.jsonl` and
-  `bench-history.jsonl`).
+  JSONL appends in this pipeline: `operator-log.jsonl`,
+  `bench-history.jsonl`, and `regressions.jsonl`).
+
+The pipeline also spawns `general-purpose` subagents for the test
+subject (control and treatment outputs in §2 and §3) and for the
+regression suite's pass-check call (§3). These are not griot-*
+roles — they are plain Claude calls with role-specific system
+prompts and tier overrides at spawn time.
 
 ## Procedure
 
@@ -401,43 +411,203 @@ Branch on the final verdict reached when the attempt loop exited.
 5. Mark this note's outcome as
    `escalated (stuck: <diagnosis.category>)`.
 
-### 3. End-of-run
+### 3. Regression suite
 
-After all notes are processed:
+After all session-notes are processed, re-run every existing
+rollup entry through a single-judge pass-check to detect
+regressions: entries that were passing in the prior run and now
+fail. The check is intentionally lighter than the per-note
+panel — one treatment generation plus one binary pass-check
+per entry — to keep cost reasonable as the rollup grows.
 
-1. Append a JSONL line to `learnings/bench-history.jsonl` via
-   `operator-checks.ts log-intervention`:
+If `learnings/rollup.md` is empty or missing, skip §3 entirely
+(set the regression counters to 0 and `current_passing_ids` to
+the empty set).
 
-   ```bash
-   node .claude/scripts/griot/operator-checks.ts log-intervention <<'INPUT'
-   {"log_path": "learnings/bench-history.jsonl",
-    "record": {
-      "ts": "<ISO 8601 timestamp>",
-      "notes_processed": <int>,
-      "notes_promoted": <int>,
-      "notes_did_not_reproduce": <int>,
-      "notes_no_consensus": <int>,
-      "notes_escalated": <int>,
-      "run_kind": "compact"
-    }}
-   INPUT
-   ```
+#### Step R.1 — Read prior passing set
 
-   `notes_escalated` is the sum of `STUCK_LEARNING`,
-   `RUBRIC_TAMPERED`, `REWRITER_FAILED`, and
-   `TEST_SUBJECT_FAILED` outcomes. (`NO_CONSENSUS` has its own
-   counter.)
+Read the most recent line from `learnings/bench-history.jsonl`
+(if the file exists). Parse it as JSON and extract the
+`passing_ids` field (default empty array if missing or unparseable).
+This `prior_passing_ids` set drives "new failure" detection.
 
-2. Show the user a one-paragraph run summary listing each
-   note's outcome. Include counts by category. For escalated
-   notes, name the specific reason
-   (`stuck (<diagnosis.category>)`, `rubric tampered`,
-   `rewriter failed`, `test subject failed`, `no consensus`).
+If `learnings/bench-history.jsonl` does not exist, treat
+`prior_passing_ids` as the empty set — every entry is "new" on
+the first run, so no regression flags fire.
 
-3. Tell the user where to look for diagnosis detail:
-   `learnings/operator-log.jsonl` has one record per
-   intervention. Promoted notes are in `learnings/rollup.md`
-   under the new `L-NNN` IDs.
+#### Step R.2 — Parse rollup
+
+Read `learnings/rollup.md` and extract every entry. Each entry
+header looks like `## L-<NNN>: <title>`; below it, find the
+`Origin: <slug>` line, the `### Learning` section, and the
+`### Rubric` section. For each entry, capture `{id,
+origin_slug, rubric}`.
+
+Initialize counters: `regressions_passing = 0`,
+`regressions_failing = 0`, `regressions_new = 0`. Initialize
+`current_passing_ids` as an empty list. Initialize
+`new_regression_records` as an empty list (used in §4).
+
+#### Step R.3 — Per-entry pass check
+
+Process entries serially (rate-limit hygiene; the rollup can
+grow large). For each entry:
+
+1. **Read the archived prompt.** Look for
+   `learnings/session-notes/archived/<origin_slug>/prompt.md`.
+   If it does not exist, skip this entry — it cannot be
+   regression-tested without an origin prompt. Do not
+   increment any counter; the entry simply doesn't appear in
+   this run's regression record.
+
+2. **Generate treatment with full rollup.** Spawn ONE
+   `general-purpose` subagent with `model` matching
+   `test_subject.tier`. System-style framing: `"You are
+   Claude. Apply the validated learnings below where
+   relevant: <full contents of rollup.md>"`. User prompt: the
+   archived `prompt.md`. Capture the output as
+   `treatment_output`. If the spawn errors or returns no
+   text, log a JSONL intervention via
+   `operator-checks.ts log-intervention` with category
+   `regression_check_failed` and skip this entry.
+
+3. **Run the pass check.** Spawn ONE `general-purpose`
+   subagent with `model: opus` (the SDK pinned this to
+   top-tier; we keep it). System-style framing:
+
+   `"You evaluate whether a Claude output passes every
+   assertion in a rubric. Binary judgement, no hedging. End
+   your response with a fenced regression-check block
+   containing JSON {all_pass: boolean, failed_assertions:
+   string[], reasoning: string}."`
+
+   User message contains the entry's rubric and the treatment
+   output, clearly labelled. The subagent's response ends
+   with a fenced ` ```regression-check ` block. Extract and
+   parse the block. If extraction fails, log a JSONL
+   intervention via `log-intervention` with category
+   `regression_check_failed` (record includes `learning_id`)
+   and skip this entry.
+
+4. **Record the result.**
+   - If `all_pass: true` → increment `regressions_passing`
+     and add `id` to `current_passing_ids`.
+   - If `all_pass: false`:
+     - Increment `regressions_failing`.
+     - If `id` was in `prior_passing_ids` → this is a new
+       regression. Log a JSONL intervention via
+       `operator-checks.ts log-intervention`:
+
+       ```bash
+       node .claude/scripts/griot/operator-checks.ts log-intervention <<'INPUT'
+       {"log_path": "learnings/regressions.jsonl",
+        "record": {
+          "ts": "<ISO 8601 timestamp>",
+          "category": "regression",
+          "learning_id": "L-NNN",
+          "failed_assertions": ["..."],
+          "reasoning": "...",
+          "was_passing_in_prior_run": true
+        }}
+       INPUT
+       ```
+
+       Increment `regressions_new` and append a summary
+       record `{id, failed_count: <length>, reasoning}` to
+       `new_regression_records` for §4.
+     - If `id` was NOT in `prior_passing_ids` → chronic
+       failure. Do NOT log (avoids per-run noise on entries
+       that have never passed). The chronic failure still
+       counts toward `regressions_failing`.
+
+After all entries are processed, the regression counters and
+`current_passing_ids` are ready for §4 (PR body) and §5
+(bench-history append).
+
+### 4. Compose nightly PR body
+
+Compose a markdown blob synthesizing the run's results and emit
+it to the user via the skill response. No file write — the
+chat output is the delivery channel.
+
+Blob shape (always include every section, with `(none)` in
+empty lists for predictable structure):
+
+```markdown
+# Nightly /griot-compact run — <today's date YYYY-MM-DD>
+
+## Run summary
+- Notes processed: <N>
+- Promoted: <N>
+- Did not reproduce: <N>
+- Escalated: <N> (stuck: <S>, rubric tampered: <T>, rewriter
+  failed: <RF>, test subject failed: <TSF>, no consensus: <NC>)
+- Rollup entries checked: <regressions_total>
+  (passing: <regressions_passing>, failing:
+  <regressions_failing>, new regressions: <regressions_new>)
+
+## Promoted learnings
+- L-NNN — "<short title>" (from <slug>) — attempt <M>
+[...for each note marked promoted; or "(none)"]
+
+## Escalations needing review
+- <slug>: <reason>
+[...for each escalation; or "(none)"]
+
+## New regressions
+- L-NNN — <count> failed assertions
+[...for each entry in new_regression_records; or "(none)"]
+
+## Run metadata
+\`<bench-history record JSON, single line>\`
+```
+
+Where `regressions_total = regressions_passing +
+regressions_failing` (entries successfully processed; entries
+skipped for missing prompts are not counted). The
+`bench-history record JSON` in the `## Run metadata` section
+is the same record that §5 will append — it can be assembled
+in working state here and reused.
+
+After emitting the blob, add a one-line pointer below it:
+"Copy the section above into a GitHub PR. Diagnosis detail is
+in `learnings/operator-log.jsonl` and
+`learnings/regressions.jsonl`."
+
+### 5. End-of-run housekeeping
+
+Append the run record to `learnings/bench-history.jsonl` via
+`operator-checks.ts log-intervention`:
+
+```bash
+node .claude/scripts/griot/operator-checks.ts log-intervention <<'INPUT'
+{"log_path": "learnings/bench-history.jsonl",
+ "record": {
+   "ts": "<ISO 8601 timestamp>",
+   "notes_processed": <int>,
+   "notes_promoted": <int>,
+   "notes_did_not_reproduce": <int>,
+   "notes_no_consensus": <int>,
+   "notes_escalated": <int>,
+   "regressions_total": <int>,
+   "regressions_passing": <int>,
+   "regressions_failing": <int>,
+   "regressions_new": <int>,
+   "passing_ids": ["L-001", "L-002", "..."],
+   "run_kind": "compact"
+ }}
+INPUT
+```
+
+`notes_escalated` is the sum of `STUCK_LEARNING`,
+`RUBRIC_TAMPERED`, `REWRITER_FAILED`, and
+`TEST_SUBJECT_FAILED` outcomes. (`NO_CONSENSUS` has its own
+counter.) `passing_ids` is the sorted array form of
+`current_passing_ids` from §3 — the next run reads this field
+to decide which failures are NEW vs chronic.
+
+This append is the skill's last action. The PR body in §4 is
+already in the user's chat; §5 just persists the record.
 
 ## Do not
 
@@ -470,6 +640,23 @@ After all notes are processed:
   `UNCHANGED` or `REGRESSED` exits immediately;
   `UNCHANGED`/`REGRESSED` exits at `max_attempts` with
   `STUCK_LEARNING`.
+- Do not skip the regression suite when `rollup.md` has entries.
+  The pass-check is what detects model drift between runs; an
+  empty rollup is the only valid skip condition.
+- Do not log a chronic regression failure (a rollup entry that
+  was failing the prior run and is still failing now). Only NEW
+  failures — entries that flipped from passing to failing —
+  warrant a record in `regressions.jsonl`. Chronic failures
+  count toward `regressions_failing` but do not log.
+- Do not write the nightly PR body to disk. The user's chat
+  output is the delivery channel; persisting to a file is out
+  of scope for this skill.
+- Do not use the full 4-judge panel for regression checks. The
+  regression suite uses a single `general-purpose` subagent for
+  treatment generation and a single `general-purpose` subagent
+  (opus tier) for the pass-check. The full panel is reserved
+  for per-note judgement; using it for regression doubles+ the
+  cost without proportional signal.
 
 ## After a successful run
 
