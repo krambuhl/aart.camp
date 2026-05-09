@@ -8,7 +8,7 @@ description: >-
   /trout-pull-request. Use when all phases are complete and the user is
   ready to put the project to bed.
 argument-hint: "<project-slug-or-path>"
-allowed-tools: Read, Write, Edit, Bash(git mv:*), Bash(git status:*), Bash(git log:*), Bash(git branch:*), Bash(ls:*), Skill
+allowed-tools: Read, Write, Edit, Bash(git status:*), Bash(git log:*), Bash(git branch:*), Bash(ls:*), Skill
 ---
 
 # /trout-archive
@@ -130,9 +130,8 @@ finding and its approved disposition.
 
 ### 6. Relocate
 
-1. Update `MANIFEST.md` `Status` from `active` to `archived`.
-2. `git mv ./projects/<date>-<slug>/ ./projects/archive/<date>-<slug>/`.
-3. Run `Bash("node .claude/scripts/trout/autosave.ts ./projects/archive/<date>-<slug>/ --event=archived --detail=projects/archive/<date>-<slug>/")` — note: after the move, the manifest lives at the new path. Call autosave against the new path.
+1. Run `Bash("node .claude/scripts/trout/archive-relocate.ts <slug>")` — the script flips `MANIFEST.md`'s `**Status**` field from `active` to `archived` and `git mv`s the project under `projects/archive/`. The new path is on stdout: `relocated: <old-path> → <new-path>`. The script refuses (and reports) if the project doesn't exist, is already archived, has a non-`active` Status, has a missing Status field, or if the destination already exists.
+2. Run `Bash("node .claude/scripts/trout/autosave.ts <new-path> --event=archived --detail=<new-path>")` — autosave records the event against the now-relocated MANIFEST. Call against the new path returned by step 1.
 
 ### 7. Archive PR
 
