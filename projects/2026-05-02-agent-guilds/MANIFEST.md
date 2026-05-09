@@ -92,3 +92,4 @@ Phase 1 merged via PR #8. Phase 1.5 split into a sequence of PRs after a post-me
 | 2026-05-08 15:52 | pr-merged | #18 (cleanup-3 deliverable D6-rest: trout-pull-request SKILL.md LLM/CRUD split) |
 | 2026-05-08 15:53 | note | Fourth cleanup branch ev.agent-guilds.phase-1-5-substrate-cleanup-4 cut from main post-#18-merge; deliverables D7-D12 begin here |
 | 2026-05-08 19:20 | checkin-created | 09 on ev.agent-guilds.phase-1-5-substrate-cleanup-4 |
+| 2026-05-08 19:28 | pr-opened | #23 |
