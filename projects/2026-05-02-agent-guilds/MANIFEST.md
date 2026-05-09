@@ -104,3 +104,5 @@ Phase 1 merged via PR #8. Phase 1.5 split into a sequence of PRs after a post-me
 | 2026-05-08 23:47 | checkin-created | 11 on ev.agent-guilds.phase-1-5-substrate-cleanup-6 |
 | 2026-05-08 23:50 | pr-opened | #28 |
 | 2026-05-08 23:50 | note | phase-row PR field updated post-submit |
+| 2026-05-09 02:13 | pr-merged | #28 (cleanup-6 D9: trout-pr-respond plumbing split) |
+| 2026-05-09 02:17 | session-saved | 2026-05-09-a |
