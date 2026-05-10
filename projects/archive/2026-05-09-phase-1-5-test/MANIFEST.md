@@ -2,7 +2,7 @@
 
 **Slug**: 2026-05-09-phase-1-5-test
 **Started**: 2026-05-09
-**Status**: active
+**Status**: archived
 **Current branch**: —
 **Latest checkin**: checkins/ev.phase-1-5-test.verify/01.md
 
