@@ -80,17 +80,17 @@ the briefing on stdout. This tells you:
 
 ### 1.5. Load learnings
 
-Invoke `/griot-use` via the Skill tool (no arguments). This reads
-`learnings/rollup.md` and installs the session-long citation contract
-(the session appends `Applied: L-NNN` when a learning actually shaped a
-response). Do this once per `/ev-run` invocation — the rollup is
-session-scoped, not per-dispatch.
+Run `Bash("node .claude/scripts/griot/use.ts")`. The script reads
+`learnings/rollup.md`, prints the status line and (if loaded) the
+content + citation contract to stdout — the Bash result lands the
+load in conversation context. Do this once per `/ev-run` invocation —
+the rollup is session-scoped, not per-dispatch.
 
-Handle the three outcomes the skill can return:
-- **Loaded N learnings** — note it in the dispatch report.
-- **Rollup empty** — note "no rollup entries" in the dispatch report
+Handle the three outcomes the script's `griot-use:` status line reports:
+- **`loaded N learnings`** — note it in the dispatch report.
+- **`rollup empty`** — note "no rollup entries" in the dispatch report
   and proceed.
-- **Rollup missing** — note "no rollup yet — `/griot-compact` has
+- **`no rollup yet`** — note "no rollup yet — `/griot-compact` has
   not run" and proceed. Do not stop.
 
 Do not read `learnings/session-notes/` or `learnings/nightly/` from the
