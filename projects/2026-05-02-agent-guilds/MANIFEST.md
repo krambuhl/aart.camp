@@ -119,3 +119,4 @@ Phase 1 merged via PR #8. Phase 1.5 split into a sequence of PRs after a post-me
 | 2026-05-09 22:06 | note | Ninth cleanup branch ev.agent-guilds.phase-1-5-substrate-cleanup-9 cut from main post-#32-merge; deliverable D12 begins here (closes Phase 1.5) |
 | 2026-05-10 00:13 | phase-completed | 1.5 |
 | 2026-05-10 00:18 | checkin-created | 14 on ev.agent-guilds.phase-1-5-substrate-cleanup-9 |
+| 2026-05-10 00:22 | pr-opened | #33 |
