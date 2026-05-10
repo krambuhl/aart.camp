@@ -15,7 +15,7 @@ Extract `guild-*` agent-panel substrate alongside trout/griot, thin ev-loop into
 | # | Name | Status | Branch | Latest checkin | PR |
 |---|------|--------|--------|----------------|----|
 | 1 | Substrate foundations | completed | ev.agent-guilds.substrate-foundations | 05 | #8 (merged) |
-| 1.5 | Substrate primitive cleanup | completed | ev.agent-guilds.phase-1-5-substrate-cleanup-9 | 14 | — |
+| 1.5 | Substrate primitive cleanup | completed | ev.agent-guilds.phase-1-5-substrate-cleanup-9 | 14 | #33 (open) |
 | 2 | Antagonist evaluator panel | not-started | — | — | — |
 | 3 | Whiteboard mechanism + engineers | not-started | — | — | — |
 | 4 | Domain pairs | not-started | — | — | — |
@@ -120,3 +120,4 @@ Phase 1 merged via PR #8. Phase 1.5 split into a sequence of PRs after a post-me
 | 2026-05-10 00:13 | phase-completed | 1.5 |
 | 2026-05-10 00:18 | checkin-created | 14 on ev.agent-guilds.phase-1-5-substrate-cleanup-9 |
 | 2026-05-10 00:22 | pr-opened | #33 |
+| 2026-05-10 00:22 | note | phase-row PR field updated post-submit |
