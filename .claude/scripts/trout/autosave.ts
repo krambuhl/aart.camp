@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { parseArgs } from 'node:util';
-import { readFileSync, writeFileSync, mkdirSync, readdirSync, existsSync, statSync } from 'node:fs';
-import { join, resolve, basename, dirname } from 'node:path';
+import { readFileSync, writeFileSync, readdirSync, existsSync, statSync } from 'node:fs';
+import { join, resolve, basename } from 'node:path';
 
 type PhaseUpdate = {
   phase: string;
@@ -11,19 +11,10 @@ type PhaseUpdate = {
 
 type Args = {
   slug: string;
-  init: boolean;
   event?: string;
   detail?: string;
   currentState?: string;
   phaseUpdate?: PhaseUpdate;
-};
-
-type InitDetail = {
-  title: string;
-  slug: string;
-  started: string;
-  strategy: string;
-  phases: Array<{ name: string; dependencies?: string[] }>;
 };
 
 const PHASE_STATUSES = new Set(['not-started', 'in-progress', 'blocked', 'completed']);
@@ -33,14 +24,17 @@ const CONVENTIONS_PATH = resolve(PROJECTS_ROOT, 'CONVENTIONS.md');
 
 // Hardcoded fallback used only if CONVENTIONS.md is unreadable. Source of
 // truth is the `## Event vocabulary` table in CONVENTIONS.md, parsed at
-// runtime — this list mirrors it but is not the authority.
+// runtime — this list mirrors it but is not the authority. Note:
+// `project-initialized` is still in the vocabulary; it is emitted by
+// `.claude/scripts/trout/plan-scaffold.ts` (D10) which absorbed the
+// project-init responsibility from autosave's former `--init` path.
 const FALLBACK_VOCABULARY = [
   'project-initialized', 'phase-started', 'phase-completed', 'phase-blocked',
   'phase-unblocked', 'checkin-created', 'pr-opened', 'pr-updated', 'pr-merged',
   'session-saved', 'retro-written', 'archived', 'note',
 ];
 
-const ARG_HINT = '<project-slug-or-path> [--init] [--event=<name>] [--detail=<text>] [--current-state=<text>] [--phase-update=<n>:<status>[:<k=v>]*]';
+const ARG_HINT = '<project-slug-or-path> --event=<name> [--detail=<text>] [--current-state=<text>] [--phase-update=<n>:<status>[:<k=v>]*]';
 
 class AutosaveError extends Error {
   candidates?: string[];
@@ -96,7 +90,6 @@ function parseArguments(argv: string[]): Args {
   try {
     parsed = parseArgs({
       options: {
-        init: { type: 'boolean' },
         event: { type: 'string' },
         detail: { type: 'string' },
         'current-state': { type: 'string' },
@@ -116,12 +109,8 @@ function parseArguments(argv: string[]): Args {
     fail(`unexpected extra positional arguments: ${positionals.slice(1).join(' ')}`);
   }
   const slug = positionals[0];
-  const init = !!values.init;
-  if (!init && !values.event) {
-    fail('--event=<name> is required (unless --init)');
-  }
-  if (init && (values.event || values['current-state'] || values['phase-update'])) {
-    fail('--init does not accept --event / --current-state / --phase-update');
+  if (!values.event) {
+    fail('--event=<name> is required');
   }
   let phaseUpdate: PhaseUpdate | undefined;
   if (values['phase-update']) {
@@ -133,23 +122,11 @@ function parseArguments(argv: string[]): Args {
   }
   return {
     slug,
-    init,
     event: values.event as string | undefined,
     detail: values.detail as string | undefined,
     currentState: values['current-state'] as string | undefined,
     phaseUpdate,
   };
-}
-
-function resolveInitTarget(slug: string): string {
-  if (slug.startsWith('.') || slug.startsWith('/')) {
-    const abs = resolve(slug);
-    if (abs.startsWith(ARCHIVE_ROOT + '/') || abs === ARCHIVE_ROOT) {
-      fail(`project is archived (read-only): ${abs}`);
-    }
-    return abs;
-  }
-  return join(PROJECTS_ROOT, slug);
 }
 
 function resolveProject(slug: string): string {
@@ -375,99 +352,8 @@ function runUpdate(projectPath: string, args: Args): { slug: string; event: stri
   return { slug: basename(projectPath), event, when };
 }
 
-function runInit(projectPath: string, detailJson: string | undefined): { slug: string; when: string } {
-  if (!detailJson) {
-    fail('--init requires --detail with a JSON object (title, slug, started, strategy, phases)');
-  }
-  let detail: InitDetail;
-  try {
-    detail = JSON.parse(detailJson);
-  } catch (err) {
-    fail(`--init --detail JSON parse error: ${(err as Error).message}`);
-  }
-  for (const required of ['title', 'slug', 'started', 'strategy', 'phases']) {
-    if (!(required in detail)) {
-      fail(`--init --detail JSON missing required field: ${required}`);
-    }
-  }
-  if (!Array.isArray(detail.phases)) {
-    fail('--init --detail.phases must be an array');
-  }
-  if (existsSync(projectPath)) {
-    fail(`project directory already exists: ${projectPath}`);
-  }
-  mkdirSync(projectPath, { recursive: true });
-  mkdirSync(join(projectPath, 'sessions'), { recursive: true });
-  mkdirSync(join(projectPath, 'checkins'), { recursive: true });
-
-  const when = timestamp();
-  const phaseRows = detail.phases.map((p, idx) => {
-    const num = idx + 1;
-    return `| ${num} | ${p.name} | not-started | — | — | — |`;
-  }).join('\n');
-  const dependencyLines = detail.phases.flatMap((p, idx) => {
-    if (!p.dependencies || p.dependencies.length === 0) return [];
-    return [`- Phase ${idx + 1}: ${p.dependencies.join('; ')}`];
-  });
-  const dependenciesBlock = dependencyLines.length > 0 ? dependencyLines.join('\n') : '- (none)';
-  const manifest = `# Project: ${detail.title}
-
-**Slug**: ${detail.slug}
-**Started**: ${detail.started}
-**Status**: active
-**Current branch**: —
-**Latest checkin**: —
-
-## Strategy
-
-${detail.strategy}
-
-## Phases
-
-| # | Name | Status | Branch | Latest checkin | PR |
-|---|------|--------|--------|----------------|----|
-${phaseRows}
-
-## Dependencies
-
-${dependenciesBlock}
-
-## Current state
-
-Project initialized. No work started yet.
-
-## Events
-
-| When | Event | Detail |
-|------|-------|--------|
-| ${when} | project-initialized | — |
-`;
-  writeFileSync(join(projectPath, 'MANIFEST.md'), manifest);
-  const config = `# Project config
-
-## Verification
-- (fill in)
-
-## PR settings
-- Base branch: main
-- Reviewers: —
-- Labels: —
-
-## Worker bindings
-- (fill in)
-`;
-  writeFileSync(join(projectPath, 'config.md'), config);
-  return { slug: basename(projectPath), when };
-}
-
 function main(): void {
   const args = parseArguments(process.argv.slice(2));
-  if (args.init) {
-    const projectPath = resolveInitTarget(args.slug);
-    const { slug, when } = runInit(projectPath, args.detail);
-    process.stdout.write(`autosave: ${slug} project-initialized @ ${when}\n`);
-    return;
-  }
   const projectPath = resolveProject(args.slug);
   const { slug, event, when } = runUpdate(projectPath, args);
   process.stdout.write(`autosave: ${slug} ${event} @ ${when}\n`);
