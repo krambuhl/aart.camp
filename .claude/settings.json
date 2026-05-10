@@ -22,8 +22,6 @@
       "Bash(node .claude/scripts/guild/*)",
       "Skill(griot-capture)",
       "Skill(griot-capture:*)",
-      "Skill(griot-use)",
-      "Skill(griot-use:*)",
       "Skill(guild-spawn)",
       "Skill(guild-spawn:*)",
       "Skill(guild-validate)",

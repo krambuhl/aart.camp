@@ -3,8 +3,8 @@
 **Slug**: 2026-05-02-agent-guilds
 **Started**: 2026-05-02
 **Status**: active
-**Current branch**: ev.agent-guilds.phase-1-5-substrate-cleanup-7
-**Latest checkin**: checkins/ev.agent-guilds.phase-1-5-substrate-cleanup-7/12.md
+**Current branch**: ev.agent-guilds.phase-1-5-substrate-cleanup-8
+**Latest checkin**: checkins/ev.agent-guilds.phase-1-5-substrate-cleanup-8/13.md
 
 ## Strategy
 
@@ -15,7 +15,7 @@ Extract `guild-*` agent-panel substrate alongside trout/griot, thin ev-loop into
 | # | Name | Status | Branch | Latest checkin | PR |
 |---|------|--------|--------|----------------|----|
 | 1 | Substrate foundations | completed | ev.agent-guilds.substrate-foundations | 05 | #8 (merged) |
-| 1.5 | Substrate primitive cleanup | in-progress | ev.agent-guilds.phase-1-5-substrate-cleanup-7 | 12 | #30 (open) |
+| 1.5 | Substrate primitive cleanup | in-progress | ev.agent-guilds.phase-1-5-substrate-cleanup-8 | 13 | #32 (open) |
 | 2 | Antagonist evaluator panel | not-started | — | — | — |
 | 3 | Whiteboard mechanism + engineers | not-started | — | — | — |
 | 4 | Domain pairs | not-started | — | — | — |
@@ -30,7 +30,7 @@ Extract `guild-*` agent-panel substrate alongside trout/griot, thin ev-loop into
 
 ## Current state
 
-Phase 1 merged via PR #8. Phase 1.5 split into a sequence of PRs after a post-merge audit produced both a rewritten plan (4× original scope) and a load-bearing convention. **Deliverables 1-9 shipped** across PRs #9 (replan + D1 convention doc + `/trout-pull-request` rework + project-wide `.claude/settings.json`), #10 (D2 `trout-autosave` migration + substrate-script convention bootstrap), #13 + #16 (D3-D5 full CRUD migrations: `trout-autoload`, `griot-capture`, `guild-validate` parser extraction), #18 (D6 `trout-pull-request` LLM/CRUD split), #23 (D7 `trout-archive` relocate split), #26 (D8 `trout-save-session` finalize split), and #28 (D9 `trout-pr-respond` plumbing split). Co-shipped follow-ons outside the plan: #12 (substrate-orientation `[!NOTE]` callout in PR bodies) and #20 (allowlist tightening). **Current cleanup branch** `ev.agent-guilds.phase-1-5-substrate-cleanup-7` (cut from main post-#28-merge) carries the remaining 3 deliverables: D10 (`trout-plan` scaffold split — interview stays prose, post-interview scaffold becomes `.claude/scripts/trout/plan-scaffold.ts`), D11 (`griot-use` → `.claude/scripts/griot/use.ts` + inline its invocation into `/ev-run`'s setup step, deleting the standalone skill), D12 (e2e verification on a throwaway `phase-1-5-test` project via the migrated path). Loop: interactive, sequential ordering. Next: deliverable 10 — `trout-plan` scaffold split. Per-family wildcard permissions (`Bash(node .claude/scripts/<family>/*)`) already landed for `trout` and `griot` families.
+Phase 1 merged via PR #8. Phase 1.5 split into a sequence of PRs after a post-merge audit produced both a rewritten plan (4× original scope) and a load-bearing convention. **Deliverables 1-10 shipped** across PRs #9 (replan + D1 convention doc + `/trout-pull-request` rework + project-wide `.claude/settings.json`), #10 (D2 `trout-autosave` migration + substrate-script convention bootstrap), #13 + #16 (D3-D5 full CRUD migrations: `trout-autoload`, `griot-capture`, `guild-validate` parser extraction), #18 (D6 `trout-pull-request` LLM/CRUD split), #23 (D7 `trout-archive` relocate split), #26 (D8 `trout-save-session` finalize split), #28 (D9 `trout-pr-respond` plumbing split), and #30 (D10 `trout-plan` scaffold split). Co-shipped follow-ons outside the plan: #12 (substrate-orientation `[!NOTE]` callout in PR bodies) and #20 (allowlist tightening). **Current cleanup branch** `ev.agent-guilds.phase-1-5-substrate-cleanup-8` (cut from main post-#30-merge) carries the remaining 2 deliverables: D11 (`griot-use` → `.claude/scripts/griot/use.ts` + inline its invocation into `/ev-run`'s setup step, deleting the standalone skill `.claude/skills/griot-use/`) and D12 (e2e verification on a throwaway `phase-1-5-test` project via the migrated path; closes Phase 1.5). Loop: interactive, sequential ordering. Next: deliverable 11 — `griot-use` → script + ev-run inline. Per-family wildcard permissions (`Bash(node .claude/scripts/<family>/*)`) already landed for `trout` and `griot` families. Side-note: D10 left `autosave.ts::runInit` and `--init` flag structurally orphaned (no caller); cleanup deferred to alongside D12 e2e verification per D10's AC #3.
 
 ## Events
 
@@ -110,3 +110,8 @@ Phase 1 merged via PR #8. Phase 1.5 split into a sequence of PRs after a post-me
 | 2026-05-09 04:23 | checkin-created | 12 on ev.agent-guilds.phase-1-5-substrate-cleanup-7 |
 | 2026-05-09 04:27 | pr-opened | #30 |
 | 2026-05-09 05:47 | note | phase-row PR field updated post-submit |
+| 2026-05-09 08:41 | pr-merged | #30 (cleanup-7 D10: trout-plan scaffold split) |
+| 2026-05-09 08:41 | note | Eighth cleanup branch ev.agent-guilds.phase-1-5-substrate-cleanup-8 cut from main post-#30-merge; deliverables D11-D12 begin here |
+| 2026-05-09 20:50 | checkin-created | 13 on ev.agent-guilds.phase-1-5-substrate-cleanup-8 |
+| 2026-05-09 20:53 | pr-opened | #32 |
+| 2026-05-09 20:53 | note | phase-row PR field updated post-submit |
