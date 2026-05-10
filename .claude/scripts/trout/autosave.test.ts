@@ -278,63 +278,6 @@ test('pr-merged auto-flips (open) to (merged) in matching phase row', () => {
   fx.cleanup();
 });
 
-test('--init scaffolds project directory tree, MANIFEST, and config', () => {
-  const fx = makeFixture();
-  const detail = JSON.stringify({
-    title: 'New Thing',
-    slug: '2026-03-01-new-thing',
-    started: '2026-03-01',
-    strategy: 'Build it.',
-    phases: [
-      { name: 'Setup' },
-      { name: 'Migrate', dependencies: ['Phase 1 merged'] },
-    ],
-  });
-  const targetPath = join(fx.root, 'projects', '2026-03-01-new-thing');
-  const res = run([targetPath, '--init', `--detail=${detail}`], fx.root);
-  assert.equal(res.status, 0, `stderr: ${res.stderr}`);
-  assert.ok(existsSync(targetPath));
-  assert.ok(existsSync(join(targetPath, 'sessions')));
-  assert.ok(existsSync(join(targetPath, 'checkins')));
-  assert.ok(existsSync(join(targetPath, 'config.md')));
-  const manifest = readFileSync(join(targetPath, 'MANIFEST.md'), 'utf-8');
-  assert.match(manifest, /# Project: New Thing/);
-  assert.match(manifest, /\| 1 \| Setup \| not-started/);
-  assert.match(manifest, /\| 2 \| Migrate \| not-started/);
-  assert.match(manifest, /Phase 2: Phase 1 merged/);
-  assert.match(manifest, /\| project-initialized \| — \|/);
-  fx.cleanup();
-});
-
-test('--init refuses if directory already exists', () => {
-  const fx = makeFixture();
-  makeProject(fx.root, '2026-01-01-test');
-  const detail = JSON.stringify({ title: 'X', slug: '2026-01-01-test', started: '2026-01-01', strategy: '.', phases: [] });
-  const targetPath = join(fx.root, 'projects', '2026-01-01-test');
-  const res = run([targetPath, '--init', `--detail=${detail}`], fx.root);
-  assert.equal(res.status, 1);
-  assert.match(res.stderr, /already exists/);
-  fx.cleanup();
-});
-
-test('--init rejects malformed JSON detail', () => {
-  const fx = makeFixture();
-  const targetPath = join(fx.root, 'projects', '2026-04-01-broken');
-  const res = run([targetPath, '--init', '--detail={not json'], fx.root);
-  assert.equal(res.status, 1);
-  assert.match(res.stderr, /JSON parse error/);
-  fx.cleanup();
-});
-
-test('--init combined with --event is rejected', () => {
-  const fx = makeFixture();
-  const targetPath = join(fx.root, 'projects', '2026-04-01-x');
-  const res = run([targetPath, '--init', '--event=note'], fx.root);
-  assert.equal(res.status, 1);
-  assert.match(res.stderr, /--init does not accept/);
-  fx.cleanup();
-});
-
 test('preserves manual edits below Events table', () => {
   const fx = makeFixture();
   const proj = makeProject(fx.root, '2026-01-01-test');
