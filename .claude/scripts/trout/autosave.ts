@@ -225,6 +225,46 @@ function rewritePhaseRow(content: string, update: PhaseUpdate): string {
   return content.slice(0, phasesHeaderIdx) + lines.join('\n') + content.slice(sectionEnd);
 }
 
+// Propagate phase-row branch changes to the manifest header's
+// **Current branch** field. Triggered only on definitive lifecycle
+// transitions: status->in-progress (set Current branch from the phase
+// row), status->completed (flip Current branch back to "—"). Other
+// transitions (blocked, not-started, status='—') leave the header
+// alone — the header is for the user's explicit "what's in flight"
+// signal, not a derived view of every phase mutation.
+function updateCurrentBranchFromPhase(content: string, update: PhaseUpdate): string {
+  let newValue: string | undefined;
+  if (update.status === 'in-progress') {
+    if (update.fields.branch && update.fields.branch !== '—') {
+      newValue = update.fields.branch;
+    } else {
+      const phaseBranch = readPhaseRowBranch(content, update.phase);
+      if (phaseBranch && phaseBranch !== '—') newValue = phaseBranch;
+    }
+  } else if (update.status === 'completed') {
+    newValue = '—';
+  }
+  if (newValue === undefined) return content;
+  const fieldRe = /^\*\*Current branch\*\*: .*$/m;
+  if (!fieldRe.test(content)) return content;
+  return content.replace(fieldRe, `**Current branch**: ${newValue}`);
+}
+
+function readPhaseRowBranch(content: string, phaseNum: string): string | null {
+  const phasesHeaderIdx = content.indexOf('\n## Phases');
+  if (phasesHeaderIdx === -1) return null;
+  const dependenciesIdx = content.indexOf('\n## Dependencies', phasesHeaderIdx);
+  const sectionEnd = dependenciesIdx === -1 ? content.length : dependenciesIdx;
+  const section = content.slice(phasesHeaderIdx, sectionEnd);
+  for (const line of section.split('\n')) {
+    const cells = parseRowCells(line);
+    if (!cells || cells.length < 6) continue;
+    if (cells[0].trim() !== phaseNum) continue;
+    return cells[3].trim();
+  }
+  return null;
+}
+
 function parseRowCells(line: string): string[] | null {
   if (!line.startsWith('|')) return null;
   if (line.match(/^\|\s*-+/)) return null;
@@ -297,6 +337,7 @@ function runUpdate(projectPath: string, args: Args): { slug: string; event: stri
   try {
     if (args.phaseUpdate) {
       content = rewritePhaseRow(content, args.phaseUpdate);
+      content = updateCurrentBranchFromPhase(content, args.phaseUpdate);
     }
     if (event === 'pr-merged' && args.detail) {
       content = applyPRMergedToPhaseRow(content, args.detail);
