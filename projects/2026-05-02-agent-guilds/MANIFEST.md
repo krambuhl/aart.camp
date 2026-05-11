@@ -15,7 +15,7 @@ Extract `guild-*` agent-panel substrate alongside trout/griot, thin ev-loop into
 | # | Name | Status | Branch | Latest checkin | PR |
 |---|------|--------|--------|----------------|----|
 | 1 | Substrate foundations | completed | ev.agent-guilds.substrate-foundations | 05 | #8 (merged) |
-| 1.5 | Substrate primitive cleanup | in-progress | ev.agent-guilds.phase-1-5-carryover-1 | 01 | #33 (merged) |
+| 1.5 | Substrate primitive cleanup | in-progress | ev.agent-guilds.phase-1-5-carryover-1 | 01 | #39 (open) |
 | 2 | Antagonist evaluator panel | not-started | — | — | — |
 | 3 | Whiteboard mechanism + engineers | not-started | — | — | — |
 | 4 | Domain pairs | not-started | — | — | — |
@@ -126,3 +126,4 @@ Phase 1 merged via PR #8. Phase 1.5 split into a sequence of PRs after a post-me
 | 2026-05-11 08:36 | note | substrate cleanup carryover shipped via #34 (non-phase): vitest convention, archive-relocate atomicity + precheck, resolveProject dedup |
 | 2026-05-11 02:02 | note | Phase 1.5 reopened to ship D13-D15 carryover (autoload-gh, allowlist tightening, Item.location cleanup) |
 | 2026-05-11 02:19 | checkin-created | 01 on ev.agent-guilds.phase-1-5-carryover-1 |
+| 2026-05-11 02:20 | pr-updated | #39 |
