@@ -49,3 +49,4 @@ Phase 2 merged via PR #31. Wet-run validation of new pipeline complete (checkin 
 | 2026-05-11 02:04 | checkin-created | 01 on ev.griot-subagents.cleanup |
 | 2026-05-11 02:04 | phase-completed | 2 |
 | 2026-05-11 02:10 | checkin-created | 02 on ev.griot-subagents.cleanup |
+| 2026-05-11 02:14 | pr-opened | #38 |
