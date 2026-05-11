@@ -3,7 +3,7 @@
 **Slug**: 2026-05-02-agent-guilds
 **Started**: 2026-05-02
 **Status**: active
-**Current branch**: ev.agent-guilds.phase-1-5-substrate-cleanup-9
+**Current branch**: —
 **Latest checkin**: checkins/ev.agent-guilds.phase-1-5-substrate-cleanup-9/14.md
 
 ## Strategy
@@ -15,7 +15,7 @@ Extract `guild-*` agent-panel substrate alongside trout/griot, thin ev-loop into
 | # | Name | Status | Branch | Latest checkin | PR |
 |---|------|--------|--------|----------------|----|
 | 1 | Substrate foundations | completed | ev.agent-guilds.substrate-foundations | 05 | #8 (merged) |
-| 1.5 | Substrate primitive cleanup | completed | ev.agent-guilds.phase-1-5-substrate-cleanup-9 | 14 | #33 (open) |
+| 1.5 | Substrate primitive cleanup | completed | ev.agent-guilds.phase-1-5-substrate-cleanup-9 | 14 | #33 (merged) |
 | 2 | Antagonist evaluator panel | not-started | — | — | — |
 | 3 | Whiteboard mechanism + engineers | not-started | — | — | — |
 | 4 | Domain pairs | not-started | — | — | — |
@@ -121,3 +121,6 @@ Phase 1 merged via PR #8. Phase 1.5 split into a sequence of PRs after a post-me
 | 2026-05-10 00:18 | checkin-created | 14 on ev.agent-guilds.phase-1-5-substrate-cleanup-9 |
 | 2026-05-10 00:22 | pr-opened | #33 |
 | 2026-05-10 00:22 | note | phase-row PR field updated post-submit |
+| 2026-05-10 00:34 | session-saved | 2026-05-10-a |
+| 2026-05-10 07:59 | pr-merged | #33 (cleanup-9 D12: e2e verification + autosave --init cleanup; closes Phase 1.5) |
+| 2026-05-11 08:36 | note | substrate cleanup carryover shipped via #34 (non-phase): vitest convention, archive-relocate atomicity + precheck, resolveProject dedup |
