@@ -70,13 +70,23 @@ working with.
 
 ### 1. Orient
 
-Invoke `Bash("node .claude/scripts/trout/autoload.ts <slug>")`. Take in
-the briefing on stdout. This tells you:
+Invoke `Bash("node .claude/scripts/trout/autoload.ts <slug> --reconcile")`.
+Take in the briefing on stdout. This tells you:
 - Current phase status
 - Latest checkin
-- Open PRs and their freshness
+- Open PRs and their freshness (verified against gh; the `--reconcile`
+  flag auto-flips `(open) → merged` drift in MANIFEST so the next
+  session sees an accurate row)
 - Suggested next action
 - Open threads from the last session handoff
+
+The `--reconcile` flag is the user-facing default for orientation: if a
+PR was merged between sessions but the manifest still shows `(open)`,
+autoload invokes `autosave --event=pr-merged` automatically and notes
+the reconciliation inline in the briefing (e.g. `> Reconciled drift:
+PR #33 marked merged (was open).`). The `(merged) → open` case (rare,
+typically a misedit) is surfaced as a `⚠` warning but never
+auto-corrected — flipping there would erase a recorded merge event.
 
 ### 1.5. Load learnings
 

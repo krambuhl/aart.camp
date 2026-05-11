@@ -1,9 +1,13 @@
 #!/usr/bin/env node
 import { parseArgs } from 'node:util';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
-import { join, resolve, basename } from 'node:path';
-import { execFileSync } from 'node:child_process';
+import { join, resolve, basename, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { execFileSync, spawn, spawnSync } from 'node:child_process';
 import { PROJECTS_ROOT, ProjectResolveError, resolveProject } from './resolve-project.ts';
+
+const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
+const AUTOSAVE_PATH = join(SCRIPT_DIR, 'autosave.ts');
 
 type Phase = {
   num: string;
@@ -69,18 +73,22 @@ function fail(reason: string, candidates?: string[]): never {
   process.exit(1);
 }
 
-function parseArguments(argv: string[]): { slug?: string } {
+function parseArguments(argv: string[]): { slug?: string; reconcile: boolean } {
   let parsed;
   try {
-    parsed = parseArgs({ options: {}, allowPositionals: true, args: argv });
+    parsed = parseArgs({
+      options: { reconcile: { type: 'boolean', default: false } },
+      allowPositionals: true,
+      args: argv,
+    });
   } catch (err) {
     fail(`argument parse failure: ${(err as Error).message}`);
   }
-  const { positionals } = parsed;
+  const { positionals, values } = parsed;
   if (positionals.length > 1) {
     fail(`unexpected extra positional arguments: ${positionals.slice(1).join(' ')}`);
   }
-  return { slug: positionals[0] };
+  return { slug: positionals[0], reconcile: Boolean(values.reconcile) };
 }
 
 function listActiveProjects(): string[] {
@@ -252,6 +260,119 @@ function loadPhaseStatuses(): string[] {
   return items ? items.map((s) => s.replace(/`/g, '')) : FALLBACK_PHASE_STATUSES;
 }
 
+type GhState = 'open' | 'merged' | 'closed' | 'unavailable';
+
+// Extract the integer PR number from a Phases-table PR cell like `#33 (merged)`.
+// Returns null for `—`, empty cells, or anything without a `#<digits>` shape.
+function extractPrNumber(prCell: string): number | null {
+  const m = prCell.match(/#(\d+)/);
+  return m ? parseInt(m[1], 10) : null;
+}
+
+// Read the lifecycle state out of a PR cell. The Phases-table convention is
+// `#<N> (<state>)` where state is `open` / `merged` / `closed`. Anything else
+// (bare `—`, no parens, novel state word) returns `unknown` — we cannot
+// reason about drift there.
+function parsePrCellState(prCell: string): 'open' | 'merged' | 'closed' | 'unknown' {
+  if (prCell.includes('(merged)')) return 'merged';
+  if (prCell.includes('(open)')) return 'open';
+  if (prCell.includes('(closed)')) return 'closed';
+  return 'unknown';
+}
+
+// Spawn `gh pr view <N> --json state,mergedAt` and resolve to a normalized
+// GhState. Any failure (gh not installed, network down, not authenticated,
+// non-zero exit) collapses to `'unavailable'`. Never rejects — callers can
+// always Promise.all without try/catch.
+function queryGhPrState(prNumber: number): Promise<GhState> {
+  return new Promise((resolve) => {
+    let child: ReturnType<typeof spawn>;
+    try {
+      child = spawn('gh', ['pr', 'view', String(prNumber), '--json', 'state,mergedAt'], {
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+    } catch {
+      resolve('unavailable');
+      return;
+    }
+    let stdout = '';
+    child.stdout?.on('data', (d: Buffer) => {
+      stdout += d.toString();
+    });
+    child.on('error', () => resolve('unavailable'));
+    child.on('close', (code) => {
+      if (code !== 0) {
+        resolve('unavailable');
+        return;
+      }
+      try {
+        const obj = JSON.parse(stdout) as { state?: string; mergedAt?: string | null };
+        if (obj.mergedAt) {
+          resolve('merged');
+        } else if (obj.state === 'MERGED') {
+          resolve('merged');
+        } else if (obj.state === 'OPEN') {
+          resolve('open');
+        } else if (obj.state === 'CLOSED') {
+          resolve('closed');
+        } else {
+          resolve('unavailable');
+        }
+      } catch {
+        resolve('unavailable');
+      }
+    });
+  });
+}
+
+async function queryGhPrStates(prNumbers: number[]): Promise<Map<number, GhState>> {
+  const results = await Promise.all(
+    prNumbers.map(async (n) => [n, await queryGhPrState(n)] as const),
+  );
+  return new Map(results);
+}
+
+// Invoke `autosave --event=pr-merged --detail=#<N>` so the manifest write goes
+// through the same path skills already use. Returns true on success, false on
+// failure (autosave's stderr is forwarded). Best-effort: a failed reconcile
+// doesn't abort orientation, it just leaves the drift surfaced.
+function invokeAutosaveForMerge(slug: string, prNumber: number): boolean {
+  const result = spawnSync(
+    'node',
+    [AUTOSAVE_PATH, slug, '--event=pr-merged', `--detail=#${prNumber}`],
+    { encoding: 'utf-8' },
+  );
+  if (result.status !== 0) {
+    process.stderr.write(result.stderr ?? `autosave invocation failed for #${prNumber}\n`);
+    return false;
+  }
+  return true;
+}
+
+function renderPhasesTable(phases: Phase[], ghStates: Map<number, GhState> | null): string {
+  const lines: string[] = [];
+  lines.push('| # | Name | Status | Branch | Latest checkin | PR |');
+  lines.push('|---|------|--------|--------|----------------|----|');
+  for (const p of phases) {
+    let prCell = p.pr;
+    const prNum = extractPrNumber(prCell);
+    if (prNum !== null && ghStates) {
+      const ghState = ghStates.get(prNum);
+      const manifestState = parsePrCellState(prCell);
+      if (
+        ghState &&
+        ghState !== 'unavailable' &&
+        manifestState !== 'unknown' &&
+        ghState !== manifestState
+      ) {
+        prCell = `#${prNum} (${manifestState} ⚠ ${ghState} on gh)`;
+      }
+    }
+    lines.push(`| ${p.num} | ${p.name} | ${p.status} | ${p.branch} | ${p.checkin} | ${prCell} |`);
+  }
+  return lines.join('\n');
+}
+
 function getCurrentBranch(): string {
   try {
     return execFileSync('git', ['branch', '--show-current'], { encoding: 'utf-8' }).trim();
@@ -313,6 +434,9 @@ function buildBriefing(
   session: Session | null,
   checkin: Checkin | null,
   gitBranch: string,
+  ghStates: Map<number, GhState> | null,
+  ghAllUnavailable: boolean,
+  reconciledPrNumbers: number[],
 ): string {
   const lines: string[] = [];
   lines.push(`## Project orientation: ${manifest.title} (${manifest.slug})`);
@@ -321,7 +445,15 @@ function buildBriefing(
   lines.push(`**Status**: ${manifest.status}  **Branch (manifest → actual)**: ${branchArrow}`);
   lines.push('');
   lines.push('### Phases');
-  lines.push(manifest.phasesTable);
+  lines.push(renderPhasesTable(manifest.phases, ghStates));
+  if (ghAllUnavailable && ghStates !== null && ghStates.size > 0) {
+    lines.push('');
+    lines.push('> _gh unavailable — PR states shown are manifest-only._');
+  }
+  for (const pr of reconciledPrNumbers) {
+    lines.push('');
+    lines.push(`> Reconciled drift: PR #${pr} marked merged (was open).`);
+  }
   lines.push('');
   lines.push('### Current state');
   lines.push(manifest.currentState);
@@ -365,8 +497,8 @@ function buildBriefing(
   return lines.join('\n');
 }
 
-function main(): void {
-  const { slug } = parseArguments(process.argv.slice(2));
+async function main(): Promise<void> {
+  const { slug, reconcile } = parseArguments(process.argv.slice(2));
   if (!slug) {
     const active = listActiveProjects();
     process.stderr.write('autoload-error: missing project identifier\n');
@@ -392,6 +524,48 @@ function main(): void {
     throw err;
   }
 
+  // Query gh for the live state of every PR referenced in the Phases table.
+  // Runs in parallel; any failure mode collapses to 'unavailable' so the
+  // briefing always renders.
+  const prNumbers = manifest.phases
+    .map((p) => extractPrNumber(p.pr))
+    .filter((n): n is number => n !== null);
+  let ghStates: Map<number, GhState> | null = null;
+  let ghAllUnavailable = false;
+  const reconciledPrNumbers: number[] = [];
+  if (prNumbers.length > 0) {
+    ghStates = await queryGhPrStates(prNumbers);
+    const stateValues = [...ghStates.values()];
+    ghAllUnavailable = stateValues.length > 0 && stateValues.every((s) => s === 'unavailable');
+
+    if (reconcile && !ghAllUnavailable) {
+      // Auto-correct `(open) → merged` drift only. The merged→open case is
+      // surfaced as a warning by renderPhasesTable but not auto-fixed —
+      // flipping there would erase a recorded pr-merged event.
+      for (const phase of manifest.phases) {
+        const prNum = extractPrNumber(phase.pr);
+        if (prNum === null) continue;
+        const manifestState = parsePrCellState(phase.pr);
+        const ghState = ghStates.get(prNum);
+        if (manifestState === 'open' && ghState === 'merged') {
+          if (invokeAutosaveForMerge(slug, prNum)) {
+            reconciledPrNumbers.push(prNum);
+          }
+        }
+      }
+      // Re-parse manifest after autosave invocations so the rendered table
+      // reflects the post-reconcile state.
+      if (reconciledPrNumbers.length > 0) {
+        try {
+          manifest = parseManifest(readFileSync(manifestPath, 'utf-8'), knownPhaseStatuses);
+        } catch (err) {
+          if (err instanceof AutoloadError) fail(err.message);
+          throw err;
+        }
+      }
+    }
+  }
+
   const configPath = join(projectPath, 'config.md');
   const config = existsSync(configPath) ? parseConfig(readFileSync(configPath, 'utf-8')) : null;
 
@@ -412,8 +586,20 @@ function main(): void {
   }
 
   const gitBranch = getCurrentBranch();
-  const briefing = buildBriefing(manifest, config, session, checkin, gitBranch);
+  const briefing = buildBriefing(
+    manifest,
+    config,
+    session,
+    checkin,
+    gitBranch,
+    ghStates,
+    ghAllUnavailable,
+    reconciledPrNumbers,
+  );
   process.stdout.write(briefing);
 }
 
-main();
+main().catch((err) => {
+  process.stderr.write(`autoload-error: ${(err as Error).message}\n`);
+  process.exit(1);
+});
