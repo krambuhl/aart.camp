@@ -11,6 +11,7 @@ import {
   analyzeWhyCheck,
   parseCheckin,
   enumerateCheckinFiles,
+  resolvePhaseUpdatePr,
 } from './pr-plumbing.ts';
 
 const SCRIPT = join(process.cwd(), '.claude/scripts/trout/pr-plumbing.ts');
@@ -112,6 +113,65 @@ test('analyzeWhyCheck: any rationale goal → not thin', () => {
   const result = analyzeWhyCheck(null, null, 'Phase 1', ['Move files', 'Add gate to prevent the leak']);
   assert.equal(result.thin, false);
   assert.equal(result.sourceSummary.checkinGoalsRationale, true);
+});
+
+// ---------------------------------------------------------------------------
+// resolvePhaseUpdatePr (placeholder substitution + literal sanity check)
+// ---------------------------------------------------------------------------
+
+test('resolvePhaseUpdatePr: <N> placeholder substituted with gh-returned number', () => {
+  assert.equal(
+    resolvePhaseUpdatePr('1.5:in-progress:pr=#<N> (open)', 42),
+    '1.5:in-progress:pr=#42 (open)',
+  );
+});
+
+test('resolvePhaseUpdatePr: multiple <N> placeholders all substituted', () => {
+  // Edge case: the same number could appear in detail text + pr field. Catch both.
+  assert.equal(
+    resolvePhaseUpdatePr('1.5:in-progress:pr=#<N> (open):note=opened-pr-<N>', 42),
+    '1.5:in-progress:pr=#42 (open):note=opened-pr-42',
+  );
+});
+
+test('resolvePhaseUpdatePr: literal pr=#<digits> matching gh number passes through', () => {
+  assert.equal(
+    resolvePhaseUpdatePr('1.5:in-progress:pr=#42 (open)', 42),
+    '1.5:in-progress:pr=#42 (open)',
+  );
+});
+
+test('resolvePhaseUpdatePr: literal pr=#<digits> mismatch rejected', () => {
+  // Spawn a child to capture the fail() exit + stderr (fail() calls process.exit).
+  const tmpScript = mkdtempSync(join(tmpdir(), 'resolve-pr-test-'));
+  try {
+    const driver = join(tmpScript, 'driver.mjs');
+    const helperPath = join(process.cwd(), '.claude/scripts/trout/pr-plumbing.ts');
+    writeFileSync(
+      driver,
+      `import { resolvePhaseUpdatePr } from '${helperPath}';\nresolvePhaseUpdatePr('1.5:in-progress:pr=#13 (open)', 42);\n`,
+    );
+    const res = spawnSync('node', [driver], { encoding: 'utf-8' });
+    assert.notEqual(res.status, 0);
+    assert.match(res.stderr, /pr-plumbing-error: phase-update-mismatch/);
+    assert.match(res.stderr, /pr=#13 but gh returned #42/);
+  } finally {
+    rmSync(tmpScript, { recursive: true, force: true });
+  }
+});
+
+test('resolvePhaseUpdatePr: phase-update without pr field passes through unchanged', () => {
+  assert.equal(
+    resolvePhaseUpdatePr('1.5:completed', 42),
+    '1.5:completed',
+  );
+});
+
+test('resolvePhaseUpdatePr: phase-update with non-pr fields untouched', () => {
+  assert.equal(
+    resolvePhaseUpdatePr('1.5:in-progress:branch=ev.foo:checkin=01', 42),
+    '1.5:in-progress:branch=ev.foo:checkin=01',
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -624,6 +684,31 @@ test('submit: missing body file → fails fast', () => {
     );
     assert.notEqual(res.status, 0);
     assert.match(res.stderr, /body file not found/);
+  } finally { f.cleanup(); }
+});
+
+test('submit: --phase-update with literal pr=#N mismatching gh-returned number errors before autosave', () => {
+  const f = setupFixture();
+  try {
+    writeCheckin(f, 1);
+    runScript(['commit', f.slug, f.branch, '--message=preflight'], f);
+    const bodyFile = join(f.root, 'body.md');
+    writeFileSync(bodyFile, '# PR body\n');
+    const res = runScript(
+      ['submit', f.slug, f.branch, '--title=Test PR', `--body-file=${bodyFile}`, '--phase-update=1.5:in-progress:pr=#13 (open)'],
+      f,
+      {
+        GH_PR_LIST_RESPONSE: '[]',
+        GH_PR_CREATE_URL: 'https://github.com/owner/repo/pull/42',
+      },
+    );
+    assert.notEqual(res.status, 0);
+    assert.match(res.stderr, /pr-plumbing-error: phase-update-mismatch/);
+    assert.match(res.stderr, /pr=#13 but gh returned #42/);
+    // PR was created (gh ran), but MANIFEST should be untouched by autosave —
+    // fail() trips before autosave is invoked. So no pr-opened event lands.
+    const manifest = readFileSync(join(f.projectDir, 'MANIFEST.md'), 'utf-8');
+    assert.doesNotMatch(manifest, /pr-opened/);
   } finally { f.cleanup(); }
 });
 

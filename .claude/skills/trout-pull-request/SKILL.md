@@ -238,15 +238,14 @@ pending the script emits `no-op` and exits 0 — proceed to § 3.2.
 **Step 3.2 — Submit the PR.** Compose the `--phase-update` argument:
 
 - New PR (`state == 'new'`): the PR number is unknown until `gh pr
-  create` returns. Two-step pattern: (a) invoke `submit` **without**
-  `--phase-update`; (b) parse the new PR number from `submit`'s
-  terminal-state line (`pr: created #<N>, ...`); (c) run a follow-up
-  `Bash("node .claude/scripts/trout/autosave.ts <slug>
-  --event=note --detail='phase-row PR field updated post-submit'
-  --phase-update=<phase>:in-progress:pr=#<N> (open)")` to set the
-  phase row's PR field. (A future enhancement to `submit` will accept
-  a `<N>` placeholder and substitute the gh-returned number; until
-  then, the two-step pattern is the workflow.)
+  create` returns. Use the `<N>` placeholder in the `pr=` field —
+  `submit` substitutes it with the gh-returned number after creating
+  the PR, so the phase-row update lands in the same atomic flow as
+  the `pr-opened` event. Single command, single tracking commit.
+  Example value: `1.5:in-progress:pr=#<N> (open)`. If you pass a
+  literal `pr=#<digits>` that doesn't match the actual gh-returned
+  number, `submit` errors out before autosaving (sanity check that
+  catches typos).
 - Stale PR (`state == 'stale'`): omit `--phase-update` from `submit`.
   The script emits a `pr-updated` event without mutating the phase
   row, which is correct — the PR number is already in the row from
@@ -258,7 +257,7 @@ Then run:
 Bash("node .claude/scripts/trout/pr-plumbing.ts submit <slug> <branch> \
   --title='<title>' \
   --body-file='/tmp/pr-body-<branch>-<NN-list>.md' \
-  [--phase-update='<N>:in-progress:pr=#<N> (open)']")
+  [--phase-update='<phase>:in-progress:pr=#<N> (open)']")
 ```
 
 `submit` is atomic: it chains gh → autosave → MANIFEST tracking commit
