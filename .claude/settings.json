@@ -33,6 +33,7 @@
       "Bash(npm run test*)",
       "Bash(npm run test:agentic *)",
       "Bash(npm run test:e2e *)",
+      "Bash(npm run test:a11y *)",
       "Bash(git fetch *)",
       "Bash(npx playwright test *)",
       "Bash(git add *)",
