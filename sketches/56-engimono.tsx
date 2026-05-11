@@ -7,7 +7,7 @@ import { tokens } from '@/tokens';
 import type { P5Color } from '@/types/p5';
 
 export const meta = {
-  title: 'Engimono — Good Luck',
+  title: 'Good Luck',
   date: '2026-04-30T00:00:00',
 };
 

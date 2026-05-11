@@ -8,7 +8,7 @@ import { tokens } from '@/tokens';
 import type { P5Color } from '@/types/p5';
 
 export const meta = {
-  title: 'Robot Thought 8 — Cardinal Drift',
+  title: 'Cardinal Drift',
   date: '2025-09-02T00:00:00',
 };
 

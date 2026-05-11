@@ -8,7 +8,7 @@ import { tokens } from '@/tokens';
 import type { P5Color } from '@/types/p5';
 
 export const meta = {
-  title: 'Robot Thought 7 — Soft Family',
+  title: 'Soft Family',
   date: '2025-09-02T00:00:00',
 };
 

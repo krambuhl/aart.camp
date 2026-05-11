@@ -8,7 +8,7 @@ import { tokens } from '@/tokens';
 import type { P5Color } from '@/types/p5';
 
 export const meta = {
-  title: 'Robot Thought 6 — Dahlia Sun',
+  title: 'Dahlia Sun',
   date: '2025-09-02T00:00:00',
 };
 
