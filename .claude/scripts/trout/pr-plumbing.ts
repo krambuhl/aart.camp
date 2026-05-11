@@ -506,6 +506,34 @@ function verbCommit(slugArg: string, branch: string, message: string, noPush: bo
   process.stdout.write(`${sha} pushed\n`);
 }
 
+// Substitute the `<N>` placeholder in a --phase-update value with the actual
+// gh-returned PR number; if the caller passed a literal `pr=#<digits>` instead,
+// sanity-check that it matches and refuse if not. Catches typos like the
+// `#13`-vs-`#16` mismatch in PR #16's tracking and the literal `<N>` that
+// landed unsubstituted in PR #18.
+export function resolvePhaseUpdatePr(phaseUpdate: string, prNumber: number): string {
+  const substituted = phaseUpdate.replace(/<N>/g, String(prNumber));
+  // Find a literal pr=#<digits> field in the *original* (pre-substitution) input.
+  // The phase-update format is `<phase>:<status>[:<k=v>]*` so the pr field, if
+  // present, is one of the colon-separated segments after position 1.
+  const segments = phaseUpdate.split(':').slice(2);
+  const prSeg = segments.find((seg) => seg.startsWith('pr='));
+  if (prSeg) {
+    const value = prSeg.slice(3);
+    const m = value.match(/^#(\d+)/);
+    if (m) {
+      const literal = parseInt(m[1], 10);
+      if (literal !== prNumber) {
+        fail(
+          'phase-update-mismatch',
+          `--phase-update contains pr=#${literal} but gh returned #${prNumber}; remove the literal number or use the <N> placeholder`,
+        );
+      }
+    }
+  }
+  return substituted;
+}
+
 function verbPush(branch: string): void {
   if (!branch) fail('args', `branch is required`);
   pushWithRetry(branch);
@@ -558,7 +586,10 @@ function verbSubmit(
     `--event=${event}`,
     `--detail=#${prNumber}`,
   ];
-  if (phaseUpdate) autosaveArgs.push(`--phase-update=${phaseUpdate}`);
+  if (phaseUpdate) {
+    const resolved = resolvePhaseUpdatePr(phaseUpdate, prNumber);
+    autosaveArgs.push(`--phase-update=${resolved}`);
+  }
   const autosaveRes = runCommand('node', autosaveArgs);
   if (autosaveRes.status !== 0) {
     process.stderr.write(autosaveRes.stderr);
