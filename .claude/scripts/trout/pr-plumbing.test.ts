@@ -12,6 +12,8 @@ import {
   parseCheckin,
   enumerateCheckinFiles,
   resolvePhaseUpdatePr,
+  selectStagePaths,
+  isUntrackedAllowlisted,
 } from './pr-plumbing.ts';
 
 const SCRIPT = join(process.cwd(), '.claude/scripts/trout/pr-plumbing.ts');
@@ -517,14 +519,15 @@ test('commit: stages substrate paths and pushes by default', () => {
   const f = setupFixture();
   try {
     writeCheckin(f, 1);
-    writeFileSync(join(f.root, 'someCode.ts'), 'export const x = 1;\n');
+    mkdirSync(join(f.root, 'lib'), { recursive: true });
+    writeFileSync(join(f.root, 'lib/someCode.ts'), 'export const x = 1;\n');
     const res = runScript(['commit', f.slug, f.branch, '--message=test commit'], f);
     assert.equal(res.status, 0, res.stderr);
     assert.match(res.stdout, /pushed$/m);
     // Verify both files are in the new commit
     const files = execFileSync('git', ['show', '--stat', '--name-only', '--pretty=format:', 'HEAD'], { cwd: f.root, encoding: 'utf-8' }).trim().split('\n').filter(Boolean);
     assert.ok(files.includes(`projects/${f.slug}/checkins/${f.branch}/01.md`), `expected checkin file in commit: ${files.join(', ')}`);
-    assert.ok(files.includes('someCode.ts'));
+    assert.ok(files.includes('lib/someCode.ts'));
   } finally { f.cleanup(); }
 });
 
@@ -549,16 +552,17 @@ test('commit: excludes settings.local.json and next-env.d.ts', () => {
   try {
     writeCheckin(f, 1);
     mkdirSync(join(f.root, '.claude'), { recursive: true });
+    mkdirSync(join(f.root, 'lib'), { recursive: true });
     writeFileSync(join(f.root, '.claude/settings.local.json'), '{}\n');
     writeFileSync(join(f.root, 'next-env.d.ts'), '// next env\n');
-    writeFileSync(join(f.root, 'normal.ts'), 'ok\n');
+    writeFileSync(join(f.root, 'lib/normal.ts'), 'ok\n');
     const res = runScript(['commit', f.slug, f.branch, '--message=test'], f);
     assert.equal(res.status, 0, res.stderr);
     // Verify excluded files are NOT in the commit
     const files = execFileSync('git', ['show', '--stat', '--name-only', '--pretty=format:', 'HEAD'], { cwd: f.root, encoding: 'utf-8' }).trim().split('\n').filter(Boolean);
     assert.ok(!files.includes('.claude/settings.local.json'), 'settings.local.json should be excluded');
     assert.ok(!files.includes('next-env.d.ts'), 'next-env.d.ts should be excluded');
-    assert.ok(files.includes('normal.ts'));
+    assert.ok(files.includes('lib/normal.ts'));
   } finally { f.cleanup(); }
 });
 
@@ -568,6 +572,111 @@ test('commit: rejects empty --message', () => {
     const res = runScript(['commit', f.slug, f.branch, '--message='], f);
     assert.notEqual(res.status, 0);
     assert.match(res.stderr, /--message is required/);
+  } finally { f.cleanup(); }
+});
+
+// ---------------------------------------------------------------------------
+// Untracked-files allowlist (D14)
+// ---------------------------------------------------------------------------
+
+test('isUntrackedAllowlisted: allows prefix-allowlisted paths', () => {
+  assert.equal(isUntrackedAllowlisted('.claude/scripts/foo/bar.ts'), true);
+  assert.equal(isUntrackedAllowlisted('app/page.tsx'), true);
+  assert.equal(isUntrackedAllowlisted('components/Stack/Stack.tsx'), true);
+  assert.equal(isUntrackedAllowlisted('sketches/53-new.tsx'), true);
+  assert.equal(isUntrackedAllowlisted('learnings/session-notes/x/correction.md'), true);
+});
+
+test('isUntrackedAllowlisted: allows root-files-allowlisted paths', () => {
+  assert.equal(isUntrackedAllowlisted('package.json'), true);
+  assert.equal(isUntrackedAllowlisted('tsconfig.json'), true);
+  assert.equal(isUntrackedAllowlisted('biome.json'), true);
+  assert.equal(isUntrackedAllowlisted('next.config.ts'), true);
+});
+
+test('isUntrackedAllowlisted: refuses non-allowlisted paths', () => {
+  assert.equal(isUntrackedAllowlisted('random-scratch.md'), false);
+  assert.equal(isUntrackedAllowlisted('notes/scratch.md'), false);
+  assert.equal(isUntrackedAllowlisted('.env'), false);
+  assert.equal(isUntrackedAllowlisted('tmp/output.json'), false);
+  // a substring match isn't enough — must be a real prefix with the trailing slash
+  assert.equal(isUntrackedAllowlisted('appendix.md'), false);
+});
+
+test('selectStagePaths: tracked-modified files outside allowlist still stage', () => {
+  // tracked-modified files are already known to git; allowlist applies to untracked only
+  const outcome = selectStagePaths('test-slug', 'feat/x', ['notes/random.md', 'docs/foo.md'], []);
+  assert.deepEqual(outcome.stage, ['notes/random.md', 'docs/foo.md']);
+  assert.deepEqual(outcome.refused, []);
+});
+
+test('selectStagePaths: untracked allowlisted-prefix files stage', () => {
+  const outcome = selectStagePaths('test-slug', 'feat/x', [], ['.claude/scripts/trout/new.ts', 'app/page.tsx']);
+  assert.deepEqual(outcome.stage, ['.claude/scripts/trout/new.ts', 'app/page.tsx']);
+  assert.deepEqual(outcome.refused, []);
+});
+
+test('selectStagePaths: untracked root-files-allowlisted files stage', () => {
+  const outcome = selectStagePaths('test-slug', 'feat/x', [], ['package.json', 'tsconfig.json']);
+  assert.deepEqual(outcome.stage, ['package.json', 'tsconfig.json']);
+  assert.deepEqual(outcome.refused, []);
+});
+
+test('selectStagePaths: untracked non-allowlisted files surface in refused', () => {
+  const outcome = selectStagePaths('test-slug', 'feat/x', [], ['random.md', 'notes/scratch.md', '.env']);
+  assert.deepEqual(outcome.stage, []);
+  assert.deepEqual(outcome.refused.sort(), ['.env', 'notes/scratch.md', 'random.md']);
+});
+
+test('selectStagePaths: checkin path under projects/ still stages; other projects/ paths skip silently', () => {
+  const outcome = selectStagePaths(
+    'test-slug',
+    'feat/x',
+    [],
+    [
+      'projects/test-slug/checkins/feat/x/01.md', // staged: matches checkin path
+      'projects/test-slug/PLAN.md', // silently skipped: project state outside checkins
+      'projects/test-slug/checkins/feat/y/01.md', // silently skipped: different branch's checkin
+    ],
+  );
+  assert.deepEqual(outcome.stage, ['projects/test-slug/checkins/feat/x/01.md']);
+  assert.deepEqual(outcome.refused, []);
+});
+
+test('selectStagePaths: mixed allowed + refused — refused listed, allowed still returned for the error message', () => {
+  // The verb fails closed when refused is non-empty (tested in the integration
+  // test below) — but the helper itself returns both lists so the caller has
+  // the full picture for error formatting.
+  const outcome = selectStagePaths(
+    'test-slug',
+    'feat/x',
+    [],
+    ['.claude/scripts/foo.ts', 'random.md', 'app/page.tsx', 'notes/x.md'],
+  );
+  assert.deepEqual(outcome.stage.sort(), ['.claude/scripts/foo.ts', 'app/page.tsx']);
+  assert.deepEqual(outcome.refused.sort(), ['notes/x.md', 'random.md']);
+});
+
+test('commit: refuses non-allowlisted untracked file and stages NOTHING (fail-closed)', () => {
+  const f = setupFixture();
+  try {
+    writeCheckin(f, 1);
+    // One allowlisted file and one refused file. Fail-closed semantics: even
+    // the allowlisted file must not stage when refusal is in play.
+    mkdirSync(join(f.root, 'lib'), { recursive: true });
+    writeFileSync(join(f.root, 'lib/legitimate.ts'), 'ok\n');
+    writeFileSync(join(f.root, 'random-scratch.md'), 'oops\n');
+    const res = runScript(['commit', f.slug, f.branch, '--message=test'], f);
+    assert.notEqual(res.status, 0);
+    assert.match(res.stderr, /pr-plumbing-error: untracked-paths-refused/);
+    assert.match(res.stderr, /random-scratch\.md/);
+    assert.match(res.stderr, /Resolution options:/);
+    assert.match(res.stderr, /\.gitignore/);
+    assert.match(res.stderr, /Extend UNTRACKED_PREFIX_ALLOWLIST/);
+    // Nothing was committed — HEAD is still the fixture's init commit
+    const log = execFileSync('git', ['log', '--oneline'], { cwd: f.root, encoding: 'utf-8' });
+    const commitCount = log.trim().split('\n').length;
+    assert.equal(commitCount, 1, `expected 1 commit (init); got ${commitCount}`);
   } finally { f.cleanup(); }
 });
 
