@@ -47,6 +47,46 @@ const STAGE_EXCLUDES = new Set([
   'next-env.d.ts',
 ]);
 
+// Allowlist for *untracked* files outside `projects/`. A path is allowed if it
+// starts with one of these prefixes OR (for repo-root files) appears in
+// UNTRACKED_ROOT_FILE_ALLOWLIST. Tracked-modified files are exempt from this
+// check — they're already known to git, so the stray-file risk that motivated
+// this allowlist doesn't apply. Files matching no entry are *refused*: the
+// commit verb surfaces a clear error and stages nothing.
+//
+// This list IS the project-shape spec for "what counts as committable code
+// under aart.camp." Extending it is a deliberate act, not a workaround.
+export const UNTRACKED_PREFIX_ALLOWLIST = [
+  '.claude/',
+  'app/',
+  'components/',
+  'sketches/',
+  'styles/',
+  'lib/',
+  'tokens/',
+  'public/',
+  'scripts/',
+  'learnings/',
+];
+
+export const UNTRACKED_ROOT_FILE_ALLOWLIST = new Set([
+  'package.json',
+  'package-lock.json',
+  'tsconfig.json',
+  'biome.json',
+  'next.config.ts',
+  'next.config.js',
+  'postcss.config.mjs',
+  'vitest.config.ts',
+  'next-env.d.ts',
+]);
+
+export function isUntrackedAllowlisted(path: string): boolean {
+  if (UNTRACKED_PREFIX_ALLOWLIST.some((p) => path.startsWith(p))) return true;
+  if (UNTRACKED_ROOT_FILE_ALLOWLIST.has(path)) return true;
+  return false;
+}
+
 class PRPlumbingError extends Error {
   code: string;
   constructor(code: string, message: string) {
@@ -449,27 +489,47 @@ function verbInspect(slugArg: string, branch: string): void {
   void slug;
 }
 
-export function selectStagePaths(slug: string, branch: string, changed: string[], untracked: string[]): string[] {
+export type StageOutcome = { stage: string[]; refused: string[] };
+
+export function selectStagePaths(
+  slug: string,
+  branch: string,
+  changed: string[],
+  untracked: string[],
+): StageOutcome {
   const checkinPrefix = `projects/${slug}/checkins/${branch}/`;
-  const paths: string[] = [];
+  const stage: string[] = [];
+  const refused: string[] = [];
+
+  // Tracked-modified files are always stageable (modulo STAGE_EXCLUDES). Git
+  // already knows about them; the untracked-allowlist exists to catch *new*
+  // stray files, not to second-guess intentional edits.
   for (const path of changed) {
     if (!path) continue;
     if (STAGE_EXCLUDES.has(path)) continue;
-    paths.push(path);
+    stage.push(path);
   }
+
   for (const path of untracked) {
     if (!path) continue;
     if (STAGE_EXCLUDES.has(path)) continue;
-    // Untracked: stage new checkin files for this branch, OR new code/skill/script files
-    // (anything outside projects/ that isn't excluded). Avoid staging stray files that
-    // happen to live under projects/ but aren't part of this branch's checkin set.
     if (path.startsWith('projects/')) {
-      if (path.startsWith(checkinPrefix) && /\d+\.md$/.test(path)) paths.push(path);
+      // Project-state files: only this branch's checkin files get staged.
+      // Other untracked files under projects/ (PLAN.md edits, session files,
+      // other branches' checkins) are silently skipped — they're managed by
+      // other substrate writers.
+      if (path.startsWith(checkinPrefix) && /\d+\.md$/.test(path)) stage.push(path);
       continue;
     }
-    paths.push(path);
+    // Outside projects/: must match the untracked allowlist.
+    if (isUntrackedAllowlisted(path)) {
+      stage.push(path);
+    } else {
+      refused.push(path);
+    }
   }
-  return paths;
+
+  return { stage, refused };
 }
 
 function verbCommit(slugArg: string, branch: string, message: string, noPush: boolean): void {
@@ -482,13 +542,32 @@ function verbCommit(slugArg: string, branch: string, message: string, noPush: bo
   if (lsRes.status !== 0) fail('git-status-failed', lsRes.stderr.trim() || `git ls-files failed`);
   const changed = diffRes.stdout.split('\n').filter(Boolean);
   const untracked = lsRes.stdout.split('\n').filter(Boolean);
-  const paths = selectStagePaths(slug, branch, changed, untracked);
-  if (paths.length === 0) {
+  const outcome = selectStagePaths(slug, branch, changed, untracked);
+  if (outcome.refused.length > 0) {
+    // Fail closed: no partial staging when untracked files fall outside the
+    // allowlist. The user must explicitly resolve before the commit proceeds.
+    const lines: string[] = [];
+    lines.push(
+      `${outcome.refused.length} untracked path${outcome.refused.length === 1 ? '' : 's'} outside the commit allowlist:`,
+    );
+    for (const p of outcome.refused) lines.push(`  - ${p}`);
+    lines.push('');
+    lines.push('Resolution options:');
+    lines.push(
+      `  1. Move the file(s) under an allowlisted directory: ${UNTRACKED_PREFIX_ALLOWLIST.join(', ')}`,
+    );
+    lines.push('  2. Add the file(s) to .gitignore if they should never be committed.');
+    lines.push(
+      '  3. Extend UNTRACKED_PREFIX_ALLOWLIST or UNTRACKED_ROOT_FILE_ALLOWLIST in .claude/scripts/trout/pr-plumbing.ts if this is a legitimately new code area.',
+    );
+    fail('untracked-paths-refused', lines.join('\n'));
+  }
+  if (outcome.stage.length === 0) {
     process.stdout.write('no-op\n');
     return;
   }
 
-  const addRes = runCommand('git', ['add', '--', ...paths]);
+  const addRes = runCommand('git', ['add', '--', ...outcome.stage]);
   if (addRes.status !== 0) fail('git-add-failed', addRes.stderr.trim());
 
   const commitRes = runCommand('git', ['commit', '-m', message]);
