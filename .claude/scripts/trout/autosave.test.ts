@@ -208,6 +208,90 @@ test('phase-update with multiple field updates', () => {
   fx.cleanup();
 });
 
+test('phase-update to in-progress with branch field propagates to **Current branch** header', () => {
+  const fx = makeFixture();
+  const proj = makeProject(fx.root, '2026-01-01-test');
+  // Phase 2 starts; new branch flips Current branch from feat/x to feat/y.
+  const res = run([
+    'test',
+    '--event=note',
+    '--detail=phase 2 begins',
+    '--phase-update=2:in-progress:branch=feat/y',
+  ], fx.root);
+  assert.equal(res.status, 0, `stderr: ${res.stderr}`);
+  const manifest = readFileSync(join(proj, 'MANIFEST.md'), 'utf-8');
+  assert.match(manifest, /^\*\*Current branch\*\*: feat\/y$/m);
+  fx.cleanup();
+});
+
+test('phase-update to in-progress without explicit branch reads from phase row', () => {
+  const fx = makeFixture();
+  const proj = makeProject(fx.root, '2026-01-01-test');
+  // Phase 1's row already has branch=feat/x; flipping it to in-progress
+  // (e.g. unblocking) without a new branch field should keep Current branch
+  // pinned to that row's value.
+  const res = run([
+    'test',
+    '--event=note',
+    '--detail=resuming phase 1',
+    '--phase-update=1:in-progress',
+  ], fx.root);
+  assert.equal(res.status, 0, `stderr: ${res.stderr}`);
+  const manifest = readFileSync(join(proj, 'MANIFEST.md'), 'utf-8');
+  assert.match(manifest, /^\*\*Current branch\*\*: feat\/x$/m);
+  fx.cleanup();
+});
+
+test('phase-update to completed flips **Current branch** to —', () => {
+  const fx = makeFixture();
+  const proj = makeProject(fx.root, '2026-01-01-test');
+  const res = run([
+    'test',
+    '--event=note',
+    '--detail=phase 1 completed',
+    '--phase-update=1:completed',
+  ], fx.root);
+  assert.equal(res.status, 0, `stderr: ${res.stderr}`);
+  const manifest = readFileSync(join(proj, 'MANIFEST.md'), 'utf-8');
+  assert.match(manifest, /^\*\*Current branch\*\*: —$/m);
+  fx.cleanup();
+});
+
+test('phase-update to non-lifecycle status (blocked) leaves **Current branch** alone', () => {
+  const fx = makeFixture();
+  const proj = makeProject(fx.root, '2026-01-01-test');
+  // The fixture starts with **Current branch**: feat/x. A blocked-only
+  // update on phase 2 (which has branch=—) should not touch the header.
+  const res = run([
+    'test',
+    '--event=note',
+    '--detail=phase 2 blocked on dep',
+    '--phase-update=2:blocked',
+  ], fx.root);
+  assert.equal(res.status, 0, `stderr: ${res.stderr}`);
+  const manifest = readFileSync(join(proj, 'MANIFEST.md'), 'utf-8');
+  assert.match(manifest, /^\*\*Current branch\*\*: feat\/x$/m);
+  fx.cleanup();
+});
+
+test('phase-update with status=— (rewriting other fields) leaves **Current branch** alone', () => {
+  const fx = makeFixture();
+  const proj = makeProject(fx.root, '2026-01-01-test');
+  // Setting just the PR field via status='—' (the existing pattern for
+  // "don't change status, change other columns") must not flip Current
+  // branch because we don't know which lifecycle stage the row is in.
+  const res = run([
+    'test',
+    '--event=pr-opened',
+    '--detail=#7',
+    '--phase-update=1:—:pr=#7 (open)',
+  ], fx.root);
+  assert.equal(res.status, 0, `stderr: ${res.stderr}`);
+  const manifest = readFileSync(join(proj, 'MANIFEST.md'), 'utf-8');
+  assert.match(manifest, /^\*\*Current branch\*\*: feat\/x$/m);
+  fx.cleanup();
+});
+
 test('phase-update: invalid status is rejected', () => {
   const fx = makeFixture();
   makeProject(fx.root, '2026-01-01-test');
