@@ -1,9 +1,9 @@
 import { test } from 'vitest';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync, chmodSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 
 const SCRIPT = join(process.cwd(), '.claude/scripts/trout/autoload.ts');
 
@@ -21,6 +21,107 @@ function run(args: string[], cwd: string): RunResult {
       status: e.status ?? 1,
     };
   }
+}
+
+// Build a fake `gh` binary that responds to `gh pr view <N> --json state,mergedAt`.
+// Modes per-PR (encoded in MOCK_GH_STATES env):
+//   'OPEN'    → exit 0, JSON with state:OPEN, mergedAt:null
+//   'MERGED'  → exit 0, JSON with state:MERGED, mergedAt:'2026-01-01T00:00:00Z'
+//   'CLOSED'  → exit 0, JSON with state:CLOSED, mergedAt:null
+//   'ERROR'   → exit 1 (treated as unavailable)
+//   undefined → exit 1 (same)
+// MOCK_GH_LOG (optional): file path; mock appends Date.now() on each invocation,
+// for ordering / parallelism assertions.
+function writeMockGh(mocksDir: string): void {
+  mkdirSync(mocksDir, { recursive: true });
+  const script = `#!/usr/bin/env node
+const { appendFileSync } = require('node:fs');
+const args = process.argv.slice(2);
+if (process.env.MOCK_GH_LOG) {
+  try { appendFileSync(process.env.MOCK_GH_LOG, Date.now() + '\\n'); } catch {}
+}
+if (process.env.MOCK_GH_DELAY_MS) {
+  // Synchronous wait so concurrent invocations actually overlap in elapsed
+  // time (used by the parallelism test).
+  const ms = parseInt(process.env.MOCK_GH_DELAY_MS, 10);
+  const end = Date.now() + ms;
+  while (Date.now() < end) {}
+}
+if (args[0] === 'pr' && args[1] === 'view') {
+  const states = JSON.parse(process.env.MOCK_GH_STATES || '{}');
+  const n = String(parseInt(args[2], 10));
+  const state = states[n];
+  if (state === 'MERGED') {
+    process.stdout.write(JSON.stringify({ state: 'MERGED', mergedAt: '2026-01-01T00:00:00Z' }));
+    process.exit(0);
+  }
+  if (state === 'OPEN') {
+    process.stdout.write(JSON.stringify({ state: 'OPEN', mergedAt: null }));
+    process.exit(0);
+  }
+  if (state === 'CLOSED') {
+    process.stdout.write(JSON.stringify({ state: 'CLOSED', mergedAt: null }));
+    process.exit(0);
+  }
+  process.exit(1);
+}
+process.exit(2);
+`;
+  writeFileSync(join(mocksDir, 'gh'), script);
+  chmodSync(join(mocksDir, 'gh'), 0o755);
+}
+
+function runWithMockGh(
+  args: string[],
+  cwd: string,
+  ghStates: Record<number, 'OPEN' | 'MERGED' | 'CLOSED' | 'ERROR'>,
+  envExtra: Record<string, string> = {},
+): RunResult {
+  const mocksDir = join(cwd, '.mocks');
+  writeMockGh(mocksDir);
+  const env = {
+    ...process.env,
+    PATH: `${mocksDir}:${process.env.PATH}`,
+    MOCK_GH_STATES: JSON.stringify(ghStates),
+    ...envExtra,
+  };
+  const res = spawnSync('node', [SCRIPT, ...args], {
+    cwd,
+    encoding: 'utf-8',
+    env,
+  });
+  return {
+    stdout: res.stdout ?? '',
+    stderr: res.stderr ?? '',
+    status: res.status ?? 1,
+  };
+}
+
+function runWithGhUnavailable(args: string[], cwd: string): RunResult {
+  // We want spawn('gh', ...) inside autoload to hit ENOENT so the unavailable
+  // codepath fires. We can't just empty PATH — `node` itself needs to be
+  // resolvable, and autoload calls `git` via getCurrentBranch. So we drop a
+  // *failing* fake `gh` into a mocks dir, prepend it to PATH, and leave the
+  // rest of PATH intact. The fake gh always exits non-zero — same effect
+  // from autoload's point of view (ghState collapses to 'unavailable').
+  const mocksDir = join(cwd, '.mocks-failing-gh');
+  mkdirSync(mocksDir, { recursive: true });
+  writeFileSync(join(mocksDir, 'gh'), '#!/usr/bin/env node\nprocess.exit(1);\n');
+  chmodSync(join(mocksDir, 'gh'), 0o755);
+  const env = {
+    ...process.env,
+    PATH: `${mocksDir}:${process.env.PATH}`,
+  };
+  const res = spawnSync('node', [SCRIPT, ...args], {
+    cwd,
+    encoding: 'utf-8',
+    env,
+  });
+  return {
+    stdout: res.stdout ?? '',
+    stderr: res.stderr ?? '',
+    status: res.status ?? 1,
+  };
 }
 
 function makeFixture(opts: { withGit?: { branch: string }; conventions?: string | null } = {}): { root: string; cleanup: () => void } {
@@ -422,5 +523,150 @@ test('suggested next action: not-started + waiting on prior PR', () => {
   const res = run(['test'], fx.root);
   assert.equal(res.status, 0, `stderr: ${res.stderr}`);
   assert.match(res.stdout, /Phase 1 has open PR #5/);
+  fx.cleanup();
+});
+
+// ---------------------------------------------------------------------------
+// gh reconciliation (D13)
+// ---------------------------------------------------------------------------
+
+const MANIFEST_WITH_PR_FIXTURE = MANIFEST_FIXTURE
+  .replace('| 1 | First | in-progress | feat/x | — | — |', '| 1 | First | completed | feat/x | 03 | #5 (open) |');
+
+test('gh: agree case (manifest open, gh open) renders no drift indicator', () => {
+  const fx = makeFixture();
+  makeProject(fx.root, '2026-01-01-test', MANIFEST_WITH_PR_FIXTURE);
+  const res = runWithMockGh(['test'], fx.root, { 5: 'OPEN' });
+  assert.equal(res.status, 0, `stderr: ${res.stderr}`);
+  // PR cell renders bare; no drift markup.
+  assert.match(res.stdout, /\| #5 \(open\) \|/);
+  assert.doesNotMatch(res.stdout, /⚠/);
+  assert.doesNotMatch(res.stdout, /Reconciled drift/);
+  fx.cleanup();
+});
+
+test('gh: open→merged drift surfaces inline indicator in default mode (no MANIFEST change)', () => {
+  const fx = makeFixture();
+  const projectPath = makeProject(fx.root, '2026-01-01-test', MANIFEST_WITH_PR_FIXTURE);
+  const res = runWithMockGh(['test'], fx.root, { 5: 'MERGED' });
+  assert.equal(res.status, 0, `stderr: ${res.stderr}`);
+  // Inline drift indicator in the Phases table.
+  assert.match(res.stdout, /\| #5 \(open ⚠ merged on gh\) \|/);
+  // No reconcile note (we didn't pass --reconcile).
+  assert.doesNotMatch(res.stdout, /Reconciled drift/);
+  // MANIFEST untouched — default mode is read-only.
+  const manifestAfter = readFileSync(join(projectPath, 'MANIFEST.md'), 'utf-8');
+  assert.match(manifestAfter, /\| 1 \| First \| completed \| feat\/x \| 03 \| #5 \(open\) \|/);
+  assert.doesNotMatch(manifestAfter, /pr-merged/);
+  fx.cleanup();
+});
+
+test('gh: open→merged drift, --reconcile auto-flips MANIFEST and records pr-merged event', () => {
+  const fx = makeFixture();
+  const projectPath = makeProject(fx.root, '2026-01-01-test', MANIFEST_WITH_PR_FIXTURE);
+  const res = runWithMockGh(['test', '--reconcile'], fx.root, { 5: 'MERGED' });
+  assert.equal(res.status, 0, `stderr: ${res.stderr}`);
+  // Briefing notes the reconcile.
+  assert.match(res.stdout, /Reconciled drift: PR #5 marked merged \(was open\)\./);
+  // MANIFEST mutated by autosave: PR cell flipped, pr-merged event row added.
+  const manifestAfter = readFileSync(join(projectPath, 'MANIFEST.md'), 'utf-8');
+  assert.match(manifestAfter, /\| #5 \(merged\) \|/);
+  assert.match(manifestAfter, /pr-merged \| #5/);
+  // The re-rendered table should reflect the post-reconcile state — no `⚠`
+  // indicator because manifest is now consistent with gh.
+  assert.doesNotMatch(res.stdout, /⚠/);
+  fx.cleanup();
+});
+
+test('gh: merged→open drift, --reconcile surfaces warning but does NOT auto-fix', () => {
+  const fx = makeFixture();
+  const m = MANIFEST_FIXTURE
+    .replace('| 1 | First | in-progress | feat/x | — | — |', '| 1 | First | completed | feat/x | 03 | #5 (merged) |');
+  const projectPath = makeProject(fx.root, '2026-01-01-test', m);
+  const res = runWithMockGh(['test', '--reconcile'], fx.root, { 5: 'OPEN' });
+  assert.equal(res.status, 0, `stderr: ${res.stderr}`);
+  // Inline warning in the Phases table.
+  assert.match(res.stdout, /\| #5 \(merged ⚠ open on gh\) \|/);
+  // No reconcile (would erase merge history) — no reconcile note either.
+  assert.doesNotMatch(res.stdout, /Reconciled drift/);
+  // MANIFEST untouched.
+  const manifestAfter = readFileSync(join(projectPath, 'MANIFEST.md'), 'utf-8');
+  assert.match(manifestAfter, /\| #5 \(merged\) \|/);
+  assert.doesNotMatch(manifestAfter, /pr-merged \| #5/);
+  fx.cleanup();
+});
+
+test('gh: unavailable in default mode emits advisory note and leaves MANIFEST untouched', () => {
+  const fx = makeFixture();
+  const projectPath = makeProject(fx.root, '2026-01-01-test', MANIFEST_WITH_PR_FIXTURE);
+  const res = runWithGhUnavailable(['test'], fx.root);
+  assert.equal(res.status, 0, `stderr: ${res.stderr}`);
+  assert.match(res.stdout, /_gh unavailable — PR states shown are manifest-only\._/);
+  // Cell renders as-is from manifest.
+  assert.match(res.stdout, /\| #5 \(open\) \|/);
+  // MANIFEST untouched.
+  const manifestAfter = readFileSync(join(projectPath, 'MANIFEST.md'), 'utf-8');
+  assert.match(manifestAfter, /\| 1 \| First \| completed \| feat\/x \| 03 \| #5 \(open\) \|/);
+  fx.cleanup();
+});
+
+test('gh: unavailable with --reconcile is inert (no error, no MANIFEST write)', () => {
+  const fx = makeFixture();
+  const projectPath = makeProject(fx.root, '2026-01-01-test', MANIFEST_WITH_PR_FIXTURE);
+  const res = runWithGhUnavailable(['test', '--reconcile'], fx.root);
+  assert.equal(res.status, 0, `stderr: ${res.stderr}`);
+  assert.match(res.stdout, /_gh unavailable — PR states shown are manifest-only\._/);
+  assert.doesNotMatch(res.stdout, /Reconciled drift/);
+  const manifestAfter = readFileSync(join(projectPath, 'MANIFEST.md'), 'utf-8');
+  assert.doesNotMatch(manifestAfter, /pr-merged \| #5/);
+  fx.cleanup();
+});
+
+test('gh: phases table with zero PR cells skips gh entirely (no advisory note)', () => {
+  const fx = makeFixture();
+  // Default MANIFEST_FIXTURE has no PRs in any phase row — both are `—`.
+  makeProject(fx.root, '2026-01-01-test', MANIFEST_FIXTURE);
+  const res = runWithMockGh(['test'], fx.root, {});
+  assert.equal(res.status, 0, `stderr: ${res.stderr}`);
+  // No advisory note (gh wasn't queried).
+  assert.doesNotMatch(res.stdout, /gh unavailable/);
+  assert.doesNotMatch(res.stdout, /⚠/);
+  fx.cleanup();
+});
+
+test('gh: queries run in parallel (3 PRs with 100ms delay each finish in well under 300ms)', () => {
+  const fx = makeFixture();
+  // Three phase rows, each with a PR. Mocked gh sleeps 100ms per call.
+  const threePrManifest = MANIFEST_FIXTURE
+    .replace(
+      '| 1 | First | in-progress | feat/x | — | — |\n| 2 | Second | not-started | — | — | — |',
+      [
+        '| 1 | First | completed | feat/x | 03 | #11 (merged) |',
+        '| 2 | Second | completed | feat/y | 02 | #12 (merged) |',
+        '| 3 | Third | in-progress | feat/z | 01 | #13 (open) |',
+      ].join('\n'),
+    );
+  makeProject(fx.root, '2026-01-01-test', threePrManifest);
+  const logFile = join(fx.root, 'gh-call-log.txt');
+  const t0 = Date.now();
+  const res = runWithMockGh(
+    ['test'],
+    fx.root,
+    { 11: 'MERGED', 12: 'MERGED', 13: 'OPEN' },
+    { MOCK_GH_LOG: logFile, MOCK_GH_DELAY_MS: '100' },
+  );
+  const elapsed = Date.now() - t0;
+  assert.equal(res.status, 0, `stderr: ${res.stderr}`);
+  // All three gh invocations occurred.
+  const logEntries = readFileSync(logFile, 'utf-8').trim().split('\n').filter(Boolean);
+  assert.equal(logEntries.length, 3, `expected 3 gh invocations, got ${logEntries.length}`);
+  // Generous parallelism check: serial execution would be 300ms+ for the
+  // gh calls alone, plus subprocess startup overhead × 3. Parallel: ~100ms +
+  // overhead × 1. We assert under 600ms to absorb spawn overhead, cold
+  // node startup, etc. — if this fires, parallelism likely regressed.
+  assert.ok(
+    elapsed < 600,
+    `expected parallel gh execution (<600ms total); got ${elapsed}ms — likely serial`,
+  );
   fx.cleanup();
 });
