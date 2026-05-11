@@ -34,12 +34,18 @@ verbs `fetch` and `write-plan`. This skill orchestrates: invoke
 
 `Bash("node .claude/scripts/trout/pr-respond-plumbing.ts fetch <slug> <pr>")`.
 The script emits one JSON document with `pr` (number, url, state,
-branch, title), `items[]` (kind ∈ issue-comment | review |
-review-comment | ci-failure; source, body, location, url),
+branch, title), `items[]` (a discriminated union over `kind`),
 `next_response_number`, and `response_path`. Items are emitted in
 deterministic order: issue-comments → reviews → review-comments →
 ci-failures. Only failure-class CI conclusions (FAILURE / CANCELLED /
 TIMED_OUT) appear; SUCCESS and NEUTRAL are filtered out.
+
+Each item has `kind`, `source`, `body`, `url`. Kind-specific extra fields:
+- `issue-comment` — no extra fields (the conversation thread is conveyed
+  by the kind itself).
+- `review` — `state` (e.g. `APPROVED`, `COMMENTED`, `CHANGES_REQUESTED`).
+- `review-comment` — `path` (file path) and `line` (line number, integer).
+- `ci-failure` — `checkName` (the failing check or status context).
 
 ### 2. Classify each item
 

@@ -127,7 +127,21 @@ test('fetch happy path: items in documented order, next_response_number = 02 wit
     assert.equal(out.items[0].source, 'alice');
     assert.equal(out.items[1].source, 'bob');
     // CI failure: only the FAILURE check, not SUCCESS
-    assert.equal(out.items[4].location, 'test');
+    assert.equal(out.items[4].checkName, 'test');
+    // Per-kind shape verification (D15: Item.location overload retired in
+    // favor of a discriminated union with kind-specific fields):
+    assert.equal(out.items[0].kind, 'issue-comment');
+    assert.equal(out.items[0].location, undefined, 'issue-comment must not carry a location field');
+    assert.equal(out.items[2].kind, 'review');
+    assert.equal(typeof out.items[2].state, 'string', 'review must carry a `state` field (was `location: r.state`)');
+    assert.equal(out.items[2].location, undefined);
+    assert.equal(out.items[3].kind, 'review-comment');
+    assert.equal(typeof out.items[3].path, 'string', 'review-comment must carry a `path` field (was packed into `location`)');
+    assert.equal(typeof out.items[3].line, 'number', 'review-comment must carry a typed `line` field (was joined with path via `:`)');
+    assert.equal(out.items[3].location, undefined);
+    assert.equal(out.items[4].kind, 'ci-failure');
+    assert.equal(typeof out.items[4].checkName, 'string', 'ci-failure must carry a `checkName` field (was `location: name`)');
+    assert.equal(out.items[4].location, undefined);
   } finally {
     fx.cleanup();
   }
@@ -292,8 +306,8 @@ test('ci-failure filtering: SUCCESS and NEUTRAL conclusions are excluded', () =>
     });
     const result = run(['fetch', SLUG, '5'], fx.root, { gh });
     assert.equal(result.status, 0, `stderr: ${result.stderr}`);
-    const items = JSON.parse(result.stdout).items as Array<{ kind: string; location: string }>;
-    const failures = items.filter((i) => i.kind === 'ci-failure').map((i) => i.location);
+    const items = JSON.parse(result.stdout).items as Array<{ kind: string; checkName?: string }>;
+    const failures = items.filter((i) => i.kind === 'ci-failure').map((i) => i.checkName);
     // alphabetical order, only failure-class conclusions
     assert.deepEqual(failures, ['b-failing', 'd-cancelled', 'e-timed-out']);
   } finally {

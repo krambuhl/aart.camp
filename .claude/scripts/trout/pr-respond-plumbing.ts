@@ -65,13 +65,15 @@ type ReviewComment = { user?: { login?: string }; body?: string; html_url?: stri
 
 // ---------- Item assembly ----------
 
-type Item = {
-  kind: 'issue-comment' | 'review' | 'review-comment' | 'ci-failure';
-  source: string;
-  body: string;
-  location: string;
-  url: string | null;
-};
+// Each item kind carries its own typed location-replacement fields rather
+// than packing four different meanings into a single `location: string`.
+// Consumers (the `/trout-pr-respond` skill body, future automation) discriminate
+// on `kind` and read the kind-specific fields directly — no string parsing.
+type Item =
+  | { kind: 'issue-comment'; source: string; body: string; url: string | null }
+  | { kind: 'review'; source: string; body: string; state: string; url: string | null }
+  | { kind: 'review-comment'; source: string; body: string; path: string; line: number; url: string | null }
+  | { kind: 'ci-failure'; source: 'ci'; body: string; checkName: string; url: string | null };
 
 const FAILING_CONCLUSIONS = new Set(['FAILURE', 'failure', 'CANCELLED', 'cancelled', 'TIMED_OUT', 'timed_out']);
 
@@ -81,14 +83,14 @@ function buildItems(pr: PRView, issueComments: IssueComment[], reviews: Review[]
     [...arr].sort((a, b) => (a[key] ?? '').localeCompare(b[key] ?? ''));
 
   for (const c of sortByDate(issueComments, 'created_at')) {
-    items.push({ kind: 'issue-comment', source: c.user?.login ?? 'unknown', body: c.body ?? '', location: 'pr-conversation', url: c.html_url ?? null });
+    items.push({ kind: 'issue-comment', source: c.user?.login ?? 'unknown', body: c.body ?? '', url: c.html_url ?? null });
   }
   for (const r of sortByDate(reviews, 'submitted_at')) {
-    items.push({ kind: 'review', source: r.user?.login ?? 'unknown', body: r.body ?? '', location: r.state ?? 'COMMENTED', url: r.html_url ?? null });
+    items.push({ kind: 'review', source: r.user?.login ?? 'unknown', body: r.body ?? '', state: r.state ?? 'COMMENTED', url: r.html_url ?? null });
   }
   for (const rc of sortByDate(reviewComments, 'created_at')) {
     const line = rc.line ?? rc.original_line ?? 0;
-    items.push({ kind: 'review-comment', source: rc.user?.login ?? 'unknown', body: rc.body ?? '', location: `${rc.path ?? '<unknown>'}:${line}`, url: rc.html_url ?? null });
+    items.push({ kind: 'review-comment', source: rc.user?.login ?? 'unknown', body: rc.body ?? '', path: rc.path ?? '<unknown>', line, url: rc.html_url ?? null });
   }
   const failing = (pr.statusCheckRollup ?? []).filter((c) => {
     const conc = (c.conclusion ?? c.state ?? '').toString();
@@ -96,8 +98,8 @@ function buildItems(pr: PRView, issueComments: IssueComment[], reviews: Review[]
   });
   failing.sort((a, b) => (a.name ?? a.context ?? '').localeCompare(b.name ?? b.context ?? ''));
   for (const c of failing) {
-    const name = c.name ?? c.context ?? 'unknown-check';
-    items.push({ kind: 'ci-failure', source: 'ci', body: `${c.conclusion ?? c.state ?? 'failure'}: see check details`, location: name, url: c.detailsUrl ?? c.targetUrl ?? null });
+    const checkName = c.name ?? c.context ?? 'unknown-check';
+    items.push({ kind: 'ci-failure', source: 'ci', body: `${c.conclusion ?? c.state ?? 'failure'}: see check details`, checkName, url: c.detailsUrl ?? c.targetUrl ?? null });
   }
   return items;
 }
