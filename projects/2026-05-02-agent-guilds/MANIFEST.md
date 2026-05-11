@@ -4,7 +4,7 @@
 **Started**: 2026-05-02
 **Status**: active
 **Current branch**: ev.agent-guilds.phase-1-5-carryover-3
-**Latest checkin**: checkins/ev.agent-guilds.phase-1-5-carryover-2/01.md
+**Latest checkin**: checkins/ev.agent-guilds.phase-1-5-carryover-3/01.md
 
 ## Strategy
 
@@ -133,3 +133,4 @@ Phase 1 merged via PR #8. Phase 1.5 split into a sequence of PRs after a post-me
 | 2026-05-11 02:37 | pr-updated | #41 |
 | 2026-05-11 02:39 | pr-merged | #41 |
 | 2026-05-11 02:40 | note | Carryover-3 branch cut from main post-#41-merge; deliverable D15 begins here |
+| 2026-05-11 02:45 | checkin-created | 01 on ev.agent-guilds.phase-1-5-carryover-3 |
