@@ -16,11 +16,9 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "generate:tokens": "tsx ./scripts/generate-tokens.ts",
-    "learnings:compact": "tsx ./scripts/learnings-compact/index.ts",
     "learnings:report": "tsx ./scripts/learnings-report.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.90.0",
     "@p5-wrapper/react": "^5.0.2",
     "classnames": "^2.3.1",
     "js-yaml": "^4.1.1",

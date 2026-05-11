@@ -29,7 +29,7 @@ gated on measured improvement.
 |---|---|---|
 | `/learnings-capture` | Right after Claude got something wrong and you corrected it | Writes a `session-notes/<ts>-<slug>/` folder with the prompt, wrong output, correction, transcript, and a candidate `learning.md`. Fast. No LLM panel. |
 | `/learnings-use` | Start of a session where you want the rollup active | Loads `rollup.md` and installs a citation contract: Claude appends `Applied: L-NNN` when it uses a learning. |
-| `/learnings-compact` | Manually, when you feel like processing captures (nightly in spirit) | Runs the judge panel. Promotes `IMPROVED` entries to `rollup.md`. Rewrite-loops `UNCHANGED` / `REGRESSED`. Flags `DID_NOT_REPRODUCE`. Updates bench history, archives processed notes, and opens a PR. |
+| `/griot-compact` | Manually, when you feel like processing captures (nightly in spirit) | Runs the judge panel. Promotes `IMPROVED` entries to `rollup.md`. Rewrite-loops `UNCHANGED` / `REGRESSED`. Flags `DID_NOT_REPRODUCE`. Updates bench history, archives processed notes, and opens a PR. |
 | `/learnings-report` | Weekly-ish | Reads the instrumentation files and produces a one-pager on trend, cost, and judge calibration. |
 
 ## Directory layout
@@ -65,7 +65,7 @@ learnings/
 
 `rollup.md` is gitignored. `/learnings-use` tolerates a missing file — if no
 compaction has run yet, it reports "no validated learnings yet" and moves on.
-On a fresh clone, run `/learnings-compact` once to generate one.
+On a fresh clone, run `/griot-compact` once to generate one.
 
 ## The self-validating loop
 
@@ -180,7 +180,7 @@ runs for people who wire it up.
 
 See `config.yaml` for thresholds, tier model IDs, and cost settings. Previous-
 gen model IDs are placeholders marked `TODO` — set them before the first real
-`/learnings-compact` run.
+`/griot-compact` run.
 
 ## Rollout phases
 

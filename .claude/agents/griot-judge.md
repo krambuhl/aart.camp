@@ -60,22 +60,37 @@ section and stop.
 
 Evaluate every rubric assertion twice — once against the control
 output, once against the treatment output. Each assertion passes or
-fails. Binary. No hedging.
+fails. Binary. No hedging. Use exact match on rubric assertion
+strings.
 
-Then derive the verdict from the pass counts:
+Then derive the verdict by checking these rules in order — **first
+match wins**:
 
-- **IMPROVED**: treatment passes strictly more assertions than
-  control, **AND** every assertion control failed now passes in
-  treatment, **AND** treatment introduces no new failures.
-- **UNCHANGED**: same pass count across control and treatment.
-- **REGRESSED**: treatment passes fewer assertions than control.
-- **DID_NOT_REPRODUCE**: control already passes every assertion. The
-  origin prompt failed to reproduce the original failure mode.
+1. **REGRESSED** — treatment fails any assertion that control
+   passes. The learning introduced new failures.
+2. **DID_NOT_REPRODUCE** — control passes every assertion (and
+   rule 1 did not match). The origin prompt failed to surface the
+   original failure mode, so the learning's effect on this rubric
+   cannot be fairly measured. Applies even when treatment is
+   identical to control — identical outputs do **not** collapse to
+   `UNCHANGED` when the baseline already solves it.
+3. **IMPROVED** — treatment passes strictly more assertions than
+   control. (Rule 1 already ensured treatment introduced no new
+   failures relative to control, so a strictly-higher pass count
+   here means every newly-passing assertion is a genuine fix.) The
+   learning measurably helped — even if some of control's failures
+   persist, partial progress on a multi-assertion rubric still
+   warrants promotion.
+4. **UNCHANGED** — treatment and control have the same pass count,
+   and rules 1-3 do not apply. The learning had no measurable
+   effect; the orchestrator may invoke the rewriter for another
+   attempt.
 
-Use exact match on rubric assertion strings. If control and treatment
-are effectively identical on every assertion, the verdict is
-`UNCHANGED` — **not** `DID_NOT_REPRODUCE`. Only use
-`DID_NOT_REPRODUCE` when control already passes every assertion.
+The precedence matters because the orchestrator's downstream action
+differs by verdict — `DID_NOT_REPRODUCE` archives the note
+immediately, `UNCHANGED` triggers up to `max_attempts` rewrites.
+Collapsing the former into the latter would burn rewrite attempts on
+a learning that has nothing to improve on.
 
 ## Output structure
 
