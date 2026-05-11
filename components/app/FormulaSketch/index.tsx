@@ -1,3 +1,5 @@
+'use client';
+
 import { useMemo } from 'react';
 import { Sketch } from '@/components/app/Sketch';
 import { Card, CardPadding } from '@/components/shared/Card';

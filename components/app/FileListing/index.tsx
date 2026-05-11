@@ -1,3 +1,5 @@
+'use client';
+
 import NextLink from 'next/link';
 import { useMemo } from 'react';
 import { Stack } from '@/components/shared/Stack';

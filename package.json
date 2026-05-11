@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "biome check .",
+    "lint:nextjs": "node ./scripts/check-nextjs.ts",
     "format": "biome format --write .",
     "check": "biome check --write .",
     "test": "vitest run",
