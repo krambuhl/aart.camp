@@ -12,7 +12,7 @@
 // captures this and shows it to the user.
 
 import fs from 'node:fs';
-import { loadConfig, resolvePath } from './learnings-compact/config';
+import { loadConfig, resolvePath } from './learnings-config';
 
 interface BenchLine {
   date: string;

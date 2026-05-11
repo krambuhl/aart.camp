@@ -628,12 +628,9 @@ already in the user's chat; §5 just persists the record.
   `learnings/bench-history.jsonl` directly. Every JSONL write
   goes through `operator-checks.ts log-intervention`. No raw
   `>>` redirects, no `echo` to JSONL paths.
-- Do not call `npm run learnings:compact`. The Node script's
-  config-load is broken (it expects the old version-pinned
-  config); Phase 3 deletes the script entirely. The skill is the
-  pipeline now.
 - Do not import `@anthropic-ai/sdk` or call the Anthropic API
-  directly. Pooled tokens via subagent dispatch only.
+  directly. The dependency was removed in Phase 3; the only path
+  is pooled tokens via subagent dispatch.
 - Do not iterate the attempt loop past
   `config.rewrite.max_attempts`. The loop's exit conditions are
   exhaustive: a final verdict at any attempt that isn't
