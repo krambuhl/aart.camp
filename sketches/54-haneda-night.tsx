@@ -7,7 +7,7 @@ import { tokens } from '@/tokens';
 import type { P5Color } from '@/types/p5';
 
 export const meta = {
-  title: 'Haneda Night — Neon Descent',
+  title: 'Neon Descent',
   date: '2026-04-30T00:00:00',
 };
 

@@ -199,62 +199,62 @@ export const registry: SketchEntry[] = [
   },
   {
     slug: '43-robot-thought-2',
-    meta: { title: 'Robot Thought 2 — Chorus', date: '2025-09-02T00:00:00' },
+    meta: { title: 'Chorus', date: '2025-09-02T00:00:00' },
     component: dynamic(() => import('./43-robot-thought-2')),
   },
   {
     slug: '44-robot-thought-3',
-    meta: { title: 'Robot Thought 3 — Interference', date: '2025-09-02T00:00:00' },
+    meta: { title: 'Interference', date: '2025-09-02T00:00:00' },
     component: dynamic(() => import('./44-robot-thought-3')),
   },
   {
     slug: '45-robot-thought-4',
-    meta: { title: 'Robot Thought 4 — Cardinal', date: '2025-09-02T00:00:00' },
+    meta: { title: 'Cardinal', date: '2025-09-02T00:00:00' },
     component: dynamic(() => import('./45-robot-thought-4')),
   },
   {
     slug: '46-robot-thought-5',
-    meta: { title: 'Robot Thought 5 — Fern Memory', date: '2025-09-02T00:00:00' },
+    meta: { title: 'Fern Memory', date: '2025-09-02T00:00:00' },
     component: dynamic(() => import('./46-robot-thought-5')),
   },
   {
     slug: '47-robot-thought-6',
-    meta: { title: 'Robot Thought 6 — Dahlia Sun', date: '2025-09-02T00:00:00' },
+    meta: { title: 'Dahlia Sun', date: '2025-09-02T00:00:00' },
     component: dynamic(() => import('./47-robot-thought-6')),
   },
   {
     slug: '48-robot-thought-7',
-    meta: { title: 'Robot Thought 7 — Soft Family', date: '2025-09-02T00:00:00' },
+    meta: { title: 'Soft Family', date: '2025-09-02T00:00:00' },
     component: dynamic(() => import('./48-robot-thought-7')),
   },
   {
     slug: '49-robot-thought-8',
-    meta: { title: 'Robot Thought 8 — Cardinal Drift', date: '2025-09-02T00:00:00' },
+    meta: { title: 'Cardinal Drift', date: '2025-09-02T00:00:00' },
     component: dynamic(() => import('./49-robot-thought-8')),
   },
   {
     slug: '50-robot-thought-9',
-    meta: { title: 'Robot Thought 9 — Polar Dance', date: '2025-09-02T00:00:00' },
+    meta: { title: 'Polar Dance', date: '2025-09-02T00:00:00' },
     component: dynamic(() => import('./50-robot-thought-9')),
   },
   {
     slug: '51-robot-thought-10',
-    meta: { title: 'Robot Thought 10 — Cardinal Weave', date: '2025-09-02T00:00:00' },
+    meta: { title: 'Cardinal Weave', date: '2025-09-02T00:00:00' },
     component: dynamic(() => import('./51-robot-thought-10')),
   },
   {
     slug: '52-robot-thought-11',
-    meta: { title: 'Robot Thought 11 — Gyre', date: '2025-09-02T00:00:00' },
+    meta: { title: 'Gyre', date: '2025-09-02T00:00:00' },
     component: dynamic(() => import('./52-robot-thought-11')),
   },
   {
     slug: '53-tsuru',
-    meta: { title: 'Tsuru — JAL Crane', date: '2026-04-30T00:00:00' },
+    meta: { title: 'JAL Crane', date: '2026-04-30T00:00:00' },
     component: dynamic(() => import('./53-tsuru')),
   },
   {
     slug: '54-haneda-night',
-    meta: { title: 'Haneda Night — Neon Descent', date: '2026-04-30T00:00:00' },
+    meta: { title: 'Neon Descent', date: '2026-04-30T00:00:00' },
     component: dynamic(() => import('./54-haneda-night')),
   },
   {
@@ -264,7 +264,37 @@ export const registry: SketchEntry[] = [
   },
   {
     slug: '56-engimono',
-    meta: { title: 'Engimono — Good Luck', date: '2026-04-30T00:00:00' },
+    meta: { title: 'Good Luck', date: '2026-04-30T00:00:00' },
     component: dynamic(() => import('./56-engimono')),
+  },
+  {
+    slug: '57-super-quilts-cuatro',
+    meta: { title: 'Radial Bloom', date: '2026-05-01T00:00:00' },
+    component: dynamic(() => import('./57-super-quilts-cuatro')),
+  },
+  {
+    slug: '58-super-quilts-cinco',
+    meta: { title: 'Spiral Wave', date: '2026-05-01T00:00:00' },
+    component: dynamic(() => import('./58-super-quilts-cinco')),
+  },
+  {
+    slug: '59-super-quilts-seis',
+    meta: { title: 'Direction Stripes', date: '2026-05-01T00:00:00' },
+    component: dynamic(() => import('./59-super-quilts-seis')),
+  },
+  {
+    slug: '60-super-quilts-siete',
+    meta: { title: 'Drift', date: '2026-05-01T00:00:00' },
+    component: dynamic(() => import('./60-super-quilts-siete')),
+  },
+  {
+    slug: '61-super-quilts-ocho',
+    meta: { title: 'Counter', date: '2026-05-01T00:00:00' },
+    component: dynamic(() => import('./61-super-quilts-ocho')),
+  },
+  {
+    slug: '62-super-quilts-nueve',
+    meta: { title: 'Tide', date: '2026-05-01T00:00:00' },
+    component: dynamic(() => import('./62-super-quilts-nueve')),
   },
 ];
