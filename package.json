@@ -13,6 +13,7 @@
     "test:watch": "vitest",
     "test:agentic": "vitest run .claude/scripts",
     "test:e2e": "npm run build-storybook && playwright test",
+    "test:a11y": "playwright test --config=playwright.config.a11y.ts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "generate:tokens": "tsx ./scripts/generate-tokens.ts",
@@ -29,6 +30,7 @@
     "the-new-css-reset": "^1.6.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.3",
     "@biomejs/biome": "^2.4.11",
     "@playwright/test": "^1.59.1",
     "@storybook/addon-a11y": "^10.3.6",

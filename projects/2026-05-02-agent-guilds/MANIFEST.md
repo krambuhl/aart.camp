@@ -3,8 +3,8 @@
 **Slug**: 2026-05-02-agent-guilds
 **Started**: 2026-05-02
 **Status**: active
-**Current branch**: —
-**Latest checkin**: checkins/ev.agent-guilds.phase-1-5-carryover-3/01.md
+**Current branch**: ev.agent-guilds.antagonist-evaluator-panel
+**Latest checkin**: checkins/ev.agent-guilds.antagonist-evaluator-panel/01.md
 
 ## Strategy
 
@@ -16,7 +16,7 @@ Extract `guild-*` agent-panel substrate alongside trout/griot, thin ev-loop into
 |---|------|--------|--------|----------------|----|
 | 1 | Substrate foundations | completed | ev.agent-guilds.substrate-foundations | 05 | #8 (merged) |
 | 1.5 | Substrate primitive cleanup | completed | ev.agent-guilds.phase-1-5-carryover-3 | 01 | #42 (merged) |
-| 2 | Antagonist evaluator panel | not-started | — | — | — |
+| 2 | Antagonist evaluator panel | in-progress | ev.agent-guilds.antagonist-evaluator-panel | 01 | — |
 | 3 | Whiteboard mechanism + engineers | not-started | — | — | — |
 | 4 | Domain pairs | not-started | — | — | — |
 | 5 | Griot integration + composability proof | not-started | — | — | — |
@@ -139,3 +139,4 @@ Phase 1 merged via PR #8. Phase 1.5 split into a sequence of PRs after a post-me
 | 2026-05-11 02:50 | pr-merged | #42 |
 | 2026-05-11 02:52 | session-saved | 2026-05-11-a.md |
 | 2026-05-11 03:11 | note | Phase 2 branch cut from main post-#42-merge; D1 evaluator-a11y begins here |
+| 2026-05-11 03:33 | checkin-created | 01 on ev.agent-guilds.antagonist-evaluator-panel |
