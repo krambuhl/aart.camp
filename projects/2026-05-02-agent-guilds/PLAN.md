@@ -61,6 +61,12 @@ Inserted post-Phase-1 from the post-merge architecture audit (`sessions/2026-05-
 11. **`griot-use` → script.** Author `.claude/scripts/griot/use.ts` (small — reads `learnings/rollup.md`, prints content + citation contract to stdout so the Bash tool result lands the load in conversation context). Sibling `use.test.ts`. Inline the invocation into `/ev-run`'s setup step (`Step 1.5. Load learnings`) so it fires automatically at loop setup, not as a discoverable user skill. Delete `.claude/skills/griot-use/`.
 12. **End-to-end verification.** Scaffold a throwaway `phase-1-5-test` project via the migrated `/trout-plan`. Take it through one unit of work via `/ev-run` → `/ev-loop-interactive`. Save session via the migrated `/trout-save-session`. Confirm everything works through the migrated path. Archive the test project via the migrated `/trout-archive`.
 
+**Carryover deliverables (added post-completion 2026-05-11):** items D13-D15 below were surfaced during Phase 1.5 execution but were not in the original 12-deliverable contract. Phase 1.5 was reopened from `completed` to `in-progress` to ship them under the same conceptual unit (substrate primitive hardening); each lands on its own `ev.agent-guilds.phase-1-5-carryover-N` branch via the normal `/ev-loop-interactive` flow.
+
+13. **`autoload.ts` gh reconciliation.** Augment `.claude/scripts/trout/autoload.ts` to verify PR open/merged state via `gh pr view --json state,mergedAt` for each PR referenced in the manifest's phase rows, rather than trusting the manifest alone. Surface drift in the briefing when manifest and gh disagree (e.g. manifest shows `(open)` but gh says merged). Degrade gracefully when gh is unavailable (offline, unauthenticated): include a "gh unavailable" note and fall back to manifest-only data. This refinement was flagged in `sessions/2026-05-08-b.md` as item #1 — it would have prevented two prior post-merge state-propagation gaps requiring manual intervention, and the very gap this session opened with (#33 merged, manifest still said `(open)`, reconciled via PR #35).
+14. **`pr-plumbing.ts commit` allowlist tightening.** The `commit` verb's untracked-files allowlist is currently too permissive for code outside `projects/`. Tighten to a curated set of code directories — under `projects/` (project state) and under `.claude/` (substrate scripts and skills). Anything else falls outside the staging-allowlist and surfaces as a refused-files error rather than silently being committed. Sessions 2026-05-08-b item #2.
+15. **`Item.location` overload cleanup in `pr-respond-plumbing.ts`.** The `Item` type's `location: string` field is overloaded across four semantic meanings depending on `kind` (`pr-conversation` literal for issue-comments; review state string for reviews; `path:line` for review-comments; check name for ci-failures). Replace with a discriminated union (per-kind `location` shape) or kind-specific fields so callers don't have to parse `location` based on `kind`. Update the `/trout-pr-respond` skill body to consume the new shape. Sessions 2026-05-08-b item — surfaced when D9 shipped the script.
+
 **Verification:**
 - `npm run lint` clean (Biome handles `.ts` natively).
 - `npm run build` clean.
@@ -68,7 +74,7 @@ Inserted post-Phase-1 from the post-merge architecture audit (`sessions/2026-05-
 - `grep -rn "Skill(skill: \"trout-autosave\"" .claude/skills/` returns nothing (and the same grep for each migrated skill).
 - E2E test project (deliverable 12) runs without errors.
 
-**One PR.**
+**One PR per carryover deliverable** (D13, D14, D15 each ship on their own branch). D1-D12 originally specified "One PR" but split into a sequence post-merge; the carryover follows the same split-PR pattern explicitly from the start.
 
 ### Phase 2: Antagonist evaluator panel
 
