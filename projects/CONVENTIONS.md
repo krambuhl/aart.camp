@@ -62,8 +62,8 @@ be erasable TypeScript (no enums, namespaces, parameter properties, or
   shapes parseArgs can't handle (e.g. colon-separated values like
   `--phase-update=N:status:k=v:k=v`).
 - **Tests**: sibling `<verb>.test.ts` next to source. No `__tests__/`
-  folders. Tests use `node:test` and run via `npm run test`
-  (`node --test '.claude/scripts/**/*.test.ts'`). Every script ships
+  folders. Tests use vitest (`import { test } from 'vitest'`) and run
+  via `npm run test` (root script: `vitest run`). Every script ships
   with a test.
 - **Errors**: `<verb>-error: <reason>[; candidates: <a>, <b>]` to
   stderr, non-zero exit. Match the prior skill's failure-mode wording

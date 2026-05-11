@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 import { parseArgs } from 'node:util';
-import { readFileSync, writeFileSync, readdirSync, existsSync, statSync } from 'node:fs';
+import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, resolve, basename } from 'node:path';
+import { PROJECTS_ROOT, ProjectResolveError, resolveProject } from './resolve-project.ts';
 
 type PhaseUpdate = {
   phase: string;
@@ -18,8 +19,6 @@ type Args = {
 };
 
 const PHASE_STATUSES = new Set(['not-started', 'in-progress', 'blocked', 'completed']);
-const PROJECTS_ROOT = resolve(process.cwd(), 'projects');
-const ARCHIVE_ROOT = resolve(PROJECTS_ROOT, 'archive');
 const CONVENTIONS_PATH = resolve(PROJECTS_ROOT, 'CONVENTIONS.md');
 
 // Hardcoded fallback used only if CONVENTIONS.md is unreadable. Source of
@@ -129,47 +128,15 @@ function parseArguments(argv: string[]): Args {
   };
 }
 
-function resolveProject(slug: string): string {
-  if (slug.startsWith('.') || slug.startsWith('/')) {
-    const abs = resolve(slug);
-    if (abs.startsWith(ARCHIVE_ROOT + '/') || abs === ARCHIVE_ROOT) {
-      fail(`project is archived (read-only): ${abs}`);
-    }
-    if (!existsSync(abs)) {
-      fail(`project path does not exist: ${abs}`);
-    }
-    if (!statSync(abs).isDirectory()) {
-      fail(`project path is not a directory: ${abs}`);
-    }
-    return abs;
+function resolveProjectOrFail(slug: string): string {
+  try {
+    return resolveProject(slug);
+  } catch (err) {
+    // err.message already inlines `; candidates: …` for ambiguous slugs, so
+    // do not pass candidates separately or fail() would double-append it.
+    if (err instanceof ProjectResolveError) fail(err.message);
+    throw err;
   }
-  if (!existsSync(PROJECTS_ROOT)) {
-    fail(`projects root does not exist: ${PROJECTS_ROOT}`);
-  }
-  const direct = join(PROJECTS_ROOT, slug);
-  if (existsSync(direct) && statSync(direct).isDirectory()) {
-    return direct;
-  }
-  if (existsSync(ARCHIVE_ROOT)) {
-    const archivedMatch = readdirSync(ARCHIVE_ROOT, { withFileTypes: true })
-      .filter((e) => e.isDirectory())
-      .map((e) => e.name)
-      .find((name) => name === slug || name.endsWith(`-${slug}`));
-    if (archivedMatch) {
-      fail(`project is archived (read-only): ${join(ARCHIVE_ROOT, archivedMatch)}`);
-    }
-  }
-  const entries = readdirSync(PROJECTS_ROOT, { withFileTypes: true })
-    .filter((e) => e.isDirectory() && e.name !== 'archive')
-    .map((e) => e.name);
-  const matches = entries.filter((name) => name.endsWith(`-${slug}`));
-  if (matches.length === 0) {
-    fail(`project not found: ${slug} (try /trout-plan ${slug} to create one)`);
-  }
-  if (matches.length > 1) {
-    fail(`multiple projects match "${slug}"`, matches);
-  }
-  return join(PROJECTS_ROOT, matches[0]);
 }
 
 function loadEventVocabulary(): string[] {
@@ -354,7 +321,7 @@ function runUpdate(projectPath: string, args: Args): { slug: string; event: stri
 
 function main(): void {
   const args = parseArguments(process.argv.slice(2));
-  const projectPath = resolveProject(args.slug);
+  const projectPath = resolveProjectOrFail(args.slug);
   const { slug, event, when } = runUpdate(projectPath, args);
   process.stdout.write(`autosave: ${slug} ${event} @ ${when}\n`);
 }

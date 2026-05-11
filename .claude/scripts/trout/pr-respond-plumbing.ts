@@ -1,11 +1,9 @@
 #!/usr/bin/env node
 import { parseArgs } from 'node:util';
-import { readFileSync, writeFileSync, existsSync, statSync, readdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { resolve, join, relative } from 'node:path';
 import { spawnSync } from 'node:child_process';
-
-const PROJECTS_ROOT = resolve(process.cwd(), 'projects');
-const ARCHIVE_ROOT = join(PROJECTS_ROOT, 'archive');
+import { ProjectResolveError, resolveProject } from './resolve-project.ts';
 
 class PrRespondError extends Error {}
 
@@ -15,26 +13,6 @@ function fail(reason: string): never {
 }
 
 // ---------- Pure helpers (exported for direct unit tests) ----------
-
-export function resolveProject(slug: string): string {
-  if (slug.startsWith('.') || slug.startsWith('/')) {
-    const abs = resolve(slug);
-    if (abs.startsWith(ARCHIVE_ROOT + '/') || abs === ARCHIVE_ROOT) throw new PrRespondError(`project is archived (read-only): ${abs}`);
-    if (!existsSync(abs)) throw new PrRespondError(`project not found: ${abs}`);
-    if (!statSync(abs).isDirectory()) throw new PrRespondError(`project path is not a directory: ${abs}`);
-    return abs;
-  }
-  if (!existsSync(PROJECTS_ROOT)) throw new PrRespondError(`projects root does not exist: ${PROJECTS_ROOT}`);
-  const direct = join(PROJECTS_ROOT, slug);
-  if (existsSync(direct) && statSync(direct).isDirectory()) return direct;
-  const candidates = readdirSync(PROJECTS_ROOT, { withFileTypes: true })
-    .filter((e) => e.isDirectory() && e.name !== 'archive')
-    .map((e) => e.name)
-    .filter((name) => name.endsWith(slug));
-  if (candidates.length === 1) return join(PROJECTS_ROOT, candidates[0]);
-  if (candidates.length > 1) throw new PrRespondError(`ambiguous slug "${slug}"; candidates: ${candidates.join(', ')}`);
-  throw new PrRespondError(`project not found: slug "${slug}" did not match any directory under ${PROJECTS_ROOT}`);
-}
 
 export function nextResponseNumber(checkinDir: string): string {
   if (!existsSync(checkinDir)) return '01';
@@ -129,7 +107,7 @@ function buildItems(pr: PRView, issueComments: IssueComment[], reviews: Review[]
 function verbFetch(slug: string, prArg: string): void {
   const prNumber = parseInt(prArg, 10);
   if (!Number.isFinite(prNumber) || prNumber <= 0) fail(`<pr-number> must be a positive integer; got "${prArg}"`);
-  const projectPath = (() => { try { return resolveProject(slug); } catch (err) { if (err instanceof PrRespondError) fail(err.message); throw err; } })();
+  const projectPath = (() => { try { return resolveProject(slug); } catch (err) { if (err instanceof ProjectResolveError || err instanceof PrRespondError) fail(err.message); throw err; } })();
 
   const repo = ghJson<{ owner: { login: string }; name: string }>(['repo', 'view', '--json', 'owner,name'], 'fetching repo info');
   const owner = repo.owner.login;
@@ -161,7 +139,7 @@ function verbWritePlan(slug: string, prArg: string, contentFile: string): void {
   if (!Number.isFinite(prNumber) || prNumber <= 0) fail(`<pr-number> must be a positive integer; got "${prArg}"`);
   const resolvedContent = resolve(contentFile);
   if (!existsSync(resolvedContent)) fail(`content file not found: ${contentFile}`);
-  const projectPath = (() => { try { return resolveProject(slug); } catch (err) { if (err instanceof PrRespondError) fail(err.message); throw err; } })();
+  const projectPath = (() => { try { return resolveProject(slug); } catch (err) { if (err instanceof ProjectResolveError || err instanceof PrRespondError) fail(err.message); throw err; } })();
 
   const pr = ghJson<{ headRefName: string }>(['pr', 'view', String(prNumber), '--json', 'headRefName'], `fetching pr ${prNumber}`);
   const branch = pr.headRefName;

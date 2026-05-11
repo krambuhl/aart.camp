@@ -186,7 +186,7 @@ test('project resolution: multiple matches fails with candidates', () => {
   makeProject(fx.root, '2026-02-01-test');
   const res = run(['test'], fx.root);
   assert.equal(res.status, 1);
-  assert.match(res.stderr, /multiple projects match "test"/);
+  assert.match(res.stderr, /ambiguous slug "test"/);
   assert.match(res.stderr, /candidates: 2026-01-01-test, 2026-02-01-test|candidates: 2026-02-01-test, 2026-01-01-test/);
   fx.cleanup();
 });
