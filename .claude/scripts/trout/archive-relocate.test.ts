@@ -150,7 +150,7 @@ test('error: project already archived (path form points under archive/)', () => 
     const archivedPath = join(fx.root, 'projects', 'archive', '2026-01-01-sample');
     const result = run([archivedPath], fx.root);
     assert.equal(result.status, 1);
-    assert.match(result.stderr, /archive-relocate-error: already archived/);
+    assert.match(result.stderr, /archive-relocate-error: project is archived \(read-only\)/);
   } finally {
     fx.cleanup();
   }
@@ -163,7 +163,7 @@ test('error: project already archived (slug form, finds it under archive/)', () 
     // now slug resolution should report it's archived
     const result = run(['2026-01-01-sample'], fx.root);
     assert.equal(result.status, 1);
-    assert.match(result.stderr, /archive-relocate-error: already archived/);
+    assert.match(result.stderr, /archive-relocate-error: project is archived \(read-only\)/);
   } finally {
     fx.cleanup();
   }
@@ -211,18 +211,69 @@ test('error: destination already exists', () => {
   }
 });
 
-test('error: git mv failure surfaces git stderr and restores manifest', () => {
+test('error: git ls-files precheck fails (no git repo) and leaves manifest untouched', () => {
   const fx = makeFixture({ initGit: false });
   try {
     const result = run(['2026-01-01-sample'], fx.root);
     assert.equal(result.status, 1);
-    assert.match(result.stderr, /archive-relocate-error: git mv failed:/);
-    // manifest should be restored to active (we flipped, then rolled back on git failure)
+    assert.match(result.stderr, /archive-relocate-error: git ls-files failed:/);
+    // manifest never modified — precheck fails before the Status flip
     const manifest = readFileSync(join(fx.projectPath, 'MANIFEST.md'), 'utf-8');
     assert.match(manifest, /\*\*Status\*\*: active/);
     assert.doesNotMatch(manifest, /\*\*Status\*\*: archived/);
-    // source directory still in place
     assert.ok(statSync(fx.projectPath).isDirectory());
+  } finally {
+    fx.cleanup();
+  }
+});
+
+test('error: project has no git-tracked files (repo exists, project never committed)', () => {
+  const fx = makeFixture({ initGit: false });
+  try {
+    // initialise repo but never `git add` the project
+    spawnSync('git', ['init', '-q'], { cwd: fx.root });
+    spawnSync('git', ['config', 'user.email', 'test@example.com'], { cwd: fx.root });
+    spawnSync('git', ['config', 'user.name', 'Test'], { cwd: fx.root });
+    // empty initial commit so HEAD exists but the project is untracked
+    spawnSync('git', ['commit', '-q', '--allow-empty', '-m', 'init'], { cwd: fx.root });
+    const result = run(['2026-01-01-sample'], fx.root);
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /archive-relocate-error: project has no git-tracked files/);
+    assert.match(result.stderr, /commit project files before archiving/);
+    // manifest untouched
+    const manifest = readFileSync(join(fx.projectPath, 'MANIFEST.md'), 'utf-8');
+    assert.match(manifest, /\*\*Status\*\*: active/);
+    assert.ok(statSync(fx.projectPath).isDirectory());
+  } finally {
+    fx.cleanup();
+  }
+});
+
+test('happy path: rename + Status flip land atomically as one staged change', () => {
+  const fx = makeFixture();
+  try {
+    const result = run(['2026-01-01-sample'], fx.root);
+    assert.equal(result.status, 0, `stderr: ${result.stderr}`);
+
+    // After archive-relocate, the working tree must be clean — the Status
+    // flip should have been staged alongside the rename, not left as an
+    // unstaged modification at the new path.
+    const status = spawnSync('git', ['status', '--porcelain'], { cwd: fx.root, encoding: 'utf-8' });
+    assert.equal(status.status, 0);
+    const lines = (status.stdout ?? '').split('\n').filter(Boolean);
+    const unstagedMod = lines.find((l) => /^.M /.test(l));
+    assert.equal(unstagedMod, undefined, `expected no unstaged modifications; got: ${lines.join(' | ')}`);
+
+    // The staged version of the manifest at the new path must already
+    // carry the flipped Status.
+    const show = spawnSync(
+      'git',
+      ['show', ':projects/archive/2026-01-01-sample/MANIFEST.md'],
+      { cwd: fx.root, encoding: 'utf-8' },
+    );
+    assert.equal(show.status, 0, `git show stderr: ${show.stderr}`);
+    assert.match(show.stdout, /^\*\*Status\*\*: archived$/m);
+    assert.doesNotMatch(show.stdout, /^\*\*Status\*\*: active$/m);
   } finally {
     fx.cleanup();
   }

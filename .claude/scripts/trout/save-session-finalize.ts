@@ -1,11 +1,10 @@
 #!/usr/bin/env node
 import { parseArgs } from 'node:util';
-import { readFileSync, writeFileSync, existsSync, statSync, readdirSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { resolve, join, relative } from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { ProjectResolveError, resolveProject } from './resolve-project.ts';
 
-const PROJECTS_ROOT = resolve(process.cwd(), 'projects');
-const ARCHIVE_ROOT = join(PROJECTS_ROOT, 'archive');
 const CAPTURE_SCRIPT = resolve(process.cwd(), '.claude/scripts/griot/capture.ts');
 
 const ARG_HINT = '<project-slug-or-path> --content-file=<path> [--date=<YYYY-MM-DD>]';
@@ -32,26 +31,6 @@ export function findNextLetter(sessionsDir: string, date: string): string {
     if (!existsSync(candidate)) return letter;
   }
   throw new FinalizeError(`all letters a-z taken for ${date}; manual intervention required`);
-}
-
-export function resolveProject(slug: string): string {
-  if (slug.startsWith('.') || slug.startsWith('/')) {
-    const abs = resolve(slug);
-    if (abs.startsWith(ARCHIVE_ROOT + '/') || abs === ARCHIVE_ROOT) throw new FinalizeError(`project is archived (read-only): ${abs}`);
-    if (!existsSync(abs)) throw new FinalizeError(`project not found: ${abs}`);
-    if (!statSync(abs).isDirectory()) throw new FinalizeError(`project path is not a directory: ${abs}`);
-    return abs;
-  }
-  if (!existsSync(PROJECTS_ROOT)) throw new FinalizeError(`projects root does not exist: ${PROJECTS_ROOT}`);
-  const direct = join(PROJECTS_ROOT, slug);
-  if (existsSync(direct) && statSync(direct).isDirectory()) return direct;
-  const candidates = readdirSync(PROJECTS_ROOT, { withFileTypes: true })
-    .filter((e) => e.isDirectory() && e.name !== 'archive')
-    .map((e) => e.name)
-    .filter((name) => name.endsWith(slug));
-  if (candidates.length === 1) return join(PROJECTS_ROOT, candidates[0]);
-  if (candidates.length > 1) throw new FinalizeError(`ambiguous slug "${slug}"; candidates: ${candidates.join(', ')}`);
-  throw new FinalizeError(`project not found: slug "${slug}" did not match any directory under ${PROJECTS_ROOT}`);
 }
 
 export type ManifestEvent = { event: string; detail: string };
@@ -159,7 +138,7 @@ function captureCorrection(checkinPath: string, slug: string, text: string): voi
 
 function tryOrFail<T>(fn: () => T): T {
   try { return fn(); } catch (err) {
-    if (err instanceof FinalizeError) fail(err.message);
+    if (err instanceof ProjectResolveError || err instanceof FinalizeError) fail(err.message);
     throw err;
   }
 }

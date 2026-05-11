@@ -1,11 +1,9 @@
 #!/usr/bin/env node
 import { parseArgs } from 'node:util';
-import { readFileSync, writeFileSync, existsSync, statSync, readdirSync } from 'node:fs';
-import { resolve, join, basename } from 'node:path';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { join, basename } from 'node:path';
 import { spawnSync } from 'node:child_process';
-
-const PROJECTS_ROOT = resolve(process.cwd(), 'projects');
-const ARCHIVE_ROOT = join(PROJECTS_ROOT, 'archive');
+import { ARCHIVE_ROOT, ProjectResolveError, resolveProject } from './resolve-project.ts';
 
 const ARG_HINT = '<project-slug-or-path>';
 
@@ -38,51 +36,6 @@ export function flipStatusLine(manifest: string): { content: string; previousSta
   throw new RelocateError('manifest missing **Status** field in header');
 }
 
-export function resolveProject(slug: string): string {
-  if (slug.startsWith('.') || slug.startsWith('/')) {
-    const abs = resolve(slug);
-    if (abs.startsWith(ARCHIVE_ROOT + '/') || abs === ARCHIVE_ROOT) {
-      throw new RelocateError(`already archived: ${abs}`);
-    }
-    if (!existsSync(abs)) {
-      throw new RelocateError(`project not found: ${abs}`);
-    }
-    if (!statSync(abs).isDirectory()) {
-      throw new RelocateError(`project path is not a directory: ${abs}`);
-    }
-    return abs;
-  }
-  if (!existsSync(PROJECTS_ROOT)) {
-    throw new RelocateError(`projects root does not exist: ${PROJECTS_ROOT}`);
-  }
-  const direct = join(PROJECTS_ROOT, slug);
-  if (existsSync(direct) && statSync(direct).isDirectory()) {
-    return direct;
-  }
-  // suffix match across active projects
-  const candidates = readdirSync(PROJECTS_ROOT, { withFileTypes: true })
-    .filter((e) => e.isDirectory() && e.name !== 'archive')
-    .map((e) => e.name)
-    .filter((name) => name.endsWith(slug));
-  if (candidates.length === 1) {
-    return join(PROJECTS_ROOT, candidates[0]);
-  }
-  if (candidates.length > 1) {
-    throw new RelocateError(`ambiguous slug "${slug}"; candidates: ${candidates.join(', ')}`);
-  }
-  // archive check (so we report "already archived" rather than "not found")
-  if (existsSync(ARCHIVE_ROOT)) {
-    const archivedMatch = readdirSync(ARCHIVE_ROOT, { withFileTypes: true })
-      .filter((e) => e.isDirectory())
-      .map((e) => e.name)
-      .filter((name) => name === slug || name.endsWith(slug));
-    if (archivedMatch.length > 0) {
-      throw new RelocateError(`already archived: ${join(ARCHIVE_ROOT, archivedMatch[0])}`);
-    }
-  }
-  throw new RelocateError(`project not found: slug "${slug}" did not match any directory under ${PROJECTS_ROOT}`);
-}
-
 // ---------- Main ----------
 
 function main(): void {
@@ -109,7 +62,7 @@ function main(): void {
   try {
     projectPath = resolveProject(positionals[0]);
   } catch (err) {
-    if (err instanceof RelocateError) fail(err.message);
+    if (err instanceof ProjectResolveError || err instanceof RelocateError) fail(err.message);
     throw err;
   }
 
@@ -121,6 +74,18 @@ function main(): void {
   const destPath = join(ARCHIVE_ROOT, basename(projectPath));
   if (existsSync(destPath)) {
     fail(`destination already exists: ${destPath}`);
+  }
+
+  // Precheck: source directory must have git-tracked content. Without this,
+  // `git mv` fails opaquely with "fatal: source directory is empty" when the
+  // project's files were never committed.
+  const lsFiles = spawnSync('git', ['ls-files', '--', projectPath], { encoding: 'utf-8' });
+  if (lsFiles.status !== 0) {
+    const stderr = (lsFiles.stderr ?? '').trim() || `git exited with status ${lsFiles.status}`;
+    fail(`git ls-files failed: ${stderr}`);
+  }
+  if (!(lsFiles.stdout ?? '').trim()) {
+    fail(`project has no git-tracked files: ${projectPath} (commit project files before archiving)`);
   }
 
   const original = readFileSync(manifestPath, 'utf-8');
@@ -135,10 +100,21 @@ function main(): void {
   }
   writeFileSync(manifestPath, updated);
 
+  // Stage the manifest modification before git mv so the rename + Status flip
+  // land atomically in a single commit. Without this, the modification stays
+  // unstaged and the caller has to make a second "Flip Status" commit.
+  const addResult = spawnSync('git', ['add', '--', manifestPath], { encoding: 'utf-8' });
+  if (addResult.status !== 0) {
+    writeFileSync(manifestPath, original);
+    const stderr = (addResult.stderr ?? '').trim() || `git exited with status ${addResult.status}`;
+    fail(`git add failed: ${stderr}`);
+  }
+
   const result = spawnSync('git', ['mv', projectPath, destPath], { encoding: 'utf-8' });
   if (result.status !== 0) {
     // restore manifest on failure so the caller can retry cleanly
     writeFileSync(manifestPath, original);
+    spawnSync('git', ['add', '--', manifestPath], { encoding: 'utf-8' });
     const stderr = (result.stderr ?? '').trim() || `git exited with status ${result.status}`;
     fail(`git mv failed: ${stderr}`);
   }
