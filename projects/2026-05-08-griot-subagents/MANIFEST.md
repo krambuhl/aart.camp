@@ -3,7 +3,7 @@
 **Slug**: griot-subagents
 **Started**: 2026-05-08
 **Status**: active
-**Current branch**: —
+**Current branch**: archive/griot-subagents
 **Latest checkin**: checkins/ev.griot-subagents.cleanup/02.md
 
 ## Strategy
@@ -14,9 +14,9 @@ interactive
 
 | # | Name | Status | Branch | Latest checkin | PR |
 |---|------|--------|--------|----------------|----|
-| 1 | Substrate | completed | ev.griot-subagents.operator-checks | 01 | #25 (open) |
+| 1 | Substrate | completed | ev.griot-subagents.operator-checks | 01 | #25 (merged) |
 | 2 | Migration | completed | ev.griot-subagents.regression-and-pr-body | 01 | #31 (merged) |
-| 3 | Cleanup | in-progress | ev.griot-subagents.cleanup | — | — |
+| 3 | Cleanup | completed | ev.griot-subagents.cleanup | 02 | #38 (merged) |
 
 ## Dependencies
 
@@ -24,7 +24,7 @@ interactive
 
 ## Current state
 
-Phase 2 merged via PR #31. Wet-run validation of new pipeline complete (checkin 01 on cleanup branch). Phase 3 deletion next.
+All three phases merged. Project ready for archive.
 
 ## Events
 
@@ -50,3 +50,5 @@ Phase 2 merged via PR #31. Wet-run validation of new pipeline complete (checkin 
 | 2026-05-11 02:04 | phase-completed | 2 |
 | 2026-05-11 02:10 | checkin-created | 02 on ev.griot-subagents.cleanup |
 | 2026-05-11 02:14 | pr-opened | #38 |
+| 2026-05-11 09:16 | pr-merged | #38 |
+| 2026-05-14 00:00 | phase-completed | 3 |
