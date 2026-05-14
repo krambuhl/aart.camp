@@ -2,7 +2,7 @@
 
 **Slug**: griot-subagents
 **Started**: 2026-05-08
-**Status**: active
+**Status**: archived
 **Current branch**: archive/griot-subagents
 **Latest checkin**: checkins/ev.griot-subagents.cleanup/02.md
 
@@ -52,3 +52,4 @@ All three phases merged. Project ready for archive.
 | 2026-05-11 02:14 | pr-opened | #38 |
 | 2026-05-11 09:16 | pr-merged | #38 |
 | 2026-05-14 00:00 | phase-completed | 3 |
+| 2026-05-14 00:00 | archived | projects/archive/2026-05-08-griot-subagents/ |
