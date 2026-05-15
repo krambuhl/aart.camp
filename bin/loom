@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# loom — entry shim for the loom project-substrate CLI.
+# Resolves the repo's .claude/cli/loom.ts relative to this shim, then
+# execs node with the original args. Run from anywhere; bin/loom does
+# not depend on the caller's cwd.
+
+set -euo pipefail
+
+SHIM_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SHIM_DIR/.." && pwd)"
+ENTRY="$REPO_ROOT/.claude/cli/loom.ts"
+
+if [[ ! -f "$ENTRY" ]]; then
+  echo "loom-shim-error: entry not found at $ENTRY" >&2
+  exit 2
+fi
+
+exec node "$ENTRY" "$@"
