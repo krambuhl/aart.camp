@@ -308,6 +308,188 @@ test('wrong.md falls back to Changes/Verdict when Execution is empty', () => {
   fx.cleanup();
 });
 
+test('--evaluator-finding=recurring writes a session-note folder with classification frontmatter', () => {
+  const fx = makeFixture();
+  const res = run(
+    [
+      '--evaluator-finding=recurring',
+      '--evaluator-name=evaluator-tokens',
+      '--code=raw-hex',
+      '--evidence=#000 at Sketch.module.css:17',
+      '--frequency-count=3',
+      '--slug=recurring-tokens-raw-hex',
+    ],
+    fx.root,
+  );
+  assert.equal(res.status, 0, `stderr: ${res.stderr}`);
+  assert.match(res.stdout, /^captured: learnings\/session-notes\/\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-recurring-tokens-raw-hex/);
+  const folders = readdirSync(join(fx.root, 'learnings', 'session-notes'));
+  assert.equal(folders.length, 1);
+  const folder = join(fx.root, 'learnings', 'session-notes', folders[0]);
+  const learning = readFileSync(join(folder, 'learning.md'), 'utf-8');
+  assert.match(learning, /^---\n/, 'learning.md should open with YAML frontmatter');
+  assert.match(learning, /classification: recurring/);
+  assert.match(learning, /evaluator: evaluator-tokens/);
+  assert.match(learning, /code: raw-hex/);
+  assert.match(learning, /frequency-count: 3/);
+  assert.match(learning, /# Learning draft/);
+  assert.match(learning, /Recurring evaluator finding/);
+  assert.match(learning, /#000 at Sketch.module.css:17/);
+  fx.cleanup();
+});
+
+test('--evaluator-finding=generator-antipattern writes a session-note folder with classification frontmatter', () => {
+  const fx = makeFixture();
+  const res = run(
+    [
+      '--evaluator-finding=generator-antipattern',
+      '--evaluator-name=evaluator-css-architecture',
+      '--code=css-arch-specificity-fight',
+      '--evidence=`.card .button` selector reaches into inner primitive',
+      '--slug=gen-antipattern-card-reach',
+    ],
+    fx.root,
+  );
+  assert.equal(res.status, 0, `stderr: ${res.stderr}`);
+  const folders = readdirSync(join(fx.root, 'learnings', 'session-notes'));
+  const folder = join(fx.root, 'learnings', 'session-notes', folders[0]);
+  const learning = readFileSync(join(folder, 'learning.md'), 'utf-8');
+  assert.match(learning, /classification: generator-antipattern/);
+  assert.match(learning, /evaluator: evaluator-css-architecture/);
+  assert.match(learning, /Generator antipattern/);
+  fx.cleanup();
+});
+
+test('--evaluator-finding=recurring requires --frequency-count', () => {
+  const fx = makeFixture();
+  const res = run(
+    [
+      '--evaluator-finding=recurring',
+      '--evaluator-name=e',
+      '--code=c',
+      '--evidence=x',
+      '--slug=missing-freq',
+    ],
+    fx.root,
+  );
+  assert.equal(res.status, 1);
+  assert.match(res.stderr, /--frequency-count=<N> is required when --evaluator-finding=recurring/);
+  fx.cleanup();
+});
+
+test('--evaluator-finding=catalog-gap errors with not-yet-supported', () => {
+  const fx = makeFixture();
+  const res = run(
+    [
+      '--evaluator-finding=catalog-gap',
+      '--evaluator-name=e',
+      '--code=c',
+      '--evidence=x',
+    ],
+    fx.root,
+  );
+  assert.equal(res.status, 1);
+  assert.match(res.stderr, /capture-error: not-yet-supported: catalog-gap/);
+  fx.cleanup();
+});
+
+test('--evaluator-finding=evaluator-conflict errors with not-yet-supported', () => {
+  const fx = makeFixture();
+  const res = run(
+    [
+      '--evaluator-finding=evaluator-conflict',
+      '--evaluator-name=e',
+      '--code=c',
+      '--evidence=x',
+    ],
+    fx.root,
+  );
+  assert.equal(res.status, 1);
+  assert.match(res.stderr, /capture-error: not-yet-supported: evaluator-conflict/);
+  fx.cleanup();
+});
+
+test('--evaluator-finding=sanctioned-exception errors with not-yet-supported', () => {
+  const fx = makeFixture();
+  const res = run(
+    [
+      '--evaluator-finding=sanctioned-exception',
+      '--evaluator-name=e',
+      '--code=c',
+      '--evidence=x',
+    ],
+    fx.root,
+  );
+  assert.equal(res.status, 1);
+  assert.match(res.stderr, /capture-error: not-yet-supported: sanctioned-exception/);
+  fx.cleanup();
+});
+
+test('--evaluator-finding=unknown errors with valid-classifications hint', () => {
+  const fx = makeFixture();
+  const res = run(
+    [
+      '--evaluator-finding=invented',
+      '--evaluator-name=e',
+      '--code=c',
+      '--evidence=x',
+    ],
+    fx.root,
+  );
+  assert.equal(res.status, 1);
+  assert.match(res.stderr, /capture-error: unknown classification 'invented'/);
+  fx.cleanup();
+});
+
+test('--evaluator-finding requires --evaluator-name, --code, --evidence', () => {
+  const fx = makeFixture();
+  const res = run(['--evaluator-finding=recurring', '--code=c', '--evidence=x', '--frequency-count=3'], fx.root);
+  assert.equal(res.status, 1);
+  assert.match(res.stderr, /--evaluator-name=<name> is required with --evaluator-finding/);
+  fx.cleanup();
+});
+
+test('--evaluator-finding and --from-checkin are mutually exclusive', () => {
+  const fx = makeFixture();
+  const path = writeCheckin(fx.root, 'checkin.md', SINGLE_CORRECTION_CHECKIN);
+  const res = run(
+    [
+      `--from-checkin=${path}`,
+      '--evaluator-finding=recurring',
+      '--evaluator-name=e',
+      '--code=c',
+      '--evidence=x',
+      '--frequency-count=3',
+    ],
+    fx.root,
+  );
+  assert.equal(res.status, 1);
+  assert.match(res.stderr, /--evaluator-finding and --from-checkin are mutually exclusive/);
+  fx.cleanup();
+});
+
+test('--evaluator-finding=recurring with --file-line includes it in learning body', () => {
+  const fx = makeFixture();
+  const res = run(
+    [
+      '--evaluator-finding=recurring',
+      '--evaluator-name=evaluator-tokens',
+      '--code=raw-hex',
+      '--evidence=#000',
+      '--frequency-count=4',
+      '--file-line=components/Sketch.module.css:17',
+      '--slug=recurring-with-file-line',
+    ],
+    fx.root,
+  );
+  assert.equal(res.status, 0, `stderr: ${res.stderr}`);
+  const folders = readdirSync(join(fx.root, 'learnings', 'session-notes'));
+  const folder = join(fx.root, 'learnings', 'session-notes', folders[0]);
+  const learning = readFileSync(join(folder, 'learning.md'), 'utf-8');
+  assert.match(learning, /file-line: components\/Sketch.module.css:17/);
+  fx.cleanup();
+});
+
 test('folder collision fails rather than overwriting', () => {
   const fx = makeFixture();
   const path = writeCheckin(fx.root, 'checkin.md', SINGLE_CORRECTION_CHECKIN);

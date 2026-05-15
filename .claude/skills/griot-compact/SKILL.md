@@ -90,6 +90,50 @@ For each unprocessed session-note (folder under
 notes serially; the parallelism is within each note's panel rounds,
 not across notes.
 
+#### Step pre-A — Classification routing
+
+Read the first 30 lines of the note's `learning.md`. If the file
+opens with a YAML frontmatter block (`---` on line 1, closing `---`
+within the first 30 lines), parse the frontmatter and read the
+`classification` field. Otherwise treat the note as **unclassified**
+(the historical correction-text capture flow has no classification
+field — those notes have always been the implicit "general learning"
+kind).
+
+Branch on the classification value:
+
+- **`recurring`** — frequency-evidenced. The four-judge panel adds
+  nothing the frequency counter hasn't already validated. Skip
+  Steps A–B entirely. Go directly to Step C with synthetic verdict
+  `IMPROVED` and proceed with the `IMPROVED` outcome (assign next
+  `L-NNN`, append to `learnings/rollup.md`, archive).
+
+- **`generator-antipattern`** — run the full Step A + Step B panel
+  exactly as today. The only divergence is in Step C's `IMPROVED`
+  outcome: promote to the **`## Project antipatterns`** section of
+  `learnings/rollup.md` rather than the general learnings section,
+  using an **`AP-NNN`** identifier scheme (compute the next ID as
+  `max(existing AP-NNN) + 1`, starting at `AP-001`). See Step C's
+  IMPROVED branch for the details. **The `## Project antipatterns`
+  section is authored in Phase 5 D2**; the SKILL routes to it as a
+  forward reference. If the section does not exist at compact time
+  and a `generator-antipattern` is promoted, append the section
+  header on first promotion.
+
+- **`catalog-gap`** | **`evaluator-conflict`** | **`sanctioned-exception`**
+  → **not-yet-supported in v1**. Skip Steps A–C entirely. Do NOT
+  archive the note. Add it to a separate run-summary list under
+  `## Not-yet-supported classifications` so the PR-body output is
+  honest about what was skipped and why.
+
+- **unclassified** (no `classification` field) → continue with the
+  historical flow (Step A + Step B + Step C as today). All
+  correction-text captures fall here.
+
+This routing block reads frontmatter ONLY. It does not modify the
+note. The classification field is data the script authored when
+capturing; the SKILL trusts it.
+
 #### Step A — Rubric (one-time per note)
 
 If the note's `rubric.md` is missing, spawn `griot-rubric-author`
@@ -328,37 +372,83 @@ Branch on the final verdict reached when the attempt loop exited.
 
 **`IMPROVED`**:
 
-1. Generate the next `learning_id`. Read `learnings/rollup.md`
-   (if it exists) and find the maximum existing `L-NNN` ID; the
-   new ID is one more, zero-padded to three digits. If
-   `rollup.md` does not exist, the first ID is `L-001`.
-2. Append a new entry to `learnings/rollup.md` (creating the
-   file if needed, preserving any existing content). Entry
-   shape:
+**Branch on classification** (read in Step pre-A):
 
-   ```
-   ## L-<NNN>: <short title derived from learning.md>
+- **`generator-antipattern`** → promote to the `## Project
+  antipatterns` section using an `AP-NNN` identifier:
 
-   Promoted: <today's date in YYYY-MM-DD>
-   Origin: <note's slug>
+  1. Read `learnings/rollup.md` (if it exists) and find the
+     maximum existing `AP-NNN` ID across all `## AP-<NNN>:` entries
+     in the file. The new ID is one more, zero-padded to three
+     digits. If no `AP-NNN` entries exist yet, the first ID is
+     `AP-001`. The `AP-NNN` and `L-NNN` namespaces are independent —
+     do not conflate.
+  2. Ensure the `## Project antipatterns` section exists in
+     `learnings/rollup.md`. If absent, append the section header
+     (one blank line, then `## Project antipatterns`, then one
+     blank line) before the antipattern entry. **D2 of Phase 5 will
+     refine this section's authoring** — for D1, the minimal header
+     is sufficient to route promotions correctly.
+  3. Append a new entry under that section with the shape:
 
-   ### Learning
+     ```
+     ### AP-<NNN>: <short title derived from learning.md>
 
-   <full contents of note's learning.md>
+     Promoted: <today's date in YYYY-MM-DD>
+     Origin: <note's slug>
+     Classification: generator-antipattern
+     Evaluator: <evaluator name from frontmatter>
+     Code: <code from frontmatter>
 
-   ### Rubric
+     <full contents of note's learning.md, with the frontmatter
+     block stripped>
+     ```
 
-   <full contents of expected_rubric>
-   ```
+  4. Move the session-note folder to `archived/` (same as the
+     learnings path).
+  5. Mark this note's outcome as
+     `"promoted as AP-NNN on attempt N (generator-antipattern)"`
+     for the run summary.
 
-   The "short title" is the first line of `learning.md` if it
-   reads as a title, or a 3–5 word distillation of the
-   learning's first sentence otherwise.
-3. Move the session-note folder from
-   `learnings/session-notes/<note>/` to
-   `learnings/session-notes/archived/<note>/` via Bash.
-4. Mark this note's outcome as
-   "promoted as L-NNN on attempt N" for the run summary.
+- **`recurring`** | **unclassified** → promote to the existing
+  general learnings flow with an `L-NNN` identifier:
+
+  1. Generate the next `learning_id`. Read `learnings/rollup.md`
+     (if it exists) and find the maximum existing `L-NNN` ID; the
+     new ID is one more, zero-padded to three digits. If
+     `rollup.md` does not exist, the first ID is `L-001`.
+  2. Append a new entry to `learnings/rollup.md` (creating the
+     file if needed, preserving any existing content). Entry
+     shape:
+
+     ```
+     ## L-<NNN>: <short title derived from learning.md>
+
+     Promoted: <today's date in YYYY-MM-DD>
+     Origin: <note's slug>
+
+     ### Learning
+
+     <full contents of note's learning.md (frontmatter stripped
+     for `recurring` notes; verbatim for unclassified notes)>
+
+     ### Rubric
+
+     <full contents of expected_rubric, or "(not generated —
+     classification: recurring skipped the panel)" for the
+     recurring branch>
+     ```
+
+     The "short title" is the first line of `learning.md` if it
+     reads as a title, or a 3–5 word distillation of the
+     learning's first sentence otherwise.
+  3. Move the session-note folder from
+     `learnings/session-notes/<note>/` to
+     `learnings/session-notes/archived/<note>/` via Bash.
+  4. Mark this note's outcome as
+     `"promoted as L-NNN on attempt N"` (or
+     `"promoted as L-NNN (recurring, no panel)"` for the recurring
+     branch) for the run summary.
 
 **`DID_NOT_REPRODUCE`**:
 
