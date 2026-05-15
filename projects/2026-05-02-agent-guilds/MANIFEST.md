@@ -4,7 +4,7 @@
 **Started**: 2026-05-02
 **Status**: active
 **Current branch**: ev.agent-guilds.antagonist-evaluator-panel-8
-**Latest checkin**: checkins/ev.agent-guilds.antagonist-evaluator-panel-7/01.md
+**Latest checkin**: checkins/ev.agent-guilds.antagonist-evaluator-panel-8/01.md
 
 ## Strategy
 
@@ -16,7 +16,7 @@ Extract `guild-*` agent-panel substrate alongside trout/griot, thin ev-loop into
 |---|------|--------|--------|----------------|----|
 | 1 | Substrate foundations | completed | ev.agent-guilds.substrate-foundations | 05 | #8 (merged) |
 | 1.5 | Substrate primitive cleanup | completed | ev.agent-guilds.phase-1-5-carryover-3 | 01 | #42 (merged) |
-| 2 | Antagonist evaluator panel | in-progress | ev.agent-guilds.antagonist-evaluator-panel-8 |  | #51 (merged) |
+| 2 | Antagonist evaluator panel | in-progress | ev.agent-guilds.antagonist-evaluator-panel-8 | 01 | #51 (merged) |
 | 3 | Whiteboard mechanism + engineers | not-started | — | — | — |
 | 4 | Domain pairs | not-started | — | — | — |
 | 5 | Griot integration + composability proof | not-started | — | — | — |
@@ -167,3 +167,4 @@ Phase 1 merged via PR #8. Phase 1.5 split into a sequence of PRs after a post-me
 | 2026-05-14 22:55 | pr-opened | #51 |
 | 2026-05-14 23:00 | pr-merged | #51 |
 | 2026-05-14 23:02 | note | Antagonist-evaluator-panel-8 branch cut from main post-#51-merge; D8 multi-evaluator smoke test (Phase 2 close) begins here |
+| 2026-05-15 00:28 | checkin-created | 01 on ev.agent-guilds.antagonist-evaluator-panel-8 |
