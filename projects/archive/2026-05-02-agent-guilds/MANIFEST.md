@@ -2,7 +2,7 @@
 
 **Slug**: 2026-05-02-agent-guilds
 **Started**: 2026-05-02
-**Status**: active
+**Status**: archived
 **Current branch**: —
 **Latest checkin**: checkins/ev.agent-guilds.griot-integration-3/01.md
 
