@@ -7,9 +7,10 @@ description: >-
   engineer's contribution into the artifact as attributed sections.
   Supports multi-round invocations — round 2+ passes the prior
   whiteboard state into the next round's brief so engineers can address
-  contradictions. Internal substrate skill — composed by ev-loop as an
-  opt-in pre-unit step. Does not iterate, does not auto-resolve
-  contradictions.
+  contradictions. Internal substrate skill — composed by ev-loop as a
+  default pre-unit step (phases may override engineers/topic/rounds via
+  PLAN.md `**Whiteboard**:` block). Does not iterate, does not
+  auto-resolve contradictions.
 argument-hint: "engineers=<comma-separated names> brief=<text> whiteboard=<path> [round=<N>]"
 user-invocable: false
 allowed-tools: Skill, Bash
@@ -112,8 +113,21 @@ work)" below.
      `Bash("node .claude/scripts/guild/whiteboard.ts read-state
      <whiteboard-path>")`. The script returns JSON
      `{rounds: [{number, sections: [{engineer, section}]}]}`.
-   - Construct `per_agent_context` for `/guild-spawn`: for each
-     engineer, the value is a single string with the form
+   - Construct `per_agent_context` for `/guild-spawn` as a JSON
+     object keyed by engineer `subagent_type`, where each value is
+     the prior-state preamble string (the body is identical for
+     every engineer in v1 — every engineer sees the same prior
+     rounds; the per-agent shape is used so `/guild-spawn` routes
+     the preamble to each spawned agent's brief):
+
+     ```json
+     {
+       "whiteboard-react-architect": "## Prior whiteboard state\n\n<...prior rounds...>\n\n## This round (N)\n\n<...instructions...>",
+       "whiteboard-design-systems":  "## Prior whiteboard state\n\n<...prior rounds...>\n\n## This round (N)\n\n<...instructions...>"
+     }
+     ```
+
+     The preamble-string content is:
 
      ```
      ## Prior whiteboard state
@@ -143,14 +157,64 @@ work)" below.
 6. **Append attributed sections to the whiteboard.** Build a JSON
    array of `{engineer, section}` entries from `/guild-spawn`'s
    outputs (preserving input order; the `section` is the engineer's
-   full response body, verbatim) and pipe it to
-   `node .claude/scripts/guild/whiteboard.ts append <whiteboard-
-   path>` via stdin. The script writes the new `## Round N` block
-   with each engineer's `### From <name>` subsection and returns
-   the locked Result JSON on stdout.
+   full response body, verbatim) and pipe it to the append script
+   via stdin:
+
+   ```bash
+   echo '<json-array>' | node .claude/scripts/guild/whiteboard.ts append <whiteboard-path>
+   ```
+
+   The script writes the new `## Round N` block with each
+   engineer's `### From <name>` subsection and returns the locked
+   Result JSON on stdout.
 
 7. **Return** the script's output (parsed back into a structured
    value) to the caller. This skill performs no further work.
+
+## Example
+
+Round 1 invocation:
+
+```
+/guild-whiteboard \
+  engineers=whiteboard-react-architect,whiteboard-design-systems \
+  brief="How should <Card> adapt to the new dark-mode token tier?" \
+  whiteboard=projects/2026-05-dark-mode/whiteboards/3-card-dark-mode.md
+```
+
+After the skill returns, the whiteboard file contains:
+
+```markdown
+# Whiteboard: How should <Card> adapt to the new dark-mode token tier?
+
+## Round 1
+
+### From whiteboard-react-architect
+
+<verbatim engineer-1 response body>
+
+### From whiteboard-design-systems
+
+<verbatim engineer-2 response body>
+```
+
+The returned JSON:
+
+```json
+{
+  "whiteboard_path": "projects/2026-05-dark-mode/whiteboards/3-card-dark-mode.md",
+  "round": 1,
+  "sections": [
+    { "engineer": "whiteboard-react-architect", "section": "<...>" },
+    { "engineer": "whiteboard-design-systems", "section": "<...>" }
+  ],
+  "contradictions": []
+}
+```
+
+A subsequent round-2 invocation with the same `whiteboard=` path
+auto-detects round 2, constructs `per_agent_context` from round 1's
+sections, and appends a new `## Round 2` block.
 
 ## Contradiction detection (v1: future-work)
 

@@ -173,20 +173,33 @@ to that phase's branch.
 
 ## PLAN.md phase-config extensions
 
-A phase entry in PLAN.md may declare an opt-in `**Whiteboard**:` block
-immediately under the phase's prose paragraph. Both `/ev-loop-interactive`
-and `/ev-loop-confidence` read it at phase start and trigger a
-`/guild-whiteboard` multi-engineer design pass before the unit/tier loop
-begins. Format:
+Both `/ev-loop-interactive` and `/ev-loop-confidence` always run a
+`/guild-whiteboard` multi-engineer design pass at phase start, before
+the unit/tier loop begins. A phase entry in PLAN.md may declare an
+optional `**Whiteboard**:` override block immediately under the
+phase's prose paragraph:
 
 ```
 **Whiteboard**: engineers=<comma-separated names>; topic=<one-line topic>; rounds=<N>
 ```
 
+Any field present in the block overrides the corresponding default;
+partial blocks are allowed.
+
+**Defaults** (when a field is missing or no block is declared):
+- `engineers` = all currently registered `whiteboard-*` agents,
+  resolved via glob of `.claude/agents/whiteboard-*.md`.
+- `topic` = the phase name.
+- `rounds` = 1.
+
 Whiteboard output lands at
-`projects/<slug>/whiteboards/<phase-number>-<topic-slug>.md` and is cited as
-an Input in each unit's contract. The block is opt-in; phases without it
-skip the whiteboard step entirely.
+`projects/<slug>/whiteboards/<phase-number>-<topic-slug>.md` and is
+cited as an Input in each unit's contract.
+
+**Bootstrapping case**: if no `whiteboard-*` agents are registered AND
+no explicit `engineers=` override is given, the loop logs a one-line
+note and skips the whiteboard step. This covers any phase that runs
+before the engineer roster ships.
 
 ## Event vocabulary
 
