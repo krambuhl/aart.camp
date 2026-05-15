@@ -3,8 +3,8 @@
 **Slug**: draft-cli
 **Started**: 2026-05-15
 **Status**: active
-**Current branch**: ev.draft-cli.revise-read-verbs
-**Latest checkin**: checkins/ev.draft-cli.revise-read-verbs (D5: revise + read verbs)/01.md
+**Current branch**: ev.draft-cli.draft-skills
+**Latest checkin**: checkins/ev.draft-cli.draft-skills (D6: /draft-plan + /draft-revise skills)/01.md
 
 ## Strategy
 
@@ -14,7 +14,7 @@ interactive
 
 | # | Name | Status | Branch | Latest checkin | PR |
 |---|------|--------|--------|----------------|----|
-| 1 | Phase 1: Ship CLI + skill + loop wiring | in-progress | ev.draft-cli.revise-read-verbs | 01 | #80 (open) |
+| 1 | Phase 1: Ship CLI + skill + loop wiring | in-progress | ev.draft-cli.draft-skills | 01 | #81 (open) |
 
 ## Dependencies
 
@@ -41,3 +41,5 @@ Project initialized. No work started yet.
 | 2026-05-15 13:04 | pr-opened | #77 |
 | 2026-05-15 13:25 | checkin-created | 01 on ev.draft-cli.revise-read-verbs (D5: revise + read verbs) |
 | 2026-05-15 13:26 | pr-opened | #80 |
+| 2026-05-15 13:34 | checkin-created | 01 on ev.draft-cli.draft-skills (D6: /draft-plan + /draft-revise skills) |
+| 2026-05-15 13:34 | pr-opened | #81 |
