@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import type { Manifest } from './types.ts';
 import { LoomError } from './errors.ts';
 
@@ -28,4 +28,15 @@ export function readManifest(path: string): Manifest {
   }
 
   return parsed as Manifest;
+}
+
+export function writeManifest(path: string, manifest: Manifest): void {
+  try {
+    writeFileSync(path, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+  } catch (err: unknown) {
+    throw new LoomError(
+      'manifest-write-failed',
+      `manifest write failed at ${path}: ${(err as Error).message}`,
+    );
+  }
 }

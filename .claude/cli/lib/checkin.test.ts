@@ -93,6 +93,8 @@ test('writeCheckin writes to derived path and round-trips', () => {
 
 test('writeCheckin refuses to overwrite (immutability invariant)', () => {
   const sample = readCheckin(join(branchDir, '04.json'));
-  // 04 already exists in setup
-  expect(() => writeCheckin(projectPath, sample)).toThrow(/checkin-already-exists/);
+  // Align the checkin's branch field with the test setup so the
+  // derived path collides with the existing 04.json
+  const collision: Checkin = { ...sample, branch: 'loom-cli/phase-1', number: '04' };
+  expect(() => writeCheckin(projectPath, collision)).toThrow(/checkin-already-exists/);
 });

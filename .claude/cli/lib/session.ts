@@ -1,4 +1,10 @@
-import { readFileSync, existsSync, readdirSync } from 'node:fs';
+import {
+  readFileSync,
+  writeFileSync,
+  mkdirSync,
+  existsSync,
+  readdirSync,
+} from 'node:fs';
 import { join } from 'node:path';
 import type { Session } from './types.ts';
 import { LoomError } from './errors.ts';
@@ -44,4 +50,34 @@ export function listSessions(projectPath: string): SessionSummary[] {
     out.push({ filename: entry, path: join(dir, entry) });
   }
   return out.sort((a, b) => (a.filename < b.filename ? -1 : 1));
+}
+
+export type WriteSessionResult = {
+  path: string;
+  filename: string;
+};
+
+export function writeSession(
+  projectPath: string,
+  session: Session,
+): WriteSessionResult {
+  const filename = `${session.date}-${session.letter}.json`;
+  const dir = join(projectPath, 'sessions');
+  const target = join(dir, filename);
+  if (existsSync(target)) {
+    throw new LoomError(
+      'session-already-exists',
+      `session already exists at ${target} (sessions are immutable)`,
+    );
+  }
+  try {
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(target, `${JSON.stringify(session, null, 2)}\n`, 'utf8');
+  } catch (err: unknown) {
+    throw new LoomError(
+      'session-write-failed',
+      `session write failed at ${target}: ${(err as Error).message}`,
+    );
+  }
+  return { path: target, filename };
 }
