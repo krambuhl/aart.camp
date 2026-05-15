@@ -3,7 +3,7 @@
 **Slug**: 2026-05-02-agent-guilds
 **Started**: 2026-05-02
 **Status**: active
-**Current branch**: ev.agent-guilds.whiteboard-3
+**Current branch**: —
 **Latest checkin**: checkins/ev.agent-guilds.whiteboard-3/01.md
 
 ## Strategy
@@ -17,7 +17,7 @@ Extract `guild-*` agent-panel substrate alongside trout/griot, thin ev-loop into
 | 1 | Substrate foundations | completed | ev.agent-guilds.substrate-foundations | 05 | #8 (merged) |
 | 1.5 | Substrate primitive cleanup | completed | ev.agent-guilds.phase-1-5-carryover-3 | 01 | #42 (merged) |
 | 2 | Antagonist evaluator panel | completed | ev.agent-guilds.antagonist-evaluator-panel-8 | 01 | #52 (merged) |
-| 3 | Whiteboard mechanism + engineers | in-progress | ev.agent-guilds.whiteboard-3 | 01 | #64 (open) |
+| 3 | Whiteboard mechanism + engineers | completed | ev.agent-guilds.whiteboard-3 | 01 | #64 (open) |
 | 4 | Domain pairs | not-started | — | — | — |
 | 5 | Griot integration + composability proof | not-started | — | — | — |
 
@@ -185,3 +185,4 @@ Phase 1 merged via PR #8. Phase 1.5 split into a sequence of PRs after a post-me
 | 2026-05-15 09:43 | session-saved | 2026-05-15-a.md |
 | 2026-05-15 10:25 | checkin-created | 01 on ev.agent-guilds.whiteboard-3 |
 | 2026-05-15 10:26 | pr-opened | #64 |
+| 2026-05-15 10:26 | phase-completed | 3 |
