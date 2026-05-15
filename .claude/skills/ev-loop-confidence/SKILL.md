@@ -58,6 +58,56 @@ Create this directory if it doesn't exist.
 
 ## Phase-level process
 
+### Whiteboard
+
+Every phase runs a multi-engineer design pass **once before Step 0**
+(pre-flight). The whiteboard output becomes shared reference material
+for every tier in the phase (cited in each tier contract's `Inputs:`
+line). This step is **always-on**: the loop invokes
+`/guild-whiteboard` at phase start regardless of explicit
+configuration; an optional PLAN.md block overrides defaults.
+
+**Default behavior** (no `**Whiteboard**:` block in PLAN.md):
+- `engineers` = all currently registered `whiteboard-*` agents,
+  resolved via glob of `.claude/agents/whiteboard-*.md`.
+- `topic` = the phase name.
+- `rounds` = 1.
+
+**Override** — optional PLAN.md block, placed immediately under the
+phase's prose paragraph:
+
+```
+**Whiteboard**: engineers=<comma-separated names>; topic=<one-line topic>; rounds=<N>
+```
+
+Any field in the block overrides the corresponding default. Partial
+blocks are allowed.
+
+**Whiteboard artifact path**:
+`projects/<slug>/whiteboards/<phase-number>-<topic-slug>.md`. Create
+the parent directory if it doesn't exist.
+
+**Per-round invocation**: for each round 1..N, invoke
+`/guild-whiteboard` via the `Skill` tool with `engineers=<list>`,
+`brief=<topic + any phase context>`, `whiteboard=<path>`. The skill
+auto-detects round number from existing file state, so re-running is
+idempotent (a re-invocation with the same whiteboard file detects
+existing rounds and appends a NEW round). For round 2+, the skill
+constructs `per_agent_context` from prior round state so engineers
+can address contradictions.
+
+**Bootstrapping case (no engineers registered)**: if the
+`.claude/agents/whiteboard-*.md` glob returns zero matches AND no
+explicit `engineers=` override is given, log a one-line note ("no
+whiteboard engineers registered — skipping whiteboard step") and
+proceed directly to Step 0.
+
+**L-004 session-boundary**: if any of the resolved `whiteboard-*`
+engineers were authored in the current session, drop them from the
+effective list manually and surface the override in the next tier's
+first checkin Notes for the PR. The runtime registry is loaded once
+per Claude Code process start; `/clear` is NOT a session boundary.
+
 ### Step 0. Pre-flight
 
 Before any work:
