@@ -24,8 +24,13 @@ beforeEach(() => {
     join(FIXTURES, 'manifest-basic.json'),
     join(projectPath, 'manifest.json'),
   );
-  // Add an archived project too
-  mkdirSync(join(projectsRoot, 'archive', '2026-04-01-old'), { recursive: true });
+  // Add an archived project too (with manifest marker)
+  const archivePath = join(projectsRoot, 'archive', '2026-04-01-old');
+  mkdirSync(archivePath, { recursive: true });
+  copyFileSync(
+    join(FIXTURES, 'manifest-basic.json'),
+    join(archivePath, 'manifest.json'),
+  );
 });
 
 afterEach(() => {

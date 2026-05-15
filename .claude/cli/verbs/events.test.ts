@@ -14,6 +14,11 @@ beforeEach(() => {
   projectsRoot = mkdtempSync(join(tmpdir(), 'loom-verbs-events-'));
   const projectPath = join(projectsRoot, '2026-05-15-test-loom');
   mkdirSync(projectPath);
+  // listProjects/resolveProject filter by manifest.json existence
+  copyFileSync(
+    join(FIXTURES, 'manifest-basic.json'),
+    join(projectPath, 'manifest.json'),
+  );
   copyFileSync(
     join(FIXTURES, 'events-all-types.jsonl'),
     join(projectPath, 'events.jsonl'),

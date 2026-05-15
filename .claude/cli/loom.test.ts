@@ -2,6 +2,8 @@ import { test, expect } from 'vitest';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import {
   NAMESPACES,
   parseInvocation,
@@ -9,6 +11,11 @@ import {
   formatUnknownVerbError,
   dispatch,
 } from './loom.ts';
+import type { CliContext } from './loom.ts';
+
+function makeCtx(): CliContext {
+  return { projectsRoot: mkdtempSync(join(tmpdir(), 'loom-test-')) };
+}
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const LOOM_ENTRY = join(__dirname, 'loom.ts');
@@ -60,26 +67,55 @@ test('formatUnknownVerbError emits structured JSON with candidates', () => {
 });
 
 test('dispatch: help → stdout + exit 0', () => {
-  const result = dispatch({ kind: 'help' });
+  const ctx = makeCtx();
+  const result = dispatch({ kind: 'help' }, ctx);
   expect(result.exitCode).toBe(0);
   expect(result.stdout).toBeDefined();
   expect(result.stderr).toBeUndefined();
+  rmSync(ctx.projectsRoot, { recursive: true, force: true });
 });
 
 test('dispatch: unknown → stderr + exit 1', () => {
-  const result = dispatch({ kind: 'unknown', verb: 'xyzzy' });
+  const ctx = makeCtx();
+  const result = dispatch({ kind: 'unknown', verb: 'xyzzy' }, ctx);
   expect(result.exitCode).toBe(1);
   expect(result.stderr).toBeDefined();
   expect(result.stdout).toBeUndefined();
+  rmSync(ctx.projectsRoot, { recursive: true, force: true });
 });
 
-test('dispatch: known namespace (no verb impl yet) → not-implemented error', () => {
-  const result = dispatch({ kind: 'verb', namespace: 'project', rest: [] });
+test('dispatch: wired namespace, missing verb → missing-verb with candidates', () => {
+  const ctx = makeCtx();
+  const result = dispatch({ kind: 'verb', namespace: 'project', rest: [] }, ctx);
   expect(result.exitCode).toBe(1);
-  expect(result.stderr).toBeDefined();
+  const parsed = JSON.parse(result.stderr as string);
+  expect(parsed.error).toBe('missing-verb');
+  expect(parsed.candidates).toContain('read');
+  expect(parsed.candidates).toContain('list');
+  rmSync(ctx.projectsRoot, { recursive: true, force: true });
+});
+
+test('dispatch: wired namespace, unknown verb → unknown-verb', () => {
+  const ctx = makeCtx();
+  const result = dispatch(
+    { kind: 'verb', namespace: 'project', rest: ['xyzzy'] },
+    ctx,
+  );
+  expect(result.exitCode).toBe(1);
+  const parsed = JSON.parse(result.stderr as string);
+  expect(parsed.error).toBe('unknown-verb');
+  expect(parsed.candidates).toContain('read');
+  rmSync(ctx.projectsRoot, { recursive: true, force: true });
+});
+
+test('dispatch: unwired namespace → not-implemented placeholder', () => {
+  const ctx = makeCtx();
+  const result = dispatch({ kind: 'verb', namespace: 'doctor', rest: [] }, ctx);
+  expect(result.exitCode).toBe(1);
   const parsed = JSON.parse(result.stderr as string);
   expect(parsed.error).toBe('not-implemented');
-  expect(parsed.namespace).toBe('project');
+  expect(parsed.namespace).toBe('doctor');
+  rmSync(ctx.projectsRoot, { recursive: true, force: true });
 });
 
 // ---------- Smoke tests via subprocess (entry-point integration) ----------
