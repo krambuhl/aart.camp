@@ -14,7 +14,7 @@
      See .claude/agents/generator-css-codemod.md § "Sketch-CSS
      carve-outs" for the codemod-level documentation. */
   & canvas {
-    background-color: black;
+    background-color: token("bg.inverted.default");
     display: block;
     height: auto !important;
     width: 100% !important;
