@@ -4,7 +4,7 @@
 **Started**: 2026-05-15
 **Status**: active
 **Current branch**: —
-**Latest checkin**: checkins/ev.draft-cli.scope-shift-wiring (D7: scope-shift detection)/01.md
+**Latest checkin**: checkins/ev.draft-cli.phase-1-close (D8: smoke + phase close)/01.md
 
 ## Strategy
 
@@ -14,7 +14,7 @@ interactive
 
 | # | Name | Status | Branch | Latest checkin | PR |
 |---|------|--------|--------|----------------|----|
-| 1 | Phase 1: Ship CLI + skill + loop wiring | completed | ev.draft-cli.scope-shift-wiring | 01 | #83 (open) |
+| 1 | Phase 1: Ship CLI + skill + loop wiring | completed | ev.draft-cli.phase-1-close | 01 | #85 (open) |
 
 ## Dependencies
 
@@ -46,3 +46,5 @@ Project initialized. No work started yet.
 | 2026-05-15 13:59 | checkin-created | 01 on ev.draft-cli.scope-shift-wiring (D7: scope-shift detection) |
 | 2026-05-15 13:59 | pr-opened | #83 |
 | 2026-05-15 15:18 | phase-completed | 1 |
+| 2026-05-15 15:19 | checkin-created | 01 on ev.draft-cli.phase-1-close (D8: smoke + phase close) |
+| 2026-05-15 15:19 | pr-opened | #85 |
