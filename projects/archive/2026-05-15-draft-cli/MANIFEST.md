@@ -2,7 +2,7 @@
 
 **Slug**: draft-cli
 **Started**: 2026-05-15
-**Status**: active
+**Status**: archived
 **Current branch**: —
 **Latest checkin**: checkins/ev.draft-cli.phase-1-close (D8: smoke + phase close)/01.md
 
@@ -48,3 +48,4 @@ Project initialized. No work started yet.
 | 2026-05-15 15:18 | phase-completed | 1 |
 | 2026-05-15 15:19 | checkin-created | 01 on ev.draft-cli.phase-1-close (D8: smoke + phase close) |
 | 2026-05-15 15:19 | pr-opened | #85 |
+| 2026-05-15 15:30 | archived | projects/archive/2026-05-15-draft-cli |
