@@ -1,9 +1,22 @@
 import { parseArgs } from 'node:util';
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  renameSync,
+} from 'node:fs';
 import { join, sep } from 'node:path';
-import { resolveProject, listProjects } from '../lib/project.ts';
-import { readManifest } from '../lib/manifest.ts';
+import {
+  resolveProject,
+  listProjects,
+  ARCHIVE_DIRNAME,
+} from '../lib/project.ts';
+import { readManifest, writeManifest } from '../lib/manifest.ts';
+import { readConfig, writeConfig } from '../lib/config.ts';
+import { appendEvent } from '../lib/events.ts';
 import { LoomError } from '../lib/errors.ts';
-import type { Manifest } from '../lib/types.ts';
+import type { Manifest, ManifestPhase } from '../lib/types.ts';
 
 // Shared CLI context. Tests inject `projectsRoot` directly and may
 // override `cwdOverride` to simulate `process.cwd()` for `status`.
@@ -101,9 +114,207 @@ export function projectStatus(rest: string[], ctx: CliContext): DispatchResult {
   }
 }
 
+const FULL_SLUG_RE = /^\d{4}-\d{2}-\d{2}-[a-z0-9][a-z0-9-]*[a-z0-9]$/;
+const DATELESS_SLUG_RE = /^[a-z0-9][a-z0-9-]*[a-z0-9]$/;
+
+function todayString(): string {
+  const d = new Date();
+  const yyyy = d.getUTCFullYear();
+  const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(d.getUTCDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function normalizeSlug(input: string): string {
+  if (FULL_SLUG_RE.test(input)) return input;
+  if (DATELESS_SLUG_RE.test(input)) return `${todayString()}-${input}`;
+  throw new LoomError(
+    'invalid-slug',
+    `slug '${input}' must be kebab-case (lowercase letters, digits, hyphens) and may optionally start with a YYYY-MM-DD date prefix`,
+  );
+}
+
+type ManifestInit = {
+  title: string;
+  started: string;
+  strategy: string;
+  phases: ManifestPhase[];
+};
+
+const SCAFFOLD_OPTIONS = {
+  pretty: { type: 'boolean' as const },
+  'plan-file': { type: 'string' as const },
+  'config-file': { type: 'string' as const },
+  'manifest-init-file': { type: 'string' as const },
+};
+
+export function projectScaffold(rest: string[], ctx: CliContext): DispatchResult {
+  const { values, positionals } = parseArgs({
+    args: rest,
+    options: SCAFFOLD_OPTIONS,
+    allowPositionals: true,
+    strict: false,
+  });
+  const slugArg = positionals[0];
+  if (slugArg === undefined) {
+    return errToResult(
+      new LoomError('missing-args', 'project scaffold requires a slug'),
+    );
+  }
+  const planFile = values['plan-file'];
+  const configFile = values['config-file'];
+  const manifestInitFile = values['manifest-init-file'];
+  if (
+    planFile === undefined ||
+    configFile === undefined ||
+    manifestInitFile === undefined
+  ) {
+    return errToResult(
+      new LoomError(
+        'missing-args',
+        'project scaffold requires --plan-file, --config-file, and --manifest-init-file',
+      ),
+    );
+  }
+  let slug: string;
+  try {
+    slug = normalizeSlug(slugArg);
+  } catch (err) {
+    return errToResult(err);
+  }
+  const projectDir = join(ctx.projectsRoot, slug);
+  const archiveDir = join(ctx.projectsRoot, ARCHIVE_DIRNAME, slug);
+  if (existsSync(projectDir) || existsSync(archiveDir)) {
+    return errToResult(
+      new LoomError(
+        'project-exists',
+        `project ${slug} already exists at ${existsSync(projectDir) ? projectDir : archiveDir}`,
+      ),
+    );
+  }
+  let manifestInit: ManifestInit;
+  try {
+    manifestInit = JSON.parse(readFileSync(manifestInitFile, 'utf8'));
+  } catch (err: unknown) {
+    return errToResult(
+      new LoomError(
+        'invalid-manifest-init',
+        `cannot read manifest-init file ${manifestInitFile}: ${(err as Error).message}`,
+      ),
+    );
+  }
+  let config;
+  try {
+    config = readConfig(configFile);
+  } catch (err) {
+    return errToResult(err);
+  }
+  try {
+    mkdirSync(projectDir, { recursive: true });
+    mkdirSync(join(projectDir, 'checkins'), { recursive: true });
+    mkdirSync(join(projectDir, 'sessions'), { recursive: true });
+
+    const manifest: Manifest = {
+      schema_version: 1,
+      title: manifestInit.title,
+      slug,
+      started: manifestInit.started,
+      status: 'active',
+      current_branch: null,
+      latest_checkin: null,
+      strategy: manifestInit.strategy,
+      phases: manifestInit.phases,
+    };
+    writeManifest(join(projectDir, 'manifest.json'), manifest);
+    writeConfig(join(projectDir, 'config.json'), config);
+    copyFileSync(planFile, join(projectDir, 'PLAN.md'));
+    appendEvent(join(projectDir, 'events.jsonl'), {
+      at: new Date().toISOString(),
+      event: 'project-initialized',
+      detail: {},
+    });
+  } catch (err: unknown) {
+    if (err instanceof LoomError) return errToResult(err);
+    return errToResult(
+      new LoomError(
+        'scaffold-failed',
+        `scaffold failed: ${(err as Error).message}`,
+      ),
+    );
+  }
+  return {
+    stdout: emit({ slug, path: projectDir }, values.pretty === true),
+    exitCode: 0,
+  };
+}
+
+const ARCHIVE_OPTIONS = {
+  pretty: { type: 'boolean' as const },
+};
+
+export function projectArchive(rest: string[], ctx: CliContext): DispatchResult {
+  const { values, positionals } = parseArgs({
+    args: rest,
+    options: ARCHIVE_OPTIONS,
+    allowPositionals: true,
+    strict: false,
+  });
+  const slugArg = positionals[0];
+  if (slugArg === undefined) {
+    return errToResult(
+      new LoomError('missing-slug', 'project archive requires a slug'),
+    );
+  }
+  let projectPath: string;
+  try {
+    projectPath = resolveProject(slugArg, ctx.projectsRoot);
+  } catch (err) {
+    return errToResult(err);
+  }
+  // Already in archive/ → refuse
+  if (projectPath.includes(`${sep}${ARCHIVE_DIRNAME}${sep}`)) {
+    return errToResult(
+      new LoomError('already-archived', `project ${slugArg} is already archived`),
+    );
+  }
+  const slug = projectPath.split(sep).pop() as string;
+  const archiveRoot = join(ctx.projectsRoot, ARCHIVE_DIRNAME);
+  const destination = join(archiveRoot, slug);
+  try {
+    // Flip manifest status, write back
+    const manifestPath = join(projectPath, 'manifest.json');
+    const manifest = readManifest(manifestPath);
+    const updated: Manifest = { ...manifest, status: 'archived' };
+    writeManifest(manifestPath, updated);
+    // Append archived event (still in source location)
+    appendEvent(join(projectPath, 'events.jsonl'), {
+      at: new Date().toISOString(),
+      event: 'archived',
+      detail: { destination },
+    });
+    // Relocate. Non-atomic — if this throws, doctor sees the drift.
+    mkdirSync(archiveRoot, { recursive: true });
+    renameSync(projectPath, destination);
+  } catch (err: unknown) {
+    if (err instanceof LoomError) return errToResult(err);
+    return errToResult(
+      new LoomError(
+        'archive-failed',
+        `archive failed: ${(err as Error).message}`,
+      ),
+    );
+  }
+  return {
+    stdout: emit({ slug, destination }, values.pretty === true),
+    exitCode: 0,
+  };
+}
+
 export const PROJECT_VERBS = {
   read: projectRead,
   list: projectList,
   ls: projectList,
   status: projectStatus,
+  scaffold: projectScaffold,
+  archive: projectArchive,
 };
