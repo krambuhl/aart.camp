@@ -1,10 +1,12 @@
 import { parseArgs } from 'node:util';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { resolveProject } from '../lib/project.ts';
-import { readRetro, listRetros } from '../lib/retro.ts';
+import { readRetro, listRetros, writeRetro } from '../lib/retro.ts';
+import { appendEvent } from '../lib/events.ts';
 import { LoomError } from '../lib/errors.ts';
 import type { CliContext, DispatchResult } from './project.ts';
-import type { RetroType } from '../lib/types.ts';
+import type { Retro, RetroType } from '../lib/types.ts';
 
 function emit(value: unknown, pretty: boolean): string {
   return pretty ? JSON.stringify(value, null, 2) : JSON.stringify(value);
@@ -92,7 +94,79 @@ export function retroRead(rest: string[], ctx: CliContext): DispatchResult {
   }
 }
 
+const WRITE_OPTIONS = {
+  pretty: { type: 'boolean' as const },
+  'retro-file': { type: 'string' as const },
+};
+
+export function retroWrite(rest: string[], ctx: CliContext): DispatchResult {
+  const { values, positionals } = parseArgs({
+    args: rest,
+    options: WRITE_OPTIONS,
+    allowPositionals: true,
+    strict: false,
+  });
+  const slug = positionals[0];
+  if (slug === undefined) {
+    return errToResult(new LoomError('missing-slug', 'retro write requires a slug'));
+  }
+  const retroFile = values['retro-file'];
+  if (retroFile === undefined) {
+    return errToResult(
+      new LoomError('missing-args', 'retro write requires --retro-file'),
+    );
+  }
+  let raw: string;
+  try {
+    raw = readFileSync(retroFile, 'utf8');
+  } catch (err: unknown) {
+    return errToResult(
+      new LoomError(
+        'retro-file-unreadable',
+        `cannot read retro file ${retroFile}: ${(err as Error).message}`,
+      ),
+    );
+  }
+  let parsed: Retro;
+  try {
+    parsed = JSON.parse(raw) as Retro;
+  } catch (err: unknown) {
+    return errToResult(
+      new LoomError(
+        'invalid-retro',
+        `retro file is not valid JSON: ${(err as Error).message}`,
+      ),
+    );
+  }
+  if (parsed.schema_version !== 1 || (parsed.type !== 'session' && parsed.type !== 'project')) {
+    return errToResult(
+      new LoomError(
+        'invalid-retro',
+        'retro file is missing required fields (schema_version, type)',
+      ),
+    );
+  }
+  try {
+    const path = resolveProject(slug, ctx.projectsRoot);
+    const written = writeRetro(path, parsed);
+    const detail: { type: RetroType; phase?: number; tier?: number } = { type: parsed.type };
+    if (parsed.type === 'session') {
+      detail.phase = parsed.phase;
+      detail.tier = parsed.tier;
+    }
+    appendEvent(join(path, 'events.jsonl'), {
+      at: new Date().toISOString(),
+      event: 'retro-written',
+      detail,
+    });
+    return { stdout: emit(written, values.pretty === true), exitCode: 0 };
+  } catch (err) {
+    return errToResult(err);
+  }
+}
+
 export const RETRO_VERBS = {
   list: retroList,
   read: retroRead,
+  write: retroWrite,
 };
