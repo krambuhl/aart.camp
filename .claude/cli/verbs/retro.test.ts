@@ -1,9 +1,16 @@
 import { test, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, mkdirSync, rmSync, copyFileSync } from 'node:fs';
+import {
+  mkdtempSync,
+  mkdirSync,
+  rmSync,
+  copyFileSync,
+  readFileSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { retroList, retroRead } from './retro.ts';
+import { retroList, retroRead, retroWrite } from './retro.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FIXTURES = join(__dirname, '..', 'fixtures');
@@ -77,6 +84,45 @@ test('retroRead: session retro missing --phase returns missing-args', () => {
 
 test('retroRead: missing --type returns missing-args', () => {
   const result = retroRead(['test-loom'], { projectsRoot });
+  expect(result.exitCode).toBe(1);
+  expect(JSON.parse(result.stderr as string).error).toBe('missing-args');
+});
+
+test('retroWrite: writes a session retro and appends retro-written event', () => {
+  // Use a fresh phase/tier so it doesn't collide
+  const retro = {
+    schema_version: 1,
+    type: 'session',
+    created: '2026-07-01T12:00:00Z',
+    phase: 4,
+    tier: 5,
+    findings: [],
+  };
+  const retroFile = join(projectsRoot, 'incoming-retro.json');
+  writeFileSync(retroFile, JSON.stringify(retro), 'utf8');
+
+  const result = retroWrite(
+    ['test-loom', `--retro-file=${retroFile}`],
+    { projectsRoot },
+  );
+  expect(result.exitCode).toBe(0);
+  const written = JSON.parse(result.stdout as string);
+  expect(written.filename).toBe('phase-4-tier-5.json');
+
+  const eventsRaw = readFileSync(
+    join(projectsRoot, '2026-05-15-test-loom', 'events.jsonl'),
+    'utf8',
+  );
+  const lastLine = eventsRaw.trim().split('\n').pop() as string;
+  const event = JSON.parse(lastLine);
+  expect(event.event).toBe('retro-written');
+  expect(event.detail.type).toBe('session');
+  expect(event.detail.phase).toBe(4);
+  expect(event.detail.tier).toBe(5);
+});
+
+test('retroWrite: missing --retro-file returns missing-args', () => {
+  const result = retroWrite(['test-loom'], { projectsRoot });
   expect(result.exitCode).toBe(1);
   expect(JSON.parse(result.stderr as string).error).toBe('missing-args');
 });

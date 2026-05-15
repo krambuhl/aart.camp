@@ -1,9 +1,21 @@
 import { test, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, mkdirSync, rmSync, copyFileSync } from 'node:fs';
+import {
+  mkdtempSync,
+  mkdirSync,
+  rmSync,
+  copyFileSync,
+  readFileSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { sessionList, sessionRead, sessionCorrections } from './session.ts';
+import {
+  sessionList,
+  sessionRead,
+  sessionCorrections,
+  sessionWrite,
+} from './session.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FIXTURES = join(__dirname, '..', 'fixtures');
@@ -57,6 +69,39 @@ test('sessionRead: returns one session', () => {
 
 test('sessionRead: missing --filename returns missing-args', () => {
   const result = sessionRead(['test-loom'], { projectsRoot });
+  expect(result.exitCode).toBe(1);
+  expect(JSON.parse(result.stderr as string).error).toBe('missing-args');
+});
+
+test('sessionWrite: writes session and appends session-saved event', () => {
+  const sample = JSON.parse(
+    readFileSync(join(FIXTURES, 'session-basic.json'), 'utf8'),
+  );
+  sample.date = '2026-07-01';
+  sample.letter = 'a';
+  const sessionFile = join(projectsRoot, 'incoming-session.json');
+  writeFileSync(sessionFile, JSON.stringify(sample), 'utf8');
+
+  const result = sessionWrite(
+    ['test-loom', `--session-file=${sessionFile}`],
+    { projectsRoot },
+  );
+  expect(result.exitCode).toBe(0);
+  const written = JSON.parse(result.stdout as string);
+  expect(written.filename).toBe('2026-07-01-a.json');
+
+  const eventsRaw = readFileSync(
+    join(projectsRoot, '2026-05-15-test-loom', 'events.jsonl'),
+    'utf8',
+  );
+  const lastLine = eventsRaw.trim().split('\n').pop() as string;
+  const event = JSON.parse(lastLine);
+  expect(event.event).toBe('session-saved');
+  expect(event.detail.filename).toBe('2026-07-01-a.json');
+});
+
+test('sessionWrite: missing --session-file returns missing-args', () => {
+  const result = sessionWrite(['test-loom'], { projectsRoot });
   expect(result.exitCode).toBe(1);
   expect(JSON.parse(result.stderr as string).error).toBe('missing-args');
 });
