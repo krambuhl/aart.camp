@@ -2,7 +2,16 @@ import { test, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import type { Manifest, Event, Config, EventName } from './types.ts';
+import type {
+  Manifest,
+  Event,
+  Config,
+  EventName,
+  Checkin,
+  Session,
+  Retro,
+  CheckinVerdictResult,
+} from './types.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FIXTURES = join(__dirname, '..', 'fixtures');
@@ -125,4 +134,149 @@ test('config-basic.json conforms to Config type', () => {
   const restringified = JSON.stringify(parsed);
   const originalNormalized = JSON.stringify(JSON.parse(text));
   expect(restringified).toBe(originalNormalized);
+});
+
+// ---------- Unit-of-work typeguards ----------
+
+const CHECKIN_VERDICT_RESULTS: ReadonlySet<CheckinVerdictResult> = new Set([
+  'approved',
+  'flagged',
+]);
+
+function isCheckin(v: unknown): v is Checkin {
+  if (typeof v !== 'object' || v === null) return false;
+  const c = v as Record<string, unknown>;
+  const phase = c.phase as Record<string, unknown> | null;
+  const contract = c.contract as Record<string, unknown> | null;
+  const execution = c.execution as Record<string, unknown> | null;
+  const verdict = c.verdict as Record<string, unknown> | null;
+  return (
+    c.schema_version === 1 &&
+    typeof c.number === 'string' &&
+    typeof c.created === 'string' &&
+    typeof phase === 'object' &&
+    phase !== null &&
+    typeof phase.number === 'number' &&
+    typeof phase.name === 'string' &&
+    typeof c.branch === 'string' &&
+    typeof c.unit === 'string' &&
+    typeof contract === 'object' &&
+    contract !== null &&
+    Array.isArray(contract.acceptance_criteria) &&
+    typeof execution === 'object' &&
+    execution !== null &&
+    Array.isArray(execution.actions) &&
+    Array.isArray(execution.files_touched) &&
+    Array.isArray(execution.corrections) &&
+    Array.isArray(c.scope) &&
+    typeof c.changes_since_previous === 'string' &&
+    typeof verdict === 'object' &&
+    verdict !== null &&
+    CHECKIN_VERDICT_RESULTS.has(verdict.result as CheckinVerdictResult) &&
+    Array.isArray(verdict.reasons) &&
+    Array.isArray(c.notes_for_pr)
+  );
+}
+
+function isSession(v: unknown): v is Session {
+  if (typeof v !== 'object' || v === null) return false;
+  const s = v as Record<string, unknown>;
+  return (
+    s.schema_version === 1 &&
+    typeof s.date === 'string' &&
+    typeof s.letter === 'string' &&
+    Array.isArray(s.phases_touched) &&
+    Array.isArray(s.checkins_written) &&
+    Array.isArray(s.pr_activity) &&
+    Array.isArray(s.what_happened) &&
+    Array.isArray(s.open_threads) &&
+    Array.isArray(s.notes)
+  );
+}
+
+function isRetro(v: unknown): v is Retro {
+  if (typeof v !== 'object' || v === null) return false;
+  const r = v as Record<string, unknown>;
+  if (r.schema_version !== 1) return false;
+  if (typeof r.created !== 'string') return false;
+  if (!Array.isArray(r.findings)) return false;
+  if (r.type === 'session') {
+    return typeof r.phase === 'number' && typeof r.tier === 'number';
+  }
+  if (r.type === 'project') {
+    return true;
+  }
+  return false;
+}
+
+// ---------- Unit-of-work round-trip tests ----------
+
+test('checkin-basic.json conforms to Checkin type (approved verdict)', () => {
+  const text = readFixture('checkin-basic.json');
+  const parsed = JSON.parse(text);
+  expect(isCheckin(parsed)).toBe(true);
+  expect((parsed as Checkin).verdict.result).toBe('approved');
+
+  const restringified = JSON.stringify(parsed);
+  const originalNormalized = JSON.stringify(JSON.parse(text));
+  expect(restringified).toBe(originalNormalized);
+});
+
+test('checkin-flagged.json conforms to Checkin type (flagged verdict)', () => {
+  const text = readFixture('checkin-flagged.json');
+  const parsed = JSON.parse(text);
+  expect(isCheckin(parsed)).toBe(true);
+  expect((parsed as Checkin).verdict.result).toBe('flagged');
+  expect((parsed as Checkin).verdict.reasons.length).toBeGreaterThan(0);
+
+  const restringified = JSON.stringify(parsed);
+  const originalNormalized = JSON.stringify(JSON.parse(text));
+  expect(restringified).toBe(originalNormalized);
+});
+
+test('checkin fixtures cover both CheckinVerdictResult values', () => {
+  const basic = JSON.parse(readFixture('checkin-basic.json')) as Checkin;
+  const flagged = JSON.parse(readFixture('checkin-flagged.json')) as Checkin;
+  const results = new Set([basic.verdict.result, flagged.verdict.result]);
+  expect(results.has('approved')).toBe(true);
+  expect(results.has('flagged')).toBe(true);
+});
+
+test('session-basic.json conforms to Session type', () => {
+  const text = readFixture('session-basic.json');
+  const parsed = JSON.parse(text);
+  expect(isSession(parsed)).toBe(true);
+
+  const restringified = JSON.stringify(parsed);
+  const originalNormalized = JSON.stringify(JSON.parse(text));
+  expect(restringified).toBe(originalNormalized);
+});
+
+test('retro-session.json conforms to Retro (session variant)', () => {
+  const text = readFixture('retro-session.json');
+  const parsed = JSON.parse(text);
+  expect(isRetro(parsed)).toBe(true);
+  expect((parsed as Retro).type).toBe('session');
+
+  const restringified = JSON.stringify(parsed);
+  const originalNormalized = JSON.stringify(JSON.parse(text));
+  expect(restringified).toBe(originalNormalized);
+});
+
+test('retro-project.json conforms to Retro (project variant)', () => {
+  const text = readFixture('retro-project.json');
+  const parsed = JSON.parse(text);
+  expect(isRetro(parsed)).toBe(true);
+  expect((parsed as Retro).type).toBe('project');
+
+  const restringified = JSON.stringify(parsed);
+  const originalNormalized = JSON.stringify(JSON.parse(text));
+  expect(restringified).toBe(originalNormalized);
+});
+
+test('retro fixtures cover both Retro types', () => {
+  const session = JSON.parse(readFixture('retro-session.json')) as Retro;
+  const project = JSON.parse(readFixture('retro-project.json')) as Retro;
+  expect(session.type).toBe('session');
+  expect(project.type).toBe('project');
 });

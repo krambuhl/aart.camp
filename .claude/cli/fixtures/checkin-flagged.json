@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "number": "07",
+  "created": "2026-05-15T18:42:00Z",
+  "phase": {
+    "number": 3,
+    "name": "Lifecycle write API + lifecycle skills"
+  },
+  "branch": "loom-cli/phase-3-lifecycle",
+  "unit": "project archive verb",
+  "contract": {
+    "goal": "Implement `loom project archive <slug>` — coordinates manifest status update and dir relocation under projects/archive/.",
+    "acceptance_criteria": [
+      "archive.ts exports an archive function that takes a slug and performs both operations",
+      "Verb is non-atomic; doctor reports drift if relocate fails after manifest write",
+      "Emits archived event via events.append on success"
+    ],
+    "rules_applied": [
+      "TDD per PLAN methodology",
+      "Coordinates manifest + events write atomically via the writer module",
+      "erasable TS"
+    ],
+    "disqualifiers": [
+      "Auto-rolls back manifest on relocate failure",
+      "Modifies files outside the named project's directory"
+    ],
+    "inputs": [
+      "cli/lib/manifest.ts",
+      "cli/lib/events.ts",
+      "cli/lib/project.ts"
+    ]
+  },
+  "execution": {
+    "actions": [
+      "Authored cli/lib/archive.ts with relocate function",
+      "Added tests in cli/lib/archive.test.ts"
+    ],
+    "files_touched": [
+      ".claude/cli/lib/archive.ts",
+      ".claude/cli/lib/archive.test.ts"
+    ],
+    "corrections": [
+      "Initial impl auto-rolled back manifest on relocate failure — that violates the non-atomic design decision; reverted."
+    ]
+  },
+  "scope": [
+    ".claude/cli/lib/archive.ts"
+  ],
+  "changes_since_previous": "Adds the archive verb logic; doctor integration follows in unit 08.",
+  "verdict": {
+    "result": "flagged",
+    "reasons": [
+      "relocate test does not verify post-state consistency when fs.rename throws partway",
+      "archived event detail is missing the destination path field per LOOM-CONVENTIONS.md event vocabulary"
+    ]
+  },
+  "notes_for_pr": [
+    "Will address both flagged reasons in the next pass.",
+    "Doctor verb is the safety net for the non-atomic design — landing in unit 08."
+  ]
+}

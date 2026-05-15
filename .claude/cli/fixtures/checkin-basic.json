@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "number": "04",
+  "created": "2026-05-15T14:30:00Z",
+  "phase": {
+    "number": 2,
+    "name": "Foundations + read API"
+  },
+  "branch": "loom-cli/phase-2-foundations",
+  "unit": "manifest read/write lib",
+  "contract": {
+    "goal": "Implement manifest read + write with round-trip tests against Phase 1 fixtures.",
+    "acceptance_criteria": [
+      "manifest.ts exports readManifest, writeManifest functions",
+      "Both functions are test-covered against fixture round-trip",
+      "writeManifest produces stable key order on output"
+    ],
+    "rules_applied": [
+      "TDD per PLAN methodology",
+      "stdlib only — no new runtime deps",
+      "erasable TS"
+    ],
+    "disqualifiers": [
+      "exposes a partial API that Phase 3 has to retrofit",
+      "adds runtime JSON Schema validation"
+    ],
+    "inputs": [
+      "cli/lib/types.ts",
+      "cli/fixtures/manifest-basic.json"
+    ]
+  },
+  "execution": {
+    "actions": [
+      "Authored cli/lib/manifest.ts with read+write functions",
+      "Authored cli/lib/manifest.test.ts with round-trip + stability tests",
+      "Verified write produces sorted keys for diff stability"
+    ],
+    "files_touched": [
+      ".claude/cli/lib/manifest.ts",
+      ".claude/cli/lib/manifest.test.ts"
+    ],
+    "corrections": []
+  },
+  "scope": [
+    ".claude/cli/lib/manifest.ts"
+  ],
+  "changes_since_previous": "Adds the manifest read/write lib; the first verb-feeding module of Phase 2.",
+  "verdict": {
+    "result": "approved",
+    "reasons": []
+  },
+  "notes_for_pr": [
+    "Manifest writer is now the canonical path to manifest.json — direct fs writes elsewhere are a substrate antipattern.",
+    "Round-trip tests cover all four PhaseStatus transitions and the optional PR-info attachment."
+  ]
+}
