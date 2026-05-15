@@ -180,13 +180,21 @@ For each unit inside a tier:
    later.
 2. **Execute.** Do the transform on the batch. Keep to scope.
 3. **Evaluate.** Invoke `/guild-validate` via the `Skill` tool to run
-   the antagonist panel against this unit. v1 panels are single-
-   evaluator lists; Phase 2+ phases will name larger panels in PLAN.md.
-   - `agents`: `evaluator-contract-fit`
+   the antagonist panel against this unit. Compose the panel by
+   auto-derivation from the unit's file list (see § Panel
+   auto-derivation below) — the result is contextual to the artifact
+   rather than a fixed list. `evaluator-contract-fit` is always
+   included as the baseline. The spec (file-type → evaluator mapping,
+   precedence list, tokens-vs-naming boundary) lives in
+   `.claude/agents/PANEL-COMPOSITION.md`; the derivation logic is
+   `.claude/scripts/guild/derive-panel.ts`.
+   - `agents`: comma-separated output of
+     `node .claude/scripts/guild/derive-panel.ts --files=<paths>`
+     (see § Panel auto-derivation for `<paths>` composition).
    - `packet`: build a **dense packet** (see shape below). The substrate
      default is dense — verbose packets correlate with budget-exhaustion
-     failures under `evaluator-contract-fit`'s `maxTurns=5`. Live
-     examples in PR #13's checkins 02-06.
+     failures under `evaluator-*`'s `maxTurns=5`. Live examples in
+     PR #13's checkins 02-06.
 
    **Dense packet shape** (three sections, in this order):
 
@@ -255,6 +263,39 @@ For each unit inside a tier:
    any condition holds, invoke `/trout-pull-request <slug> <branch>`
    so the PR tracks the latest state. Otherwise continue to the next
    unit.
+
+### Panel auto-derivation
+
+The `agents` list passed to `/guild-validate` is computed from the
+unit's file list at evaluation time, not hardcoded. The composition
+rules (file-type → evaluator mapping, precedence ordering, conflict
+policy) live in `.claude/agents/PANEL-COMPOSITION.md` and are the
+source of truth.
+
+1. **Collect file paths.** Take the unit's changed and created files
+   from the tier batch. Practical recipe: `git status --short` minus
+   deletions and substrate carryovers, plus any freshly-authored
+   untracked paths.
+2. **Derive the panel.** Run
+   `node .claude/scripts/guild/derive-panel.ts --files=<comma-
+   separated paths>`. The script prints a comma-separated list of
+   `subagent_type` names on stdout, precedence-ordered, with
+   `evaluator-contract-fit` always first.
+3. **Pass to `/guild-validate`.** Use the script's stdout as the
+   `agents=` argument verbatim. Confidence-loop tiers tend to touch
+   a single file family (a codemod over .module.css, a rename over
+   .tsx imports, etc.), so the derived panel is typically narrower
+   than the interactive loop's — common case is contract-fit plus
+   one or two domain lenses.
+
+Edge cases follow the same shape as `/ev-loop-interactive`'s § Panel
+auto-derivation:
+
+- Empty file list → contract-fit only.
+- Substrate-only files → contract-fit only.
+- L-004 session-boundary: if the derive-panel output includes an
+  evaluator authored during this session, drop it from `agents=`
+  manually and note the override in the checkin's Notes section.
 
 ### Should-checkpoint policy
 
