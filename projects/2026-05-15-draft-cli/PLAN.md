@@ -18,13 +18,23 @@ loom-cli's "angular to planning" posture: loom owns project state, draft
 owns plan authoring, they meet at `PLAN.md`.
 
 Draft is **a sibling consumer of loom-cli's CLI substrate**, not a
-duplicate. Loom-cli has already shipped `.claude/cli/lib/project.ts`
-(fuzzy slug resolution via `resolveProject(slugOrPath, projectsRoot)`),
-`lib/errors.ts` (structured `LoomError` pattern), the `bin/<name>` shim
-convention, and the `.claude/cli/fixtures/` test-data layout. Draft
-imports these directly. The `LoomError` name is asymmetric for draft —
-documented in `## Decisions` and accepted; renaming the substrate error
-is out of scope for this project.
+duplicate. Loom-cli has shipped `.claude/cli/lib/` (the slug regexes,
+`LoomError`, and as of D1 of this project, `createSlug`), the
+`bin/<name>` shim convention, and the `.claude/cli/fixtures/`
+test-data layout. Draft imports the naming + error primitives
+directly. The `LoomError` name is asymmetric for draft — documented
+in `## Decisions` and accepted; renaming the substrate error is out
+of scope for this project.
+
+**Critical: draft cannot reuse loom's `resolveProject`.** Loom's
+`listProjects` (which `resolveProject` calls) was updated mid-project
+to filter by a `manifest.json` marker — only loom-managed projects
+appear. Draft writes trout-style projects (`MANIFEST.md`,
+`sessions/`, `checkins/` — no `manifest.json`), so draft's own
+projects are invisible to loom's resolver. Draft therefore ships its
+own trout-aware resolver in D3 below. The shared layer in
+`.claude/cli/lib/` keeps slug grammar; each CLI owns its own
+resolver.
 
 Two outputs land per project:
 
@@ -72,12 +82,10 @@ implicit state of a plan-in-progress, known-only-when-complete. No
   optional `--no-commit`. `revise` takes `--revision-file=<path>`,
   required `--rationale=<str>`, optional `--no-commit`. `read` takes
   `--pretty`.
-- **Imports from loom-cli's lib**: `resolveProject` from
-  `.claude/cli/lib/project.ts` for fuzzy slug matching; `LoomError`
-  from `.claude/cli/lib/errors.ts` for structured errors. A new
-  `createSlug(topic, today): slug` helper lands in
-  `.claude/cli/lib/project.ts` (alongside `resolveProject`) — it's a
-  naming primitive, belongs in the shared lib. Test-covered.
+- **Imports from loom-cli's lib**: `createSlug(topic, today): slug`
+  (shipped via D1 of this project), `SLUG_RE` / regex constants, and
+  `LoomError` from `.claude/cli/lib/`. Slug-grammar is shared; the
+  resolver isn't — see D3 for draft's own trout-aware resolver.
 - TypeScript types in `.claude/cli/lib/draft-types.ts` (or inline if
   minimal) + fixtures in `.claude/cli/fixtures/` (e.g.
   `draft-plan-basic.json`, `draft-revise-basic.json`,
@@ -221,34 +229,53 @@ Documented once here, cited from both skills.
 
 ### Phase 1: Ship CLI + two skills + loop wiring
 
-Single PR per user direction. CLI deliverables are now small because
-loom-cli has already shipped slug resolution, error shape, the shim
-convention, and the fixture layout.
+**One PR per deliverable** (revised mid-project after PR #70 merged
+D1 standalone — matches loom-cli's actual cadence). Each deliverable
+below ships as its own branch + PR. Branches are named
+`ev.draft-cli.<short-slug>` (D1 was `ev.draft-cli.phase-1` — kept for
+historical clarity; subsequent branches named per deliverable). CLI
+deliverables are small because loom-cli has already shipped slug
+grammar, error shape, the shim convention, and the fixture layout.
 
 Deliverables:
 
-1. **`createSlug` in `lib/project.ts`.** Tiny shared-lib addition.
-   Test-first. Lives in loom-cli's lib so the naming primitive has
-   one home.
+1. **`createSlug` in `lib/project.ts`.** SHIPPED via PR #70. Tiny
+   shared-lib addition; the naming primitive has one home.
 
 2. **CLI entry + shim.** `.claude/cli/draft.ts` (parseInvocation
    pattern adapted from loom.ts — flat verb dispatch, no NAMESPACES
-   registry). `bin/draft` shim mirroring `bin/loom`. Imports
-   `resolveProject`, `createSlug`, `LoomError`.
+   registry). `bin/draft` shim mirroring `bin/loom`. Three verbs
+   (`plan`, `revise`, `read`) stub to `not-implemented`. Imports
+   land progressively as verb handlers arrive in D4-D6.
 
-3. **`plan` verb.** Pure verb function + thin IO wrapper. Test-first.
+3. **Trout-aware resolver in draft lib.** `.claude/cli/lib/draft-
+   project.ts` exports `resolveTroutProject(slugOrPath,
+   projectsRoot): string` — counterpart to loom's `resolveProject`
+   that finds trout-style projects (looks for `MANIFEST.md` and the
+   absence of `manifest.json`). Test-first, fixture-driven, mirrors
+   loom's resolver behavior (full slug → date-less suffix → path,
+   ambiguous → structured error, archived → archive/ fallback).
+   This deliverable was added mid-project after loom's `listProjects`
+   formalized the trout/loom boundary by filtering on
+   `manifest.json` — see Context § "Critical: draft cannot reuse
+   loom's `resolveProject`."
+
+4. **`plan` verb.** Pure verb function + thin IO wrapper. Test-first.
    Fixture covers happy path plus directory-exists-no-PLAN.md and
-   uncommitted-overwrite cases. `--no-commit` flag.
+   uncommitted-overwrite cases. `--no-commit` flag. Uses
+   `createSlug` for new-project naming; doesn't need the resolver
+   (project is being created, not located).
 
-4. **`revise` verb.** Pure verb function + thin IO wrapper.
-   Test-first. Fixture covers happy path, missing-PLAN, and revision-
-   log append. `--rationale` required, `--no-commit` optional.
+5. **`revise` verb.** Pure verb function + thin IO wrapper.
+   Test-first. Fixture covers happy path, missing-PLAN, and
+   revision-log append. `--rationale` required, `--no-commit`
+   optional. Uses `resolveTroutProject` from D3.
 
-5. **`read` verb.** Pure verb function + thin IO wrapper. Test-first.
+6. **`read` verb.** Pure verb function + thin IO wrapper. Test-first.
    JSON envelope shape per § Skill-to-CLI contract; `--pretty` for
-   humans.
+   humans. Uses `resolveTroutProject` from D3.
 
-6. **`/draft-plan` skill.** Grill-me interview as prose,
+7. **`/draft-plan` skill.** Grill-me interview as prose,
    recommendation-per-question pacing. Synthesizes INTERVIEW.md (the
    walked tree) and PLAN.md (clean shape) at the end. Shells out to
    `bin/draft plan --plan-file=... --interview-file=...`. Reuses
@@ -257,35 +284,38 @@ Deliverables:
    `bin/draft plan` (CLI) are distinct surfaces serving distinct
    audiences.
 
-7. **`/draft-revise` skill.** Thin. Takes slug + scope-shift context
+8. **`/draft-revise` skill.** Thin. Takes slug + scope-shift context
    from the calling loop. Reads current PLAN.md, composes a full new
    PLAN.md reflecting the change, surfaces a summary to the user for
    confirm, shells out to `bin/draft revise --rationale=<summary>`.
    No grill-me ceremony in v1.
 
-8. **Loop wiring.** Add scope-shift detection to `ev-loop-confidence`
+9. **Loop wiring.** Add scope-shift detection to `ev-loop-confidence`
    and `ev-loop-interactive`. **Restrictive default**: only offers
    `/draft-revise` when at least two signals concur (e.g., evaluator
-   finding *and* user comment, or whiteboard contradiction *and* phase
-   boundary). One-signal cases surface in the unit's `Notes for the
-   PR` for later review but do not interrupt. On confirm, invokes
-   `/draft-revise <slug>` via the Skill tool.
+   finding *and* user comment, or whiteboard contradiction *and*
+   phase boundary). One-signal cases surface in the unit's `Notes
+   for the PR` for later review but do not interrupt. On confirm,
+   invokes `/draft-revise <slug>` via the Skill tool.
 
-9. **Smoke tests + phase close.** Throwaway project. Run `/draft-plan`;
-   verify both files committed. Simulate two-signal scope-shift in a
-   loop run; verify `/draft-revise` proposes a revision, user confirm
-   triggers `bin/draft revise`, PLAN.md is updated, revision log
-   appended, commit lands.
+10. **Smoke tests + phase close.** Throwaway project. Run
+    `/draft-plan`; verify both files committed. Simulate two-signal
+    scope-shift in a loop run; verify `/draft-revise` proposes a
+    revision, user confirm triggers `bin/draft revise`, PLAN.md is
+    updated, revision log appended, commit lands.
 
-**Verification:**
+**Per-deliverable verification** (each PR):
 
 - `npm run lint` (Biome) clean.
 - `npm run test` clean (vitest covers every CLI verb, written
-  test-first; `createSlug` covered too).
+  test-first).
 - `npm run build` clean.
+
+**Phase close** (after D10):
+
 - Manual smoke through the throwaway project end-to-end.
 
-**One PR.**
+**Ten deliverables, ten PRs** (D1 already shipped via PR #70).
 
 ## Dependencies
 
@@ -343,9 +373,17 @@ implementation.
 
 - **CLI lives at `.claude/cli/draft.ts`** following loom-cli's layout
   convention. `bin/draft` shim mirrors `bin/loom`.
-- **Draft imports loom-cli's lib.** `resolveProject`, `createSlug`
-  (new, lands in same lib), and `LoomError` from `.claude/cli/lib/`.
-  Draft is a sibling consumer of loom's substrate utilities.
+- **Draft imports the shared naming/error primitives from
+  loom-cli's lib** (`createSlug`, slug regexes, `LoomError`) — but
+  ships its own resolver. Loom's `resolveProject` only finds
+  loom-managed projects (filtered by `manifest.json`); draft's
+  projects are trout-style and need a separate resolver
+  (`resolveTroutProject` in D3). The shared layer is naming + error;
+  the per-CLI layer is resolution.
+- **One PR per deliverable** (revised mid-project after PR #70
+  landed D1 standalone). Branches named `ev.draft-cli.<short-slug>`.
+  Matches loom-cli's actual cadence. Replaces the original
+  "single-PR-per-phase" decision.
 - **PLAN.md is the clean final shape; INTERVIEW.md is the working
   trail.** Grill-me notes never bleed into PLAN.md. Both files are
   committed; both live next door in the project directory. INTERVIEW.md
