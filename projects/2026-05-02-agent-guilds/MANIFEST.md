@@ -16,7 +16,7 @@ Extract `guild-*` agent-panel substrate alongside trout/griot, thin ev-loop into
 |---|------|--------|--------|----------------|----|
 | 1 | Substrate foundations | completed | ev.agent-guilds.substrate-foundations | 05 | #8 (merged) |
 | 1.5 | Substrate primitive cleanup | completed | ev.agent-guilds.phase-1-5-carryover-3 | 01 | #42 (merged) |
-| 2 | Antagonist evaluator panel | in-progress | ev.agent-guilds.antagonist-evaluator-panel-6 | 01 | #49 (merged) |
+| 2 | Antagonist evaluator panel | in-progress | ev.agent-guilds.antagonist-evaluator-panel-6 | 01 | #50 (open) |
 | 3 | Whiteboard mechanism + engineers | not-started | — | — | — |
 | 4 | Domain pairs | not-started | — | — | — |
 | 5 | Griot integration + composability proof | not-started | — | — | — |
@@ -160,3 +160,4 @@ Phase 1 merged via PR #8. Phase 1.5 split into a sequence of PRs after a post-me
 | 2026-05-14 22:26 | pr-merged | #49 |
 | 2026-05-14 22:28 | note | Antagonist-evaluator-panel-6 branch cut from main post-#49-merge; D6 PANEL-COMPOSITION docs begins here |
 | 2026-05-14 22:35 | checkin-created | 01 on ev.agent-guilds.antagonist-evaluator-panel-6 |
+| 2026-05-14 22:36 | pr-opened | #50 |
