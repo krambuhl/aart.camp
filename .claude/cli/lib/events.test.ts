@@ -1,7 +1,9 @@
 import { test, expect } from 'vitest';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { readEvents } from './events.ts';
+import { readEvents, appendEvent } from './events.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FIXTURE = join(__dirname, '..', 'fixtures', 'events-all-types.jsonl');
@@ -36,4 +38,38 @@ test('readEvents applies limit', () => {
 
 test('readEvents throws events-not-found on missing file', () => {
   expect(() => readEvents('/nonexistent/events.jsonl')).toThrow(/events-not-found/);
+});
+
+test('appendEvent creates the file if missing and writes one line', () => {
+  const tmp = mkdtempSync(join(tmpdir(), 'loom-events-append-'));
+  const target = join(tmp, 'events.jsonl');
+  appendEvent(target, {
+    at: '2026-05-15T10:20:00Z',
+    event: 'note',
+    detail: { text: 'first' },
+  });
+  const events = readEvents(target);
+  expect(events).toHaveLength(1);
+  expect(events[0].event).toBe('note');
+  rmSync(tmp, { recursive: true, force: true });
+});
+
+test('appendEvent preserves prior lines (append-only)', () => {
+  const tmp = mkdtempSync(join(tmpdir(), 'loom-events-append-'));
+  const target = join(tmp, 'events.jsonl');
+  appendEvent(target, {
+    at: '2026-05-15T10:20:00Z',
+    event: 'note',
+    detail: { text: 'first' },
+  });
+  appendEvent(target, {
+    at: '2026-05-15T10:21:00Z',
+    event: 'note',
+    detail: { text: 'second' },
+  });
+  const events = readEvents(target);
+  expect(events).toHaveLength(2);
+  expect((events[0].detail as { text: string }).text).toBe('first');
+  expect((events[1].detail as { text: string }).text).toBe('second');
+  rmSync(tmp, { recursive: true, force: true });
 });

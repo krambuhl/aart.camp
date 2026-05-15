@@ -3,7 +3,13 @@ import { mkdtempSync, mkdirSync, rmSync, copyFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readCheckin, listCheckins, latestCheckin } from './checkin.ts';
+import {
+  readCheckin,
+  listCheckins,
+  latestCheckin,
+  writeCheckin,
+} from './checkin.ts';
+import type { Checkin } from './types.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FIXTURES = join(__dirname, '..', 'fixtures');
@@ -72,4 +78,21 @@ test('latestCheckin returns the highest-numbered one for a branch', () => {
 
 test('latestCheckin returns null when branch has no checkins', () => {
   expect(latestCheckin(projectPath, { branch: 'nonexistent' })).toBeNull();
+});
+
+test('writeCheckin writes to derived path and round-trips', () => {
+  const sample = readCheckin(join(branchDir, '04.json'));
+  // Use a branch that has a slash to exercise nested mkdir
+  const cWithBranch: Checkin = { ...sample, branch: 'loom-cli/new', number: '01' };
+  const written = writeCheckin(projectPath, cWithBranch);
+  expect(written.path).toContain('checkins/loom-cli/new/01.json');
+  const readBack = readCheckin(written.path);
+  expect(readBack.number).toBe('01');
+  expect(readBack.branch).toBe('loom-cli/new');
+});
+
+test('writeCheckin refuses to overwrite (immutability invariant)', () => {
+  const sample = readCheckin(join(branchDir, '04.json'));
+  // 04 already exists in setup
+  expect(() => writeCheckin(projectPath, sample)).toThrow(/checkin-already-exists/);
 });
