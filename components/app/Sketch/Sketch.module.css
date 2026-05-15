@@ -5,6 +5,14 @@
   height: min-content;
   justify-content: center;
 
+  /* Load-bearing patterns — do NOT normalize:
+     - `& canvas` (descendant selector): p5.js owns the <canvas> DOM
+       node and writes inline width/height from createCanvas(w, h);
+       a CSS-Module class cannot be attached to it.
+     - `!important` on width/height: overrides those p5-authored
+       inline styles so the canvas renders responsively.
+     See .claude/agents/generator-css-codemod.md § "Sketch-CSS
+     carve-outs" for the codemod-level documentation. */
   & canvas {
     background-color: black;
     display: block;

@@ -201,6 +201,86 @@ no explicit `engineers=` override is given, the loop logs a one-line
 note and skips the whiteboard step. This covers any phase that runs
 before the engineer roster ships.
 
+## Generator-evaluator pair authoring
+
+The substrate has three agent families: `evaluator-*` (read-only
+verdicts, see `.claude/agents/evaluator-base.md`), `whiteboard-*`
+(read-only prose perspectives, see
+`.claude/agents/whiteboard-base.md`), and `generator-*` (write-
+capable artifacts, see `.claude/agents/generator-base.md`).
+
+A **"domain pair"** is a *pattern* — a `generator-*` paired with
+a specialist `evaluator-*` that participates in the panel with
+elevated precedence per
+[PANEL-COMPOSITION.md](.claude/agents/PANEL-COMPOSITION.md). It is
+NOT a separate agent family. The v1 active pair is
+`generator-css-codemod` + `evaluator-css-architecture`; that pair
+is the reference implementation for future pairs.
+
+### Shape for adding a new pair
+
+1. **Author `.claude/agents/generator-<domain>.md`**. Frontmatter:
+   `name`, `role: generator`, `description`,
+   `tools` (per `generator-base.md`'s allowlist or a narrower
+   subset; never include `Bash(git commit:*)` or `Bash(gh pr:*)`
+   — orchestrator owns commits), `model: inherit`,
+   `activation: active | stub`. Body: open with "Read
+   `generator-base.md` and apply its constraints," then layer
+   domain-specific scope (what files the generator touches, what
+   it produces, stopping conditions, boundary with sibling
+   evaluators).
+
+2. **Author `.claude/agents/evaluator-<domain>.md`**. Standard
+   `evaluator-*` shape per `evaluator-base.md` (`role: evaluator`,
+   read-only tools, structured verdict format). Body documents
+   the domain rubric — what catalog entries the evaluator
+   detects, severity per entry, boundary with adjacent
+   evaluators (especially other lenses on the same file types).
+
+3. **Register both in `PANEL-COMPOSITION.md`**. The specialist
+   evaluator gets a slot in the precedence list — placement
+   depends on the domain's blast radius (cascade-fragile CSS
+   produces visual breakage on shipped code, so
+   `evaluator-css-architecture` sits between framework
+   correctness and React-runtime correctness). Add a boundary
+   subsection covering overlap with adjacent lenses; if the
+   domain shares file types with two or more existing
+   evaluators, document the multi-way boundary explicitly.
+
+4. **Invoke via phase-config**. A unit's contract names the
+   specialist via `Panel: +<evaluator-name>` (existing
+   PANEL-COMPOSITION override mechanism). The panel runs the
+   specialist alongside the auto-derived evaluators; the
+   specialist's elevated precedence wins overlap-resolution
+   when its remedy is compatible with adjacent findings. Per
+   the gate-then-review pattern documented in `/ev-loop-*`
+   SKILLs, fail-fast applies on specialist *rejection*.
+
+### Stubs vs active
+
+Per the Phase 4 whiteboard's skeptic-flagged risk: stubs ship
+**only** when concrete activation criteria can be named AND
+the toolchain actually exists in the project. Speculative
+stubs invite drift — they're worst-of-both-worlds (enough
+disk presence to bit-rot, not enough callability to provide
+value).
+
+When a stub IS authored, its frontmatter includes an
+`activates-when:` list (string array) describing what has
+to be true before flipping to `activation: active`. The
+loop reads frontmatter (not body prose) for the loud-error
+path when a phase config names a stub generator.
+
+### Cross-references
+
+- `.claude/agents/generator-base.md` — family shared contract.
+- `.claude/agents/generator-css-codemod.md` — v1 active
+  generator reference implementation.
+- `.claude/agents/evaluator-css-architecture.md` — v1 active
+  specialist evaluator reference implementation.
+- `.claude/agents/PANEL-COMPOSITION.md` — precedence list +
+  three-way tokens/naming/architecture boundary.
+
 ## Event vocabulary
 
 Every write to MANIFEST.md appends one row to the Events table. The event

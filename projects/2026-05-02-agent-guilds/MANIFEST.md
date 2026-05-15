@@ -4,7 +4,7 @@
 **Started**: 2026-05-02
 **Status**: active
 **Current branch**: ev.agent-guilds.domain-pairs-2
-**Latest checkin**: checkins/ev.agent-guilds.domain-pairs/01.md
+**Latest checkin**: checkins/ev.agent-guilds.domain-pairs-2/01.md
 
 ## Strategy
 
@@ -18,7 +18,7 @@ Extract `guild-*` agent-panel substrate alongside trout/griot, thin ev-loop into
 | 1.5 | Substrate primitive cleanup | completed | ev.agent-guilds.phase-1-5-carryover-3 | 01 | #42 (merged) |
 | 2 | Antagonist evaluator panel | completed | ev.agent-guilds.antagonist-evaluator-panel-8 | 01 | #52 (merged) |
 | 3 | Whiteboard mechanism + engineers | completed | ev.agent-guilds.whiteboard-3 | 01 | #64 (merged) |
-| 4 | Domain pairs | in-progress | ev.agent-guilds.domain-pairs-2 |  | #71 (merged) |
+| 4 | Domain pairs | in-progress | ev.agent-guilds.domain-pairs-2 | 01 | #71 (merged) |
 | 5 | Griot integration + composability proof | not-started | — | — | — |
 
 ## Dependencies
@@ -192,3 +192,4 @@ Phase 1 merged via PR #8. Phase 1.5 split into a sequence of PRs after a post-me
 | 2026-05-15 11:00 | pr-opened | #71 |
 | 2026-05-15 11:18 | pr-merged | #71 |
 | 2026-05-15 11:18 | note | domain-pairs-2 branch cut from main post-#71-merge; Phase 4 D2 (CONVENTIONS pattern + Sketch.module.css comment) begins here |
+| 2026-05-15 11:23 | checkin-created | 01 on ev.agent-guilds.domain-pairs-2 |
