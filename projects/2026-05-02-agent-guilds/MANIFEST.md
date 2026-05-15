@@ -18,7 +18,7 @@ Extract `guild-*` agent-panel substrate alongside trout/griot, thin ev-loop into
 | 1.5 | Substrate primitive cleanup | completed | ev.agent-guilds.phase-1-5-carryover-3 | 01 | #42 (merged) |
 | 2 | Antagonist evaluator panel | completed | ev.agent-guilds.antagonist-evaluator-panel-8 | 01 | #52 (merged) |
 | 3 | Whiteboard mechanism + engineers | completed | ev.agent-guilds.whiteboard-3 | 01 | #64 (merged) |
-| 4 | Domain pairs | in-progress | ev.agent-guilds.domain-pairs | 01 | — |
+| 4 | Domain pairs | in-progress | ev.agent-guilds.domain-pairs | 01 | #71 (open) |
 | 5 | Griot integration + composability proof | not-started | — | — | — |
 
 ## Dependencies
@@ -189,3 +189,4 @@ Phase 1 merged via PR #8. Phase 1.5 split into a sequence of PRs after a post-me
 | 2026-05-15 10:28 | pr-merged | #64 |
 | 2026-05-15 10:29 | note | domain-pairs branch cut from main post-#64-merge; Phase 4 begins here |
 | 2026-05-15 10:59 | checkin-created | 01 on ev.agent-guilds.domain-pairs |
+| 2026-05-15 11:00 | pr-opened | #71 |
