@@ -7,6 +7,7 @@ export const ARCHIVE_DIRNAME = 'archive';
 
 const SLUG_RE = /^\d{4}-\d{2}-\d{2}-[a-z0-9][a-z0-9-]*[a-z0-9]$/;
 const DATELESS_RE = /^[a-z0-9][a-z0-9-]*[a-z0-9]$/;
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export type ProjectSummary = {
   slug: string;
@@ -90,6 +91,37 @@ export function resolveProject(slugOrPath: string, projectsRoot: string): string
     'project-not-found',
     `no project matching '${slugOrPath}'`,
   );
+}
+
+// Build a project slug from a free-form topic and a YYYY-MM-DD date.
+//
+// Slugifies `topic` (lowercase, runs of non-alphanumeric collapsed to a
+// single `-`, leading/trailing `-` trimmed) and prefixes with `today`,
+// producing `<YYYY-MM-DD>-<slug>` matching `SLUG_RE` exactly.
+//
+// Throws `LoomError`:
+//   - `invalid-date`  — `today` doesn't match YYYY-MM-DD.
+//   - `invalid-topic` — `topic` slugifies to fewer than 2 chars
+//                       (empty, whitespace, only special chars, or a
+//                       single alphanumeric — SLUG_RE requires 2+).
+export function createSlug(topic: string, today: string): string {
+  if (!DATE_RE.test(today)) {
+    throw new LoomError(
+      'invalid-date',
+      `today '${today}' does not match YYYY-MM-DD`,
+    );
+  }
+  const slug = topic
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  if (slug.length < 2) {
+    throw new LoomError(
+      'invalid-topic',
+      `topic '${topic}' slugifies to '${slug}' (must be at least 2 chars)`,
+    );
+  }
+  return `${today}-${slug}`;
 }
 
 export function listProjects(
