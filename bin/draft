@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# draft — entry shim for the draft planning CLI.
+# Resolves the repo's .claude/cli/draft.ts relative to this shim, then
+# execs node with the original args. Run from anywhere; bin/draft does
+# not depend on the caller's cwd.
+
+set -euo pipefail
+
+SHIM_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SHIM_DIR/.." && pwd)"
+ENTRY="$REPO_ROOT/.claude/cli/draft.ts"
+
+if [[ ! -f "$ENTRY" ]]; then
+  echo "draft-shim-error: entry not found at $ENTRY" >&2
+  exit 2
+fi
+
+exec node "$ENTRY" "$@"
