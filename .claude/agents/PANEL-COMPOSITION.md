@@ -48,6 +48,8 @@ different files is a no-op.
 | `.claude/agents/*.md`, `.claude/skills/*/SKILL.md`, `projects/**/checkins/**/*.md` | `evaluator-contract-fit` only — this is substrate authoring; domain evaluators don't apply to agent definitions, skill bodies, or checkin files |
 | `.claude/scripts/**/*.ts` (substrate scripts) | `evaluator-contract-fit`, `evaluator-naming` (script identifiers / function names are public-API surface for substrate consumers) |
 | `.claude/scripts/**/*.test.ts` (substrate tests) | `evaluator-contract-fit` only — the naming evaluator's `test files` carve-out applies |
+| `.claude/cli/**/*.ts` (substrate CLI) | `evaluator-contract-fit`, `evaluator-naming` — same rationale as `.claude/scripts/`; CLI verb names + exported types are public-API surface for loops and humans |
+| `.claude/cli/**/*.test.ts` (substrate CLI tests) | `evaluator-contract-fit` only — the naming evaluator's `test files` carve-out applies |
 
 ### Union rule
 
