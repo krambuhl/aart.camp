@@ -10,6 +10,7 @@ import { CHECKIN_VERBS } from './verbs/checkin.ts';
 import { SESSION_VERBS } from './verbs/session.ts';
 import { RETRO_VERBS } from './verbs/retro.ts';
 import { DOCTOR_VERBS } from './verbs/doctor.ts';
+import { PR_VERBS } from './verbs/pr.ts';
 import type { CliContext, DispatchResult } from './verbs/project.ts';
 
 export type { CliContext, DispatchResult };
@@ -38,6 +39,7 @@ const VERBS_BY_NAMESPACE: Record<string, Record<string, VerbHandler>> = {
   checkin: CHECKIN_VERBS,
   session: SESSION_VERBS,
   retro: RETRO_VERBS,
+  pr: PR_VERBS,
   doctor: DOCTOR_VERBS,
 };
 

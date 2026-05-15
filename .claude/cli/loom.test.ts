@@ -123,13 +123,15 @@ test('dispatch: verbless namespace (doctor) routes rest as handler args', () => 
   rmSync(ctx.projectsRoot, { recursive: true, force: true });
 });
 
-test('dispatch: unwired namespace (pr) → not-implemented placeholder', () => {
+test('dispatch: pr namespace wired (no unwired namespaces remain)', () => {
   const ctx = makeCtx();
+  // pr is wired now (Phase 4 unit 01). Missing verb returns missing-verb,
+  // not not-implemented.
   const result = dispatch({ kind: 'verb', namespace: 'pr', rest: [] }, ctx);
   expect(result.exitCode).toBe(1);
   const parsed = JSON.parse(result.stderr as string);
-  expect(parsed.error).toBe('not-implemented');
-  expect(parsed.namespace).toBe('pr');
+  expect(parsed.error).toBe('missing-verb');
+  expect(parsed.candidates).toContain('discover');
   rmSync(ctx.projectsRoot, { recursive: true, force: true });
 });
 

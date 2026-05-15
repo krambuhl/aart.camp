@@ -19,10 +19,13 @@ import { LoomError } from '../lib/errors.ts';
 import type { Manifest, ManifestPhase } from '../lib/types.ts';
 
 // Shared CLI context. Tests inject `projectsRoot` directly and may
-// override `cwdOverride` to simulate `process.cwd()` for `status`.
+// override `cwdOverride` to simulate `process.cwd()` for `status`,
+// or `ghRunner` to stub the `gh` CLI in pr verbs.
+import type { GhRunner } from '../lib/gh.ts';
 export type CliContext = {
   projectsRoot: string;
   cwdOverride?: string;
+  ghRunner?: GhRunner;
 };
 
 export type DispatchResult = {
