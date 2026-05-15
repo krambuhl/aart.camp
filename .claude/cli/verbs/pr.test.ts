@@ -1,9 +1,16 @@
 import { test, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, mkdirSync, rmSync, copyFileSync } from 'node:fs';
+import {
+  mkdtempSync,
+  mkdirSync,
+  rmSync,
+  copyFileSync,
+  writeFileSync,
+  readFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { prDiscover } from './pr.ts';
+import { prDiscover, prOpen, prUpdate } from './pr.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FIXTURES = join(__dirname, '..', 'fixtures');
@@ -111,4 +118,156 @@ test('prDiscover: missing --branch returns missing-args', () => {
   const result = prDiscover(['test-loom'], { projectsRoot });
   expect(result.exitCode).toBe(1);
   expect(JSON.parse(result.stderr as string).error).toBe('missing-args');
+});
+
+// ---------- prOpen tests ----------
+
+test('prOpen: composes gh pr create, parses URL, appends event', () => {
+  setupProjectWithCheckins(['01']);
+  const projectPath = join(projectsRoot, '2026-05-15-test-loom');
+  const bodyFile = join(projectsRoot, 'body.md');
+  writeFileSync(bodyFile, '## Summary\nBody contents', 'utf8');
+
+  const ghCalls: string[][] = [];
+  const ghRunner = (args: string[]) => {
+    ghCalls.push(args);
+    return 'https://github.com/owner/repo/pull/77\n';
+  };
+
+  const result = prOpen(
+    [
+      'test-loom',
+      '--title=Test PR',
+      `--body-file=${bodyFile}`,
+      '--branch=loom-cli/test-branch',
+    ],
+    { projectsRoot, ghRunner },
+  );
+  expect(result.exitCode).toBe(0);
+  const out = JSON.parse(result.stdout as string);
+  expect(out.pr).toBe(77);
+  expect(out.url).toBe('https://github.com/owner/repo/pull/77');
+
+  // gh invocation should include create + flags
+  expect(ghCalls[0]).toContain('pr');
+  expect(ghCalls[0]).toContain('create');
+  expect(ghCalls[0]).toContain('--title');
+  expect(ghCalls[0]).toContain('Test PR');
+
+  // pr-opened event appended
+  const eventsRaw = readFileSync(join(projectPath, 'events.jsonl'), 'utf8');
+  const lastLine = eventsRaw.trim().split('\n').pop() as string;
+  const event = JSON.parse(lastLine);
+  expect(event.event).toBe('pr-opened');
+  expect(event.detail.pr).toBe(77);
+  expect(event.detail.url).toBe('https://github.com/owner/repo/pull/77');
+});
+
+test('prOpen: gh failure surfaces as gh-failed', () => {
+  setupProjectWithCheckins(['01']);
+  const bodyFile = join(projectsRoot, 'body.md');
+  writeFileSync(bodyFile, '...', 'utf8');
+  const ghRunner = () => {
+    throw new Error('gh: auth required');
+  };
+  const result = prOpen(
+    ['test-loom', '--title=x', `--body-file=${bodyFile}`],
+    { projectsRoot, ghRunner },
+  );
+  expect(result.exitCode).toBe(1);
+  expect(JSON.parse(result.stderr as string).error).toBe('gh-failed');
+});
+
+test('prOpen: missing --title returns missing-args', () => {
+  setupProjectWithCheckins(['01']);
+  const bodyFile = join(projectsRoot, 'body.md');
+  writeFileSync(bodyFile, '...', 'utf8');
+  const result = prOpen(
+    ['test-loom', `--body-file=${bodyFile}`],
+    { projectsRoot },
+  );
+  expect(result.exitCode).toBe(1);
+  expect(JSON.parse(result.stderr as string).error).toBe('missing-args');
+});
+
+test('prOpen: missing --body-file returns missing-args', () => {
+  setupProjectWithCheckins(['01']);
+  const result = prOpen(['test-loom', '--title=x'], { projectsRoot });
+  expect(result.exitCode).toBe(1);
+  expect(JSON.parse(result.stderr as string).error).toBe('missing-args');
+});
+
+test('prOpen: invalid gh URL output returns invalid-pr-url', () => {
+  setupProjectWithCheckins(['01']);
+  const bodyFile = join(projectsRoot, 'body.md');
+  writeFileSync(bodyFile, '...', 'utf8');
+  const ghRunner = () => 'not a pr url\n';
+  const result = prOpen(
+    ['test-loom', '--title=x', `--body-file=${bodyFile}`],
+    { projectsRoot, ghRunner },
+  );
+  expect(result.exitCode).toBe(1);
+  expect(JSON.parse(result.stderr as string).error).toBe('invalid-pr-url');
+});
+
+// ---------- prUpdate tests ----------
+
+test('prUpdate: composes gh pr edit, appends pr-updated event', () => {
+  setupProjectWithCheckins(['01']);
+  const projectPath = join(projectsRoot, '2026-05-15-test-loom');
+  const bodyFile = join(projectsRoot, 'body.md');
+  writeFileSync(bodyFile, '## Updated body', 'utf8');
+
+  const ghCalls: string[][] = [];
+  const ghRunner = (args: string[]) => {
+    ghCalls.push(args);
+    return '';
+  };
+
+  const result = prUpdate(
+    ['test-loom', '--pr=42', `--body-file=${bodyFile}`],
+    { projectsRoot, ghRunner },
+  );
+  expect(result.exitCode).toBe(0);
+  const out = JSON.parse(result.stdout as string);
+  expect(out.pr).toBe(42);
+
+  // gh invocation
+  expect(ghCalls[0]).toContain('pr');
+  expect(ghCalls[0]).toContain('edit');
+  expect(ghCalls[0]).toContain('42');
+
+  // pr-updated event
+  const eventsRaw = readFileSync(join(projectPath, 'events.jsonl'), 'utf8');
+  const lastLine = eventsRaw.trim().split('\n').pop() as string;
+  const event = JSON.parse(lastLine);
+  expect(event.event).toBe('pr-updated');
+  expect(event.detail.pr).toBe(42);
+});
+
+test('prUpdate: missing --pr returns missing-args', () => {
+  setupProjectWithCheckins(['01']);
+  const bodyFile = join(projectsRoot, 'body.md');
+  writeFileSync(bodyFile, '...', 'utf8');
+  const result = prUpdate(
+    ['test-loom', `--body-file=${bodyFile}`],
+    { projectsRoot },
+  );
+  expect(result.exitCode).toBe(1);
+  expect(JSON.parse(result.stderr as string).error).toBe('missing-args');
+});
+
+test('prUpdate: gh failure surfaces as gh-failed', () => {
+  setupProjectWithCheckins(['01']);
+  const bodyFile = join(projectsRoot, 'body.md');
+  writeFileSync(bodyFile, '...', 'utf8');
+  const ghRunner = () => {
+    throw new Error('gh: PR 99 not found');
+  };
+  const result = prUpdate(
+    ['test-loom', '--pr=99', `--body-file=${bodyFile}`],
+    { projectsRoot, ghRunner },
+  );
+  expect(result.exitCode).toBe(1);
+  expect(JSON.parse(result.stderr as string).error).toBe('gh-failed');
 });
