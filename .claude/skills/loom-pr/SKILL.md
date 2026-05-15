@@ -62,13 +62,22 @@ verdict, notes_for_pr).
 
 ### 3. Compose title and body
 
-**Title**:
-- Single-checkin (`|disk| == 1`): `[Phase N] <unit name>` where N
-  and unit name come from the checkin's `phase.number` +
-  `phase.name` + `unit` fields. Trim to under 70 characters.
+**Title** — always prefix with the project's plan name, not the
+phase. The plan-name prefix makes PR titles scannable in a reviewer's
+notification feed across multiple concurrent projects.
+
+- Single-checkin (`|disk| == 1`): `[<plan-name>] <unit name>` where
+  `<plan-name>` is the project's slug (date-less form preferred:
+  `loom-cli`, not `2026-05-15-loom-cli`) and `<unit name>` comes from
+  the checkin's `unit` field. Trim to under 70 characters.
 - Multi-checkin (`|disk| >= 2`): If every checkin shares the same
-  phase, `[Phase N] <phase name>`. Else stop and report
-  `pr: paused, awaiting title input — checkins span phases <list>`.
+  phase, `[<plan-name>] <phase name>` (phase name from
+  `checkin.phase.name`). Else stop and report `pr: paused, awaiting
+  title input — checkins span phases <list>`.
+
+The phase number is NOT in the title. It's surfaced in the body's
+substrate-orientation callout below (see "phase <N><letter> of an
+<total>-phase project" wording).
 
 **Body** (always under 600 words; sections cap individually):
 
@@ -77,7 +86,9 @@ verdict, notes_for_pr).
 
 > [!NOTE]
 > Part of the **<project title>** project — see
-> [PLAN.md](projects/<slug>/PLAN.md) for context.
+> [PLAN.md](projects/<slug>/PLAN.md) for full context.
+> This is phase <N><letter> of what is currently an <total>-phase
+> project to <project intent>.
 
 ## Motivation
 <2-4 sentences distilled from checkin.contract.goal and PLAN.md
@@ -102,6 +113,25 @@ manifest config. Just the commands and their result.>
 ---
 Tracked by project substrate: <manifest path> — checkin{s} <list>
 ```
+
+**Computing the callout fields**:
+
+- `<project title>` — from manifest's `title` field.
+- `<slug>` — from manifest's `slug` field.
+- `<N>` — current phase number from `checkin.phase.number`.
+- `<letter>` — lowercase letter indicating this PR's position
+  within the phase: `a` if this is the first PR opened on a branch
+  in this phase, `b` for the second, and so on. Compute by reading
+  `bin/loom events read <slug> --event=pr-opened` and counting
+  prior pr-opened events scoped to the same phase (cross-check via
+  the phase row in `bin/loom phase read <slug> <N>` — its branch
+  field tells you which PRs were for this phase).
+- `<total>` — `manifest.phases.length` (read via
+  `bin/loom project read <slug>`).
+- `<project intent>` — distilled from PLAN.md's `## Context`
+  section in one sentence (use it verbatim if it's already a
+  single sentence). This is the "why" of the whole project, not
+  this PR's motivation.
 
 **Motivation source check**: if `checkin.contract.goal` is empty
 across all checkins AND PLAN.md doesn't have a `## Context` section,
