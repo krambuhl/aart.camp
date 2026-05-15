@@ -1,4 +1,11 @@
-import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
+import {
+  readFileSync,
+  writeFileSync,
+  mkdirSync,
+  existsSync,
+  readdirSync,
+  statSync,
+} from 'node:fs';
 import { join, relative } from 'node:path';
 import type { Checkin } from './types.ts';
 import { LoomError } from './errors.ts';
@@ -90,4 +97,34 @@ export function latestCheckin(
   const list = listCheckins(projectPath, opts);
   if (list.length === 0) return null;
   return list[list.length - 1] ?? null;
+}
+
+export type WriteCheckinResult = {
+  path: string;
+  number: string;
+  branch: string;
+};
+
+export function writeCheckin(
+  projectPath: string,
+  checkin: Checkin,
+): WriteCheckinResult {
+  const branchDir = join(projectPath, 'checkins', checkin.branch);
+  const target = join(branchDir, `${checkin.number}.json`);
+  if (existsSync(target)) {
+    throw new LoomError(
+      'checkin-already-exists',
+      `checkin already exists at ${target} (checkins are immutable)`,
+    );
+  }
+  try {
+    mkdirSync(branchDir, { recursive: true });
+    writeFileSync(target, `${JSON.stringify(checkin, null, 2)}\n`, 'utf8');
+  } catch (err: unknown) {
+    throw new LoomError(
+      'checkin-write-failed',
+      `checkin write failed at ${target}: ${(err as Error).message}`,
+    );
+  }
+  return { path: target, number: checkin.number, branch: checkin.branch };
 }

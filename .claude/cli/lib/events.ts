@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, appendFileSync } from 'node:fs';
 import type { Event, EventName } from './types.ts';
 import { LoomError } from './errors.ts';
 
@@ -49,4 +49,15 @@ export function readEvents(path: string, opts: ReadEventsOptions = {}): Event[] 
     return filtered.slice(0, opts.limit);
   }
   return filtered;
+}
+
+export function appendEvent(path: string, event: Event): void {
+  try {
+    appendFileSync(path, `${JSON.stringify(event)}\n`, 'utf8');
+  } catch (err: unknown) {
+    throw new LoomError(
+      'events-write-failed',
+      `events append failed at ${path}: ${(err as Error).message}`,
+    );
+  }
 }
