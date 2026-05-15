@@ -1,0 +1,79 @@
+import { test, expect, beforeEach, afterEach } from 'vitest';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { resolveProject, listProjects } from './project.ts';
+
+let projectsRoot: string;
+
+beforeEach(() => {
+  projectsRoot = mkdtempSync(join(tmpdir(), 'loom-project-test-'));
+  // Active projects
+  mkdirSync(join(projectsRoot, '2026-05-10-project-a'));
+  mkdirSync(join(projectsRoot, '2026-05-15-loom-cli'));
+  // Archived
+  mkdirSync(join(projectsRoot, 'archive', '2026-04-01-old-project'), {
+    recursive: true,
+  });
+  // Add some non-project entries that should be ignored
+  writeFileSync(join(projectsRoot, 'CONVENTIONS.md'), '# noise\n');
+});
+
+afterEach(() => {
+  rmSync(projectsRoot, { recursive: true, force: true });
+});
+
+test('resolveProject: full slug returns its path', () => {
+  const p = resolveProject('2026-05-15-loom-cli', projectsRoot);
+  expect(p).toBe(join(projectsRoot, '2026-05-15-loom-cli'));
+});
+
+test('resolveProject: date-less suffix returns unique match', () => {
+  const p = resolveProject('loom-cli', projectsRoot);
+  expect(p).toBe(join(projectsRoot, '2026-05-15-loom-cli'));
+});
+
+test('resolveProject: archived slug falls back to archive/', () => {
+  const p = resolveProject('old-project', projectsRoot);
+  expect(p).toBe(join(projectsRoot, 'archive', '2026-04-01-old-project'));
+});
+
+test('resolveProject: relative path resolves to absolute', () => {
+  const rel = './2026-05-15-loom-cli';
+  const p = resolveProject(join(projectsRoot, rel), projectsRoot);
+  expect(p).toBe(resolve(projectsRoot, '2026-05-15-loom-cli'));
+});
+
+test('resolveProject: nonexistent slug throws project-not-found', () => {
+  expect(() => resolveProject('does-not-exist', projectsRoot)).toThrow(
+    /project-not-found/,
+  );
+});
+
+test('resolveProject: ambiguous suffix throws slug-ambiguous with candidates', () => {
+  // Add a second project sharing the suffix `-foo`
+  mkdirSync(join(projectsRoot, '2026-05-20-foo'));
+  mkdirSync(join(projectsRoot, '2026-05-25-foo'));
+  try {
+    resolveProject('foo', projectsRoot);
+    throw new Error('expected throw');
+  } catch (err: unknown) {
+    const e = err as { code: string; candidates?: string[] };
+    expect(e.code).toBe('slug-ambiguous');
+    expect(e.candidates).toBeDefined();
+    expect(e.candidates?.length).toBe(2);
+  }
+});
+
+test('listProjects: enumerates active projects only by default', () => {
+  const list = listProjects(projectsRoot);
+  expect(list.map((p) => p.slug).sort()).toEqual([
+    '2026-05-10-project-a',
+    '2026-05-15-loom-cli',
+  ]);
+});
+
+test('listProjects: --archived enumerates the archive instead', () => {
+  const list = listProjects(projectsRoot, { archived: true });
+  expect(list.map((p) => p.slug)).toEqual(['2026-04-01-old-project']);
+});
