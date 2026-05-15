@@ -1,4 +1,5 @@
 import { existsSync, readdirSync, statSync } from 'node:fs';
+const LOOM_MARKER = 'manifest.json';
 import { isAbsolute, join, resolve } from 'node:path';
 import { LoomError } from './errors.ts';
 
@@ -112,6 +113,11 @@ export function listProjects(
     } catch {
       continue;
     }
+    // Filter to loom-managed projects: only directories carrying the
+    // JSON manifest are listed. Trout projects (markdown MANIFEST.md)
+    // are intentionally invisible to loom per the coexistence policy
+    // in LOOM-CONVENTIONS.md.
+    if (!existsSync(join(fullPath, LOOM_MARKER))) continue;
     projects.push({ slug: entry, path: fullPath });
   }
   return projects;

@@ -6,17 +6,27 @@ import { resolveProject, listProjects } from './project.ts';
 
 let projectsRoot: string;
 
+function makeLoomProject(root: string, slug: string): void {
+  const path = join(root, slug);
+  mkdirSync(path, { recursive: true });
+  // Marker file: loom-managed projects carry manifest.json. Filtering
+  // by this marker excludes trout (markdown) projects from listings.
+  writeFileSync(join(path, 'manifest.json'), '{}');
+}
+
 beforeEach(() => {
   projectsRoot = mkdtempSync(join(tmpdir(), 'loom-project-test-'));
   // Active projects
-  mkdirSync(join(projectsRoot, '2026-05-10-project-a'));
-  mkdirSync(join(projectsRoot, '2026-05-15-loom-cli'));
+  makeLoomProject(projectsRoot, '2026-05-10-project-a');
+  makeLoomProject(projectsRoot, '2026-05-15-loom-cli');
   // Archived
-  mkdirSync(join(projectsRoot, 'archive', '2026-04-01-old-project'), {
-    recursive: true,
-  });
+  makeLoomProject(join(projectsRoot, 'archive'), '2026-04-01-old-project');
   // Add some non-project entries that should be ignored
   writeFileSync(join(projectsRoot, 'CONVENTIONS.md'), '# noise\n');
+  // Add a trout-style project (no manifest.json) — must NOT appear in
+  // listProjects output. Lives alongside loom projects to exercise the
+  // coexistence filter.
+  mkdirSync(join(projectsRoot, '2026-05-12-trout-only'));
 });
 
 afterEach(() => {
@@ -51,9 +61,9 @@ test('resolveProject: nonexistent slug throws project-not-found', () => {
 });
 
 test('resolveProject: ambiguous suffix throws slug-ambiguous with candidates', () => {
-  // Add a second project sharing the suffix `-foo`
-  mkdirSync(join(projectsRoot, '2026-05-20-foo'));
-  mkdirSync(join(projectsRoot, '2026-05-25-foo'));
+  // Two loom-marked projects sharing the suffix `-foo`
+  makeLoomProject(projectsRoot, '2026-05-20-foo');
+  makeLoomProject(projectsRoot, '2026-05-25-foo');
   try {
     resolveProject('foo', projectsRoot);
     throw new Error('expected throw');
@@ -62,6 +72,13 @@ test('resolveProject: ambiguous suffix throws slug-ambiguous with candidates', (
     expect(e.code).toBe('slug-ambiguous');
     expect(e.candidates).toBeDefined();
     expect(e.candidates?.length).toBe(2);
+  }
+});
+
+test('listProjects: filters out trout-only projects (no manifest.json)', () => {
+  const list = listProjects(projectsRoot);
+  for (const p of list) {
+    expect(p.slug).not.toBe('2026-05-12-trout-only');
   }
 });
 
