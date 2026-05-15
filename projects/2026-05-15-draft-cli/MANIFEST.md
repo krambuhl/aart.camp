@@ -14,7 +14,7 @@ interactive
 
 | # | Name | Status | Branch | Latest checkin | PR |
 |---|------|--------|--------|----------------|----|
-| 1 | Phase 1: Ship CLI + skill + loop wiring | in-progress | ev.draft-cli.trout-resolver | 01 | #74 (open) |
+| 1 | Phase 1: Ship CLI + skill + loop wiring | in-progress | ev.draft-cli.trout-resolver | 01 | #75 (open) |
 
 ## Dependencies
 
@@ -36,3 +36,4 @@ Project initialized. No work started yet.
 | 2026-05-15 11:21 | checkin-created | 01 on ev.draft-cli.cli-scaffold (D2: CLI scaffold) |
 | 2026-05-15 11:24 | pr-opened | #74 |
 | 2026-05-15 11:31 | checkin-created | 01 on ev.draft-cli.trout-resolver (D3: trout resolver) |
+| 2026-05-15 11:32 | pr-opened | #75 |
