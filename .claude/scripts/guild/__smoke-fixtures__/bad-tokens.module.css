@@ -1,0 +1,24 @@
+/* Smoke-test fixture for the antagonist evaluator panel.
+ *
+ * Intentionally uses literal hex and px values where token()
+ * functions would apply — targets evaluator-tokens catalog hits
+ * (tokens-hex-literal, tokens-hardcoded-spacing,
+ * tokens-hardcoded-typography).
+ *
+ * Lives outside Biome's files.includes and not imported in the
+ * build graph. See ./README.md for the fixture convention.
+ * Authored in the Phase 2 D8 smoke test of the
+ * 2026-05-02-agent-guilds project.
+ */
+
+.banner {
+  color: #ff0000;
+  background: #00ff00;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.bannerTitle {
+  font-size: 14px;
+  line-height: 1.5;
+}
