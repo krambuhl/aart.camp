@@ -3,7 +3,7 @@
 **Slug**: 2026-05-15-loom-cli
 **Started**: 2026-05-15
 **Status**: active
-**Current branch**: loom-cli/phase-2-foundations
+**Current branch**: —
 **Latest checkin**: checkins/loom-cli/phase-2-foundations/04.md
 
 ## Strategy
@@ -15,7 +15,7 @@ Build loom, a project-memory CLI designed for orchestration loops as first-class
 | # | Name | Status | Branch | Latest checkin | PR |
 |---|------|--------|--------|----------------|----|
 | 1 | Schemas + fixtures | completed | loom-cli/phase-1-schemas | 03 | #57 (merged) |
-| 2 | Foundations + read API | in-progress | loom-cli/phase-2-foundations | 04 | #62 (open) |
+| 2 | Foundations + read API | completed | loom-cli/phase-2-foundations | 04 | #62 (open) |
 | 3 | Lifecycle write API + lifecycle skills | not-started | — | — | — |
 | 4 | PR write API + PR skills | not-started | — | — | — |
 
@@ -50,3 +50,4 @@ Project initialized. No work started yet.
 | 2026-05-15 10:03 | pr-opened | #61 |
 | 2026-05-15 10:15 | checkin-created | 04 on loom-cli/phase-2-foundations |
 | 2026-05-15 10:16 | pr-opened | #62 |
+| 2026-05-15 10:16 | phase-completed | 2 |
