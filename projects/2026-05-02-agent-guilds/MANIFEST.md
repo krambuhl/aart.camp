@@ -196,3 +196,4 @@ Phase 1 merged via PR #8. Phase 1.5 split into a sequence of PRs after a post-me
 | 2026-05-15 11:24 | pr-opened | #73 |
 | 2026-05-15 12:31 | pr-merged | #73 |
 | 2026-05-15 12:31 | note | domain-pairs-3 branch cut from main post-#73-merge; Phase 4 D3 (real CSS codemod exercise, Phase 4 close) begins here — requires fresh Claude Code session per L-004 |
+| 2026-05-15 12:34 | session-saved | 2026-05-15-b.md |
