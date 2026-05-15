@@ -109,12 +109,23 @@ rationale-word matching) lives in `analyzeWhyCheck` in the script.
 
 #### 2.1 Title
 
-- **Single-checkin** (`|disk| = 1`): `[Phase N] <unit name>`. Phase
-  number and unit name come from `checkins[0].phase` and
-  `checkins[0].unit` in the inspect JSON. Trim to under 70 characters.
+Title prefix is the project's **plan name**, not the phase. Prefixing
+with the plan name makes PR titles scannable in a reviewer's
+notification feed across multiple concurrent projects — `[loom-cli]`
+identifies the project, where `[Phase 1]` doesn't.
+
+Compute `<plan-name>` by stripping the leading `YYYY-MM-DD-` from the
+project slug. Example: slug `2026-05-15-loom-cli` → plan name
+`loom-cli`. (If a slug somehow lacks the date prefix, fall back to
+using it verbatim.)
+
+- **Single-checkin** (`|disk| = 1`): `[<plan-name>] <unit name>`. Unit
+  name comes from `checkins[0].unit` in the inspect JSON. Phase
+  number is NOT in the title — it's surfaced in the body NOTE callout
+  (see § 2.2). Trim to under 70 characters.
 - **Multi-checkin** (`|disk| ≥ 2`):
   - If all entries in `checkins[]` share the same `phase` AND that phase
-    has a name in PLAN.md → `[Phase N] <phase name>`.
+    has a name in PLAN.md → `[<plan-name>] <phase name>`.
   - Else stop. Report `pr: paused, awaiting title input — checkins span phases <list>`.
 - Always under 70 characters.
 
@@ -133,10 +144,11 @@ overview) or compress the body harder.
 
 > [!NOTE]
 > Part of the **<project title>** project — see
-> [PLAN.md](projects/<slug>/PLAN.md) for context. Full acceptance
-> criteria, scope, execution, and evaluator verdict live in the
-> linked checkin file(s) in the Reference / Units section below —
-> the body is intentionally a summary.
+> [PLAN.md](projects/<slug>/PLAN.md) for full context.
+> This is phase <N> of <total> in a project to <project intent>.
+> Full acceptance criteria, scope, execution, and evaluator verdict
+> live in the linked checkin file(s) in the Reference / Units section
+> below — the body is intentionally a summary.
 
 ## Motivation
 <2–4 sentences. The "why" at conceptual level — design philosophy,
@@ -163,11 +175,31 @@ Tracked by project substrate: <path to MANIFEST.md> — checkin{s} <NN list>
 ```
 
 The marker MUST be the first line of the body — staleness detection
-depends on it. The `> [!NOTE]` callout is required (Invariant 8); the two
-templated slots — project title and PLAN.md link — come from the project
-MANIFEST's `# Project: <title>` line and the resolved slug. Other GitHub
-alerts (`[!WARNING]`, `[!CAUTION]`) go in `## Notes`, not as replacements
-for the substrate-orientation callout.
+depends on it. The `> [!NOTE]` callout is required (Invariant 8) and
+has four templated slots:
+
+- `<project title>` from the project MANIFEST's `# Project: <title>`
+  line.
+- `<slug>` from the resolved slug (full form, with date prefix).
+- `<N>` from `checkins[0].phase` (e.g. `1` from `"1 — Schemas +
+  fixtures"`).
+- `<total>` by reading MANIFEST.md's `## Phases` table and counting
+  data rows.
+- `<project intent>` distilled from PLAN.md's `## Context` section
+  in one sentence. Use it verbatim if it's already a single sentence;
+  otherwise compress to the underlying "why" of the whole project,
+  not this PR's motivation.
+
+Other GitHub alerts (`[!WARNING]`, `[!CAUTION]`) go in `## Notes`, not
+as replacements for the substrate-orientation callout.
+
+**Follow-up:** loom-pr's analogous callout includes a phase-letter
+(`<N><letter>` — `1a`, `1b`, `1c`...) that tracks PR position within
+a phase. Trout's body NOTE omits the letter for now because the
+markdown events table is less queryable than loom's `events.jsonl`.
+A future extension to `pr-plumbing.ts`'s `inspect` could expose
+`priorPrOpenedForPhase` so this skill can compute the letter the
+same way.
 
 **Section caps are hard** (Invariant 7). If source material wants to
 balloon a section, the PR is doing too much — split it or compress.
