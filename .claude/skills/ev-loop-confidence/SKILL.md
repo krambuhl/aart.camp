@@ -58,6 +58,49 @@ Create this directory if it doesn't exist.
 
 ## Phase-level process
 
+### Whiteboard (opt-in)
+
+If the phase entry in PLAN.md declares a `**Whiteboard**:` block, run a
+multi-engineer design pass **once before Step 0** (pre-flight). The
+whiteboard output becomes shared reference material for every tier in
+the phase (cited in each tier contract's `Inputs:` line).
+
+**Phase config format** (in PLAN.md, immediately under the phase's
+prose):
+
+```
+**Whiteboard**: engineers=<comma-separated names>; topic=<one-line topic>; rounds=<N>
+```
+
+Where `engineers` is a comma-separated list of `whiteboard-*`
+`subagent_type` names, `topic` is the design question being explored
+(used as the whiteboard file's header), and `rounds` is the number of
+rounds to run (typically 1 or 2; round 2 lets engineers address
+round-1 contradictions).
+
+**Whiteboard artifact path**:
+`projects/<slug>/whiteboards/<phase-number>-<topic-slug>.md`. Create
+the parent directory if it doesn't exist.
+
+**Per-round invocation**: for each round 1..N, invoke
+`/guild-whiteboard` via the `Skill` tool with `engineers=<list>`,
+`brief=<topic + any phase context>`, `whiteboard=<path>`. The skill
+auto-detects round number from existing file state, so re-running is
+idempotent (a re-invocation with the same whiteboard file detects
+existing rounds and appends a NEW round). For round 2+, the skill
+constructs `per_agent_context` from prior round state so engineers
+can address contradictions.
+
+**L-004 session-boundary**: if any of the named `whiteboard-*`
+engineers were authored in the current session, drop them from the
+`engineers=` list manually and surface the override in the next
+tier's first checkin Notes for the PR. The runtime registry is
+loaded once per Claude Code process start; `/clear` is NOT a session
+boundary.
+
+**Skipping**: if no `**Whiteboard**:` block is present in the phase
+entry, skip this step entirely and proceed directly to Step 0.
+
 ### Step 0. Pre-flight
 
 Before any work:

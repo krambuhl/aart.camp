@@ -171,6 +171,23 @@ a real subdirectory: `checkins/claude/adopt-biome-v1/01.md`.
 across all branches. Each phase row has its own latest-checkin number scoped
 to that phase's branch.
 
+## PLAN.md phase-config extensions
+
+A phase entry in PLAN.md may declare an opt-in `**Whiteboard**:` block
+immediately under the phase's prose paragraph. Both `/ev-loop-interactive`
+and `/ev-loop-confidence` read it at phase start and trigger a
+`/guild-whiteboard` multi-engineer design pass before the unit/tier loop
+begins. Format:
+
+```
+**Whiteboard**: engineers=<comma-separated names>; topic=<one-line topic>; rounds=<N>
+```
+
+Whiteboard output lands at
+`projects/<slug>/whiteboards/<phase-number>-<topic-slug>.md` and is cited as
+an Input in each unit's contract. The block is opt-in; phases without it
+skip the whiteboard step entirely.
+
 ## Event vocabulary
 
 Every write to MANIFEST.md appends one row to the Events table. The event
