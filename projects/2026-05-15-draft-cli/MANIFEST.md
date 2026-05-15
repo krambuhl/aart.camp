@@ -14,7 +14,7 @@ interactive
 
 | # | Name | Status | Branch | Latest checkin | PR |
 |---|------|--------|--------|----------------|----|
-| 1 | Phase 1: Ship CLI + skill + loop wiring | in-progress | ev.draft-cli.cli-scaffold | 01 | #70 (merged) / #<N> (open, pending) |
+| 1 | Phase 1: Ship CLI + skill + loop wiring | in-progress | ev.draft-cli.cli-scaffold | 01 | #74 (open) |
 
 ## Dependencies
 
@@ -34,3 +34,4 @@ Project initialized. No work started yet.
 | 2026-05-15 10:59 | pr-opened | #70 |
 | 2026-05-15 11:00 | pr-merged | #70 |
 | 2026-05-15 11:21 | checkin-created | 01 on ev.draft-cli.cli-scaffold (D2: CLI scaffold) |
+| 2026-05-15 11:24 | pr-opened | #74 |
