@@ -2,6 +2,11 @@
 import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { realpathSync } from 'node:fs';
+import { join } from 'node:path';
+import { DRAFT_VERBS } from './verbs/draft.ts';
+import type { DraftCliContext, DispatchResult } from './verbs/draft.ts';
+
+export type { DraftCliContext, DispatchResult };
 
 // ---------- Verb registry ----------
 
@@ -64,13 +69,10 @@ export function formatUnknownVerbError(verb: string): string {
   return JSON.stringify(payload);
 }
 
-export type DispatchResult = {
-  stdout?: string;
-  stderr?: string;
-  exitCode: number;
-};
-
-export function dispatch(invocation: Invocation): DispatchResult {
+export function dispatch(
+  invocation: Invocation,
+  ctx: DraftCliContext,
+): DispatchResult {
   if (invocation.kind === 'help') {
     return { stdout: formatHelp(), exitCode: 0 };
   }
@@ -80,22 +82,30 @@ export function dispatch(invocation: Invocation): DispatchResult {
       exitCode: 1,
     };
   }
-  // Verb recognized but no handler implementation yet (D3/D4/D5 fill
-  // these in). Print a placeholder error pointing at the future surface.
-  const payload = {
-    error: 'not-implemented',
-    message: `verb '${invocation.verb}' has no handler yet (D3-D5 in progress)`,
-    verb: invocation.verb,
-  };
-  return { stderr: JSON.stringify(payload), exitCode: 1 };
+  const handler = DRAFT_VERBS[invocation.verb];
+  if (handler === undefined) {
+    // Reachable only if VERBS includes a name not present in
+    // DRAFT_VERBS. Kept as a defensive branch so the surface stays
+    // consistent if the two registries drift.
+    const payload = {
+      error: 'not-implemented',
+      message: `verb '${invocation.verb}' has no handler yet`,
+      verb: invocation.verb,
+    };
+    return { stderr: JSON.stringify(payload), exitCode: 1 };
+  }
+  return handler(invocation.rest, ctx);
 }
 
 // ---------- Entry ----------
 
+function deriveProjectsRoot(): string {
+  return process.env.DRAFT_PROJECTS_ROOT ?? join(process.cwd(), 'projects');
+}
+
 function main(argv: string[]): never {
-  // parseArgs is invoked here for forward compatibility with --pretty and
-  // verb-level flags landing in D3-D5. D2 only honors top-level flags;
-  // verb-level argument parsing lives in each verb's handler.
+  // parseArgs is invoked here for forward compatibility with top-level
+  // flags. Verb-level argument parsing lives in each verb's handler.
   parseArgs({
     args: argv,
     options: {
@@ -106,8 +116,9 @@ function main(argv: string[]): never {
     strict: false,
   });
 
+  const ctx: DraftCliContext = { projectsRoot: deriveProjectsRoot() };
   const invocation = parseInvocation(argv);
-  const result = dispatch(invocation);
+  const result = dispatch(invocation, ctx);
   if (result.stdout !== undefined) process.stdout.write(`${result.stdout}\n`);
   if (result.stderr !== undefined) process.stderr.write(`${result.stderr}\n`);
   process.exit(result.exitCode);

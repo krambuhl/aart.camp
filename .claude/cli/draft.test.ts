@@ -1,5 +1,7 @@
 import { test, expect } from 'vitest';
 import { spawnSync } from 'node:child_process';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import {
@@ -9,10 +11,23 @@ import {
   formatUnknownVerbError,
   dispatch,
 } from './draft.ts';
+import type { DraftCliContext } from './draft.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DRAFT_ENTRY = join(__dirname, 'draft.ts');
 const BIN_DRAFT = join(__dirname, '..', '..', 'bin', 'draft');
+
+function makeCtx(): DraftCliContext {
+  const root = mkdtempSync(join(tmpdir(), 'draft-dispatch-test-'));
+  return {
+    projectsRoot: root,
+    today: '2026-05-15',
+    gitRunner: {
+      isCommitted: () => false,
+      addAndCommit: () => undefined,
+    },
+  };
+}
 
 // ---------- Pure helper tests ----------
 
@@ -60,26 +75,44 @@ test('formatUnknownVerbError emits structured JSON with candidates', () => {
 });
 
 test('dispatch: help → stdout + exit 0', () => {
-  const result = dispatch({ kind: 'help' });
+  const result = dispatch({ kind: 'help' }, makeCtx());
   expect(result.exitCode).toBe(0);
   expect(result.stdout).toBeDefined();
   expect(result.stderr).toBeUndefined();
 });
 
 test('dispatch: unknown → stderr + exit 1', () => {
-  const result = dispatch({ kind: 'unknown', verb: 'xyzzy' });
+  const result = dispatch({ kind: 'unknown', verb: 'xyzzy' }, makeCtx());
   expect(result.exitCode).toBe(1);
   expect(result.stderr).toBeDefined();
   expect(result.stdout).toBeUndefined();
 });
 
-test('dispatch: known verb (no impl yet) → not-implemented error', () => {
-  const result = dispatch({ kind: 'verb', verb: 'plan', rest: [] });
+test('dispatch: plan verb routes to planVerb (missing-args surfaces)', () => {
+  // plan is now implemented (D4). Calling with no rest args produces a
+  // structured missing-args error, NOT not-implemented — proves the
+  // dispatch is routing through DRAFT_VERBS.plan rather than the
+  // stub branch.
+  const result = dispatch({ kind: 'verb', verb: 'plan', rest: [] }, makeCtx());
   expect(result.exitCode).toBe(1);
-  expect(result.stderr).toBeDefined();
+  const parsed = JSON.parse(result.stderr as string);
+  expect(parsed.error).toBe('missing-args');
+});
+
+test('dispatch: revise verb still stubs to not-implemented', () => {
+  const result = dispatch({ kind: 'verb', verb: 'revise', rest: [] }, makeCtx());
+  expect(result.exitCode).toBe(1);
   const parsed = JSON.parse(result.stderr as string);
   expect(parsed.error).toBe('not-implemented');
-  expect(parsed.verb).toBe('plan');
+  expect(parsed.verb).toBe('revise');
+});
+
+test('dispatch: read verb still stubs to not-implemented', () => {
+  const result = dispatch({ kind: 'verb', verb: 'read', rest: [] }, makeCtx());
+  expect(result.exitCode).toBe(1);
+  const parsed = JSON.parse(result.stderr as string);
+  expect(parsed.error).toBe('not-implemented');
+  expect(parsed.verb).toBe('read');
 });
 
 // ---------- Smoke tests via subprocess (entry-point integration) ----------
