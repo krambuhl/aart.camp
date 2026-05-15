@@ -3,10 +3,18 @@ import { isAbsolute, join, resolve } from 'node:path';
 import { LoomError } from './errors.ts';
 import { ARCHIVE_DIRNAME } from './project.ts';
 
-// Trout marker: trout-managed projects carry a markdown manifest.
-// Loom-managed projects carry `manifest.json` and are filtered out
-// here by the absence-of-loom-marker check in listTroutProjects.
-const TROUT_MARKER = 'MANIFEST.md';
+// Draft's filter is two-sided. A directory counts as a
+// draft-readable project iff it contains `PLAN.md` (the file draft
+// reads/revises) AND does NOT contain `manifest.json` (the loom-
+// managed marker). Trout-managed projects carry `MANIFEST.md` in
+// addition to `PLAN.md`; they qualify. Draft-only projects (from
+// `bin/draft plan` before any further substrate scaffolding) carry
+// just `PLAN.md` + `INTERVIEW.md`; they also qualify.
+//
+// Originally this filter required `MANIFEST.md`, but that excluded
+// draft's own output from its own resolver. Broadened in D5 to the
+// PLAN-bearing definition that matches draft's actual scope.
+const PLAN_MARKER = 'PLAN.md';
 const LOOM_MARKER = 'manifest.json';
 
 // Slug-grammar regexes are duplicated locally rather than imported
@@ -26,13 +34,17 @@ export type ListProjectsOptions = {
   archived?: boolean;
 };
 
-// Resolve a trout-style project slug or path to an absolute directory.
+// Resolve a draft-readable project slug or path to an absolute
+// directory.
 //
 // Behaviour parallels loom's `resolveProject` exactly, with one
-// substantive difference: only directories that carry `MANIFEST.md`
-// (and not `manifest.json`) qualify as projects. Loom projects are
-// invisible to this resolver by design — the trout/loom coexistence
-// boundary is enforced at the listing layer.
+// substantive difference: only directories that carry `PLAN.md`
+// (and not `manifest.json`) qualify. This includes trout-managed
+// projects (which carry both `PLAN.md` and `MANIFEST.md`) AND
+// draft-only projects (which carry `PLAN.md` + `INTERVIEW.md`
+// without the trout MANIFEST). Loom projects are invisible by
+// design — the coexistence boundary is enforced at the listing
+// layer.
 //
 // Accepts:
 //   - full slug:        2026-05-15-draft-cli
@@ -130,9 +142,10 @@ export function listTroutProjects(
     } catch {
       continue;
     }
-    // Trout filter: project must have MANIFEST.md AND must NOT have
-    // manifest.json. Both conditions enforce the trout/loom split.
-    if (!existsSync(join(fullPath, TROUT_MARKER))) continue;
+    // Draft filter: project must have PLAN.md AND must NOT have
+    // manifest.json. Both conditions enforce the draft-readable
+    // boundary (and exclude loom-managed projects).
+    if (!existsSync(join(fullPath, PLAN_MARKER))) continue;
     if (existsSync(join(fullPath, LOOM_MARKER))) continue;
     projects.push({ slug: entry, path: fullPath });
   }
