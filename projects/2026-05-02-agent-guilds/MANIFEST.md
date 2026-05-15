@@ -4,7 +4,7 @@
 **Started**: 2026-05-02
 **Status**: active
 **Current branch**: ev.agent-guilds.griot-integration-3
-**Latest checkin**: checkins/ev.agent-guilds.griot-integration-2/01.md
+**Latest checkin**: checkins/ev.agent-guilds.griot-integration-3/01.md
 
 ## Strategy
 
@@ -209,3 +209,4 @@ Phase 1 merged via PR #8. Phase 1.5 split into a sequence of PRs after a post-me
 | 2026-05-15 16:09 | checkin-created | 01 on ev.agent-guilds.griot-integration-2 |
 | 2026-05-15 16:10 | pr-opened | #88 |
 | 2026-05-15 16:13 | note | Cut ev.agent-guilds.griot-integration-3 for Phase 5 D3 (composability-proof loop /a11y-review-file) |
+| 2026-05-15 16:19 | checkin-created | 01 on ev.agent-guilds.griot-integration-3 |
