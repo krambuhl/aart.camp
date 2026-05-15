@@ -1,6 +1,12 @@
 import { parseArgs } from 'node:util';
-import { copyFileSync, existsSync, mkdirSync } from 'node:fs';
-import { join } from 'node:path';
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+} from 'node:fs';
+import { join, relative } from 'node:path';
 import { LoomError } from '../lib/errors.ts';
 import { createSlug } from '../lib/project.ts';
 import { resolveTroutProject } from '../lib/draft-project.ts';
@@ -101,30 +107,14 @@ export function planVerb(
   let slug: string;
   try {
     if (SLUG_RE.test(slugOrTopic)) {
-      // Caller passed a full slug. Confirm the project doesn't
-      // already exist before treating it as the target.
+      // Caller passed a full slug. Use as-is; collision is handled
+      // by the PLAN.md commit-status check below.
       slug = slugOrTopic;
     } else {
       slug = createSlug(slugOrTopic, todayString(ctx));
     }
   } catch (err) {
     return errToResult(err);
-  }
-
-  // Reject if the derived/given slug already names a trout project.
-  try {
-    resolveTroutProject(slug, ctx.projectsRoot);
-    return errToResult(
-      new LoomError(
-        'project-already-exists',
-        `a trout project already exists at slug '${slug}' — use revise to update`,
-      ),
-    );
-  } catch (err) {
-    if (!(err instanceof LoomError) || err.code !== 'project-not-found') {
-      return errToResult(err);
-    }
-    // Falls through: not-found is the happy path here.
   }
 
   const targetDir = join(ctx.projectsRoot, slug);
@@ -182,24 +172,237 @@ export function planVerb(
   };
 }
 
-// Stub handlers for revise / read. Real implementations land in
-// D5 / D6. Keeping them in the registry surfaces the "not implemented"
-// payload through the same dispatch path as plan rather than the
-// generic verb-not-found branch — preserves the forward-compatible
-// shape downstream callers expect.
-function notImplemented(verb: string): VerbHandler {
-  return () => {
-    const payload = {
-      error: 'not-implemented',
-      message: `verb '${verb}' has no handler yet (D5/D6 in progress)`,
-      verb,
-    };
-    return { stderr: JSON.stringify(payload), exitCode: 1 };
+// ---------- revise verb ----------
+
+const REVISE_OPTIONS = {
+  'revision-file': { type: 'string' as const },
+  rationale: { type: 'string' as const },
+  'no-commit': { type: 'boolean' as const },
+  pretty: { type: 'boolean' as const },
+};
+
+// Insert a new revision-log entry into the PLAN content. If a
+// `## Revision log` section already exists, the new entry is
+// inserted directly under the heading (newest-first). Otherwise a
+// fresh section is appended at the end of the document.
+export function appendRevisionLogEntry(
+  content: string,
+  date: string,
+  rationale: string,
+): string {
+  const entry = `- ${date} — ${rationale}`;
+  const headingRe = /^## Revision log\s*$/m;
+  const match = content.match(headingRe);
+  if (match === null) {
+    const sep = content.endsWith('\n') ? '\n' : '\n\n';
+    return `${content.trimEnd()}${sep}\n## Revision log\n\n${entry}\n`;
+  }
+  // Insert directly after the heading line. Find the end of the
+  // heading line and insert with surrounding blank-line padding.
+  const headingStart = match.index ?? 0;
+  const headingEnd = headingStart + (match[0]?.length ?? 0);
+  const before = content.slice(0, headingEnd);
+  const after = content.slice(headingEnd);
+  // Normalize the gap between heading and first entry to one blank
+  // line. `after` may start with `\n\n- ...` (existing entries) or
+  // `\n\n## Next` (empty log section preceding another heading).
+  const afterTrimmed = after.replace(/^\n+/, '');
+  return `${before}\n\n${entry}\n\n${afterTrimmed}`;
+}
+
+export function reviseVerb(
+  rest: string[],
+  ctx: DraftCliContext,
+): DispatchResult {
+  const { values, positionals } = parseArgs({
+    args: rest,
+    options: REVISE_OPTIONS,
+    allowPositionals: true,
+    strict: false,
+  });
+  const slug = positionals[0];
+  const revisionFile = values['revision-file'];
+  const rationale = values.rationale;
+  const noCommit = values['no-commit'] === true;
+  const pretty = values.pretty === true;
+
+  if (slug === undefined) {
+    return errToResult(
+      new LoomError('missing-args', 'revise requires a <slug> positional'),
+    );
+  }
+  if (revisionFile === undefined) {
+    return errToResult(
+      new LoomError('missing-args', 'revise requires --revision-file=<path>'),
+    );
+  }
+  if (rationale === undefined || rationale.trim() === '') {
+    return errToResult(
+      new LoomError(
+        'missing-args',
+        'revise requires --rationale=<str> (the why for git history + Revision log)',
+      ),
+    );
+  }
+
+  let targetDir: string;
+  try {
+    targetDir = resolveTroutProject(slug, ctx.projectsRoot);
+  } catch (err) {
+    return errToResult(err);
+  }
+
+  const planMdPath = join(targetDir, 'PLAN.md');
+  if (!existsSync(planMdPath)) {
+    return errToResult(
+      new LoomError(
+        'plan-not-found',
+        `no PLAN.md at ${planMdPath} — use 'draft plan' to create one`,
+      ),
+    );
+  }
+
+  let revisionContent: string;
+  try {
+    revisionContent = readFileSync(revisionFile, 'utf8');
+  } catch (err: unknown) {
+    return errToResult(
+      new LoomError(
+        'revision-read-failed',
+        `cannot read revision file ${revisionFile}: ${(err as Error).message}`,
+      ),
+    );
+  }
+
+  const date = todayString(ctx);
+  const composed = appendRevisionLogEntry(revisionContent, date, rationale);
+
+  try {
+    writeFileSync(planMdPath, composed);
+  } catch (err: unknown) {
+    return errToResult(
+      new LoomError(
+        'plan-write-failed',
+        `writing PLAN.md failed: ${(err as Error).message}`,
+      ),
+    );
+  }
+
+  if (!noCommit) {
+    try {
+      gitRunnerOf(ctx).addAndCommit(
+        repoRootOf(ctx),
+        [planMdPath],
+        `[draft revise] ${slug}: ${rationale}`,
+      );
+    } catch (err) {
+      return errToResult(err);
+    }
+  }
+
+  // Resolve the project-relative slug for the envelope output, in
+  // case the caller passed a date-less form.
+  const resolvedSlug = targetDir.split('/').pop() ?? slug;
+
+  return {
+    stdout: emit(
+      {
+        slug: resolvedSlug,
+        path: targetDir,
+        committed: !noCommit,
+        rationale,
+      },
+      pretty,
+    ),
+    exitCode: 0,
+  };
+}
+
+// ---------- read verb ----------
+
+const READ_OPTIONS = {
+  pretty: { type: 'boolean' as const },
+};
+
+export function readVerb(
+  rest: string[],
+  ctx: DraftCliContext,
+): DispatchResult {
+  const { values, positionals } = parseArgs({
+    args: rest,
+    options: READ_OPTIONS,
+    allowPositionals: true,
+    strict: false,
+  });
+  const slug = positionals[0];
+  const pretty = values.pretty === true;
+
+  if (slug === undefined) {
+    return errToResult(
+      new LoomError('missing-args', 'read requires a <slug> positional'),
+    );
+  }
+
+  let targetDir: string;
+  try {
+    targetDir = resolveTroutProject(slug, ctx.projectsRoot);
+  } catch (err) {
+    return errToResult(err);
+  }
+
+  const planMdPath = join(targetDir, 'PLAN.md');
+  if (!existsSync(planMdPath)) {
+    return errToResult(
+      new LoomError(
+        'plan-not-found',
+        `no PLAN.md at ${planMdPath}`,
+      ),
+    );
+  }
+
+  let content: string;
+  try {
+    content = readFileSync(planMdPath, 'utf8');
+  } catch (err: unknown) {
+    return errToResult(
+      new LoomError(
+        'plan-read-failed',
+        `cannot read PLAN.md at ${planMdPath}: ${(err as Error).message}`,
+      ),
+    );
+  }
+
+  // --pretty short-circuits the envelope: emit raw PLAN.md content.
+  // The envelope is the JSON contract for downstream introspection;
+  // humans get the markdown directly.
+  if (pretty) {
+    return { stdout: content, exitCode: 0 };
+  }
+
+  const resolvedSlug = targetDir.split('/').pop() ?? slug;
+  const interviewMdPath = join(targetDir, 'INTERVIEW.md');
+  // Express paths relative to projectsRoot for stable, short
+  // envelope output (e.g. `projects/2026-05-15-foo/PLAN.md` rather
+  // than an absolute path). Falls back to absolute if the path
+  // doesn't sit under projectsRoot.
+  const relPath = relative(ctx.projectsRoot, planMdPath) || planMdPath;
+  const relInterview = relative(ctx.projectsRoot, interviewMdPath) || interviewMdPath;
+
+  return {
+    stdout: JSON.stringify({
+      path: relPath,
+      content,
+      plan: {
+        slug: resolvedSlug,
+        interview_path: relInterview,
+      },
+    }),
+    exitCode: 0,
   };
 }
 
 export const DRAFT_VERBS: Record<string, VerbHandler> = {
   plan: planVerb,
-  revise: notImplemented('revise'),
-  read: notImplemented('read'),
+  revise: reviseVerb,
+  read: readVerb,
 };

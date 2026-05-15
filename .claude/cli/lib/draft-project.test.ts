@@ -9,8 +9,10 @@ let projectsRoot: string;
 function makeTroutProject(root: string, slug: string): void {
   const path = join(root, slug);
   mkdirSync(path, { recursive: true });
-  // Marker file: trout-managed projects carry MANIFEST.md (markdown).
-  writeFileSync(join(path, 'MANIFEST.md'), '# Project\n');
+  // Marker file: draft-readable projects carry PLAN.md. (Trout-
+  // managed projects also have MANIFEST.md; draft-only projects
+  // have just PLAN.md + INTERVIEW.md.)
+  writeFileSync(join(path, 'PLAN.md'), '# Plan\n');
 }
 
 function makeLoomProject(root: string, slug: string): void {
@@ -27,7 +29,7 @@ beforeEach(() => {
   makeTroutProject(projectsRoot, '2026-05-15-draft-cli');
   // Active loom project (must NOT resolve via resolveTroutProject)
   makeLoomProject(projectsRoot, '2026-05-15-loom-cli');
-  // Active non-substrate dir (no MANIFEST.md, no manifest.json)
+  // Active non-substrate dir (no PLAN.md, no manifest.json)
   mkdirSync(join(projectsRoot, '2026-05-20-bare'));
   // Archived trout
   makeTroutProject(join(projectsRoot, 'archive'), '2026-04-01-old-project');
@@ -89,8 +91,8 @@ test('resolveTroutProject: loom-only project (manifest.json present) does NOT re
   );
 });
 
-test('resolveTroutProject: bare directory without MANIFEST.md does NOT resolve', () => {
-  // 2026-05-20-bare has no manifest of either kind.
+test('resolveTroutProject: bare directory without PLAN.md does NOT resolve', () => {
+  // 2026-05-20-bare has no PLAN.md and no manifest.json.
   expect(() => resolveTroutProject('bare', projectsRoot)).toThrow(
     /project-not-found/,
   );

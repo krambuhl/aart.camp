@@ -266,43 +266,40 @@ Deliverables:
    `createSlug` for new-project naming; doesn't need the resolver
    (project is being created, not located).
 
-5. **`revise` verb.** Pure verb function + thin IO wrapper.
-   Test-first. Fixture covers happy path, missing-PLAN, and
-   revision-log append. `--rationale` required, `--no-commit`
-   optional. Uses `resolveTroutProject` from D3.
+5. **`revise` + `read` verbs.** Combined deliverable (revised
+   mid-project — both verbs share `resolveTroutProject` and are
+   parallel in shape, so they ship in one PR). `revise` is a pure
+   verb function + thin IO wrapper, test-first; fixture covers
+   happy path, missing-PLAN, revision-log append. `--rationale`
+   required, `--no-commit` optional. `read` is also pure verb +
+   thin IO wrapper, test-first; emits JSON envelope per § Skill-
+   to-CLI contract, `--pretty` for humans. Both wire into
+   `DRAFT_VERBS` (replacing the `notImplemented` stubs from D4).
 
-6. **`read` verb.** Pure verb function + thin IO wrapper. Test-first.
-   JSON envelope shape per § Skill-to-CLI contract; `--pretty` for
-   humans. Uses `resolveTroutProject` from D3.
+6. **`/draft-plan` + `/draft-revise` skills.** Combined
+   deliverable (revised mid-project — both are draft skills that
+   shell out to the CLI, ship in one PR). `/draft-plan` is the
+   grill-me interview that synthesizes INTERVIEW.md + PLAN.md and
+   shells to `bin/draft plan`. `/draft-revise` is the thin
+   loop-invoked composer that reads current PLAN, composes a
+   revision, surfaces a summary for confirm, and shells to
+   `bin/draft revise --rationale=<summary>`. No grill-me ceremony
+   inside `/draft-revise` in v1.
 
-7. **`/draft-plan` skill.** Grill-me interview as prose,
-   recommendation-per-question pacing. Synthesizes INTERVIEW.md (the
-   walked tree) and PLAN.md (clean shape) at the end. Shells out to
-   `bin/draft plan --plan-file=... --interview-file=...`. Reuses
-   existing PLAN.md template from `/trout-plan` (cross-referenced).
-   Skill body documents the seam: `/draft-plan` (skill) and
-   `bin/draft plan` (CLI) are distinct surfaces serving distinct
-   audiences.
+7. **Loop wiring.** Add scope-shift detection to
+   `ev-loop-confidence` and `ev-loop-interactive`. **Restrictive
+   default**: only offers `/draft-revise` when at least two
+   signals concur (e.g., evaluator finding *and* user comment, or
+   whiteboard contradiction *and* phase boundary). One-signal
+   cases surface in the unit's `Notes for the PR` for later
+   review but do not interrupt. On confirm, invokes
+   `/draft-revise <slug>` via the Skill tool.
 
-8. **`/draft-revise` skill.** Thin. Takes slug + scope-shift context
-   from the calling loop. Reads current PLAN.md, composes a full new
-   PLAN.md reflecting the change, surfaces a summary to the user for
-   confirm, shells out to `bin/draft revise --rationale=<summary>`.
-   No grill-me ceremony in v1.
-
-9. **Loop wiring.** Add scope-shift detection to `ev-loop-confidence`
-   and `ev-loop-interactive`. **Restrictive default**: only offers
-   `/draft-revise` when at least two signals concur (e.g., evaluator
-   finding *and* user comment, or whiteboard contradiction *and*
-   phase boundary). One-signal cases surface in the unit's `Notes
-   for the PR` for later review but do not interrupt. On confirm,
-   invokes `/draft-revise <slug>` via the Skill tool.
-
-10. **Smoke tests + phase close.** Throwaway project. Run
-    `/draft-plan`; verify both files committed. Simulate two-signal
-    scope-shift in a loop run; verify `/draft-revise` proposes a
-    revision, user confirm triggers `bin/draft revise`, PLAN.md is
-    updated, revision log appended, commit lands.
+8. **Smoke tests + phase close.** Throwaway project. Run
+   `/draft-plan`; verify both files committed. Simulate two-signal
+   scope-shift in a loop run; verify `/draft-revise` proposes a
+   revision, user confirm triggers `bin/draft revise`, PLAN.md is
+   updated, revision log appended, commit lands.
 
 **Per-deliverable verification** (each PR):
 
@@ -315,7 +312,10 @@ Deliverables:
 
 - Manual smoke through the throwaway project end-to-end.
 
-**Ten deliverables, ten PRs** (D1 already shipped via PR #70).
+**Eight deliverables, eight PRs** (D1-D4 already shipped via PRs
+#70, #74, #75, #77). Original ten-deliverable plan consolidated
+mid-project: D5+D6 (revise + read verbs) ship as one PR, D7+D8
+(draft-plan + draft-revise skills) ship as one PR.
 
 ## Dependencies
 

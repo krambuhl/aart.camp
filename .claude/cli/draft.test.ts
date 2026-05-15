@@ -99,20 +99,21 @@ test('dispatch: plan verb routes to planVerb (missing-args surfaces)', () => {
   expect(parsed.error).toBe('missing-args');
 });
 
-test('dispatch: revise verb still stubs to not-implemented', () => {
+test('dispatch: revise verb routes to reviseVerb (missing-args surfaces)', () => {
+  // revise is now implemented (D5). Calling with no rest args produces
+  // a structured missing-args error, NOT not-implemented — proves the
+  // dispatch is routing through DRAFT_VERBS.revise.
   const result = dispatch({ kind: 'verb', verb: 'revise', rest: [] }, makeCtx());
   expect(result.exitCode).toBe(1);
   const parsed = JSON.parse(result.stderr as string);
-  expect(parsed.error).toBe('not-implemented');
-  expect(parsed.verb).toBe('revise');
+  expect(parsed.error).toBe('missing-args');
 });
 
-test('dispatch: read verb still stubs to not-implemented', () => {
+test('dispatch: read verb routes to readVerb (missing-args surfaces)', () => {
   const result = dispatch({ kind: 'verb', verb: 'read', rest: [] }, makeCtx());
   expect(result.exitCode).toBe(1);
   const parsed = JSON.parse(result.stderr as string);
-  expect(parsed.error).toBe('not-implemented');
-  expect(parsed.verb).toBe('read');
+  expect(parsed.error).toBe('missing-args');
 });
 
 // ---------- Smoke tests via subprocess (entry-point integration) ----------
