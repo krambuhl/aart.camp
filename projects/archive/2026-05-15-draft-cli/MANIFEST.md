@@ -2,9 +2,9 @@
 
 **Slug**: draft-cli
 **Started**: 2026-05-15
-**Status**: active
-**Current branch**: ev.draft-cli.revise-read-verbs
-**Latest checkin**: checkins/ev.draft-cli.revise-read-verbs (D5: revise + read verbs)/01.md
+**Status**: archived
+**Current branch**: —
+**Latest checkin**: checkins/ev.draft-cli.phase-1-close (D8: smoke + phase close)/01.md
 
 ## Strategy
 
@@ -14,7 +14,7 @@ interactive
 
 | # | Name | Status | Branch | Latest checkin | PR |
 |---|------|--------|--------|----------------|----|
-| 1 | Phase 1: Ship CLI + skill + loop wiring | in-progress | ev.draft-cli.revise-read-verbs | 01 | #80 (open) |
+| 1 | Phase 1: Ship CLI + skill + loop wiring | completed | ev.draft-cli.phase-1-close | 01 | #85 (open) |
 
 ## Dependencies
 
@@ -41,3 +41,11 @@ Project initialized. No work started yet.
 | 2026-05-15 13:04 | pr-opened | #77 |
 | 2026-05-15 13:25 | checkin-created | 01 on ev.draft-cli.revise-read-verbs (D5: revise + read verbs) |
 | 2026-05-15 13:26 | pr-opened | #80 |
+| 2026-05-15 13:34 | checkin-created | 01 on ev.draft-cli.draft-skills (D6: /draft-plan + /draft-revise skills) |
+| 2026-05-15 13:34 | pr-opened | #81 |
+| 2026-05-15 13:59 | checkin-created | 01 on ev.draft-cli.scope-shift-wiring (D7: scope-shift detection) |
+| 2026-05-15 13:59 | pr-opened | #83 |
+| 2026-05-15 15:18 | phase-completed | 1 |
+| 2026-05-15 15:19 | checkin-created | 01 on ev.draft-cli.phase-1-close (D8: smoke + phase close) |
+| 2026-05-15 15:19 | pr-opened | #85 |
+| 2026-05-15 15:30 | archived | projects/archive/2026-05-15-draft-cli |

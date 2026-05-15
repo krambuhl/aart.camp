@@ -208,8 +208,8 @@ For each deliverable (picked per the ordering rule):
 4. **Iterate or commit.**
    - Flagged: address the specific reasons, re-invoke `/guild-validate`.
      Up to 2 retries (3 panel runs total).
-   - Approved: continue to step 4.5 (findings append + threshold) and
-     then finalize the checkin.
+   - Approved: continue to step 4.5 (findings append + threshold)
+     and step 5 (scope-shift detection), then finalize the checkin.
 4.5. **Append findings + detect recurring threshold.** On approved
      verdict (and ONLY on approved — flagged findings that get
      addressed in iterations do NOT count toward the recurring counter;
@@ -290,8 +290,50 @@ For each deliverable (picked per the ordering rule):
      `evaluator-contract-fit` against the contract itself, not against
      an artifact). The frequency counter is for evaluator findings
      about real artifacts, not contract-shape issues.
-5. **Autosave.** `Bash("node .claude/scripts/trout/autosave.ts <slug> --event=checkin-created --detail='<NN> on <branch>' --phase-update=<N>:in-progress:branch=<branch>:checkin=<NN>")`.
-6. **Checkpoint.** Free mode: after every deliverable. Sequential mode:
+5. **Scope-shift detection (restrictive default).** Runs only on
+   approved units (flagged-and-iterating units skip this step). Look
+   for signals that PLAN.md is stale; offer `/draft-revise` ONLY
+   on two-signal concurrence.
+
+   **Signal sources**:
+   - **Evaluator finding** mentioning a missing or changed phase,
+     deliverable, or load-bearing decision (in either blocking or
+     advisory findings).
+   - **User comment during the unit** that proposed a change to
+     plan structure (not just tactical refinement of this unit's
+     contract).
+   - **Whiteboard contradiction** (round 2+ whiteboard surfaces a
+     disagreement between engineers that current PLAN doesn't
+     resolve).
+   - **Phase boundary** (this unit is the last in its phase OR
+     the next phase is about to start).
+
+   **Two-signal-concurrence rule**: offer `/draft-revise` only
+   when 2+ signal sources fire for the same shift. Single signals
+   get a note (see below); the loop does NOT interrupt.
+
+   **Offer flow**: surface a short paragraph naming the two
+   signals and a proposed one-line rationale. Use
+   `AskUserQuestion` (or natural-language confirm) for
+   accept/decline/defer. Default: decline (no interrupt unless
+   the user explicitly accepts).
+
+   **On accept**: invoke
+   `Skill(skill: draft-revise, args: "<slug> <one-line summary>")`.
+   After `/draft-revise` returns, proceed to step 6 (Autosave). Do
+   not re-execute the unit.
+
+   **On single signal** (no concurrence): append to the unit's
+   `## Notes for the PR` section in the checkin file:
+   ```
+   signal: <signal type>: <one-line description> (single signal; no revise offered)
+   ```
+   Loop continues normally.
+
+   **On zero signals**: no action. Loop continues.
+
+6. **Autosave.** `Bash("node .claude/scripts/trout/autosave.ts <slug> --event=checkin-created --detail='<NN> on <branch>' --phase-update=<N>:in-progress:branch=<branch>:checkin=<NN>")`.
+7. **Checkpoint.** Free mode: after every deliverable. Sequential mode:
    after every deliverable **or** when the human explicitly asks.
    Invoke `/trout-pull-request <slug> <branch>`.
 
