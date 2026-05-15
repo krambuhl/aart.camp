@@ -108,13 +108,28 @@ test('dispatch: wired namespace, unknown verb → unknown-verb', () => {
   rmSync(ctx.projectsRoot, { recursive: true, force: true });
 });
 
-test('dispatch: unwired namespace → not-implemented placeholder', () => {
+test('dispatch: verbless namespace (doctor) routes rest as handler args', () => {
   const ctx = makeCtx();
-  const result = dispatch({ kind: 'verb', namespace: 'doctor', rest: [] }, ctx);
+  // Doctor against a nonexistent slug should reach the doctor handler
+  // (returning a project-not-found from the resolveProject step),
+  // not get rejected as unknown-verb.
+  const result = dispatch(
+    { kind: 'verb', namespace: 'doctor', rest: ['nonexistent-slug'] },
+    ctx,
+  );
+  expect(result.exitCode).toBe(1);
+  const parsed = JSON.parse(result.stderr as string);
+  expect(parsed.error).toBe('project-not-found');
+  rmSync(ctx.projectsRoot, { recursive: true, force: true });
+});
+
+test('dispatch: unwired namespace (pr) → not-implemented placeholder', () => {
+  const ctx = makeCtx();
+  const result = dispatch({ kind: 'verb', namespace: 'pr', rest: [] }, ctx);
   expect(result.exitCode).toBe(1);
   const parsed = JSON.parse(result.stderr as string);
   expect(parsed.error).toBe('not-implemented');
-  expect(parsed.namespace).toBe('doctor');
+  expect(parsed.namespace).toBe('pr');
   rmSync(ctx.projectsRoot, { recursive: true, force: true });
 });
 

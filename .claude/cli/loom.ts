@@ -6,6 +6,10 @@ import { join } from 'node:path';
 import { PROJECT_VERBS } from './verbs/project.ts';
 import { PHASE_VERBS } from './verbs/phase.ts';
 import { EVENTS_VERBS } from './verbs/events.ts';
+import { CHECKIN_VERBS } from './verbs/checkin.ts';
+import { SESSION_VERBS } from './verbs/session.ts';
+import { RETRO_VERBS } from './verbs/retro.ts';
+import { DOCTOR_VERBS } from './verbs/doctor.ts';
 import type { CliContext, DispatchResult } from './verbs/project.ts';
 
 export type { CliContext, DispatchResult };
@@ -25,13 +29,22 @@ export const NAMESPACES: Record<string, string> = {
 
 // Namespaces with wired-up verb handlers as of this unit. Recognized
 // namespaces NOT in this map return the `not-implemented` placeholder
-// (unit 04 fills in the rest).
+// (`pr` is the only one as of Phase 2 close).
 type VerbHandler = (rest: string[], ctx: CliContext) => DispatchResult;
 const VERBS_BY_NAMESPACE: Record<string, Record<string, VerbHandler>> = {
   project: PROJECT_VERBS,
   phase: PHASE_VERBS,
   events: EVENTS_VERBS,
+  checkin: CHECKIN_VERBS,
+  session: SESSION_VERBS,
+  retro: RETRO_VERBS,
+  doctor: DOCTOR_VERBS,
 };
+
+// Verbless namespaces are single-handler namespaces (per
+// LOOM-CONVENTIONS.md: `loom doctor [<slug>]`). The first
+// verb-position argument is treated as the first handler arg.
+const VERBLESS_NAMESPACES: ReadonlySet<string> = new Set(['doctor']);
 
 // ---------- Pure helpers (exported for direct unit tests) ----------
 
@@ -101,6 +114,14 @@ export function dispatch(invocation: Invocation, ctx: CliContext): DispatchResul
       namespace: invocation.namespace,
     };
     return { stderr: JSON.stringify(payload), exitCode: 1 };
+  }
+  // Verbless namespace: the namespace IS the only verb. Route the
+  // entire rest as args to that single handler.
+  if (VERBLESS_NAMESPACES.has(invocation.namespace)) {
+    const handler = verbs[invocation.namespace];
+    if (handler !== undefined) {
+      return handler(invocation.rest, ctx);
+    }
   }
   const verbName = invocation.rest[0];
   if (verbName === undefined) {
