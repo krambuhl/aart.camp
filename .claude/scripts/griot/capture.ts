@@ -15,7 +15,18 @@ type Checkin = {
 
 const SESSION_NOTES_ROOT = resolve(process.cwd(), 'learnings/session-notes');
 
-const ARG_HINT = '--from-checkin=<path> [--slug=<slug>] [--correction-text=<text>]';
+const ARG_HINT = [
+  '  capture.ts --from-checkin=<path> [--slug=<slug>] [--correction-text=<text>]',
+  '  capture.ts --evaluator-finding=<classification> --evaluator-name=<name> --code=<code> --evidence=<text>',
+  '             [--slug=<slug>] [--file-line=<path:line>] [--frequency-count=<N>]',
+  '             classifications: recurring | generator-antipattern | catalog-gap | evaluator-conflict | sanctioned-exception',
+  '             (recurring requires --frequency-count; catalog-gap | evaluator-conflict | sanctioned-exception are not-yet-supported)',
+].join('\n');
+
+const VALID_CLASSIFICATIONS = ['recurring', 'generator-antipattern', 'catalog-gap', 'evaluator-conflict', 'sanctioned-exception'] as const;
+type Classification = (typeof VALID_CLASSIFICATIONS)[number];
+const IMPLEMENTED_CLASSIFICATIONS: ReadonlySet<Classification> = new Set(['recurring', 'generator-antipattern']);
+const NOT_YET_SUPPORTED: ReadonlySet<Classification> = new Set(['catalog-gap', 'evaluator-conflict', 'sanctioned-exception']);
 
 function normalizeWhitespace(s: string): string {
   return s.replace(/\s+/g, ' ').trim();
@@ -144,6 +155,168 @@ _Draft auto-generated from \`${checkinPath}\` § Notes for the PR. The compactio
 `;
 }
 
+type EvaluatorFindingArgs = {
+  classification: Classification;
+  evaluatorName: string;
+  code: string;
+  evidence: string;
+  fileLine: string | undefined;
+  frequencyCount: number | undefined;
+};
+
+function buildEvaluatorFindingLearningMd(args: EvaluatorFindingArgs): string {
+  const frontmatter: string[] = [
+    '---',
+    `classification: ${args.classification}`,
+    `evaluator: ${args.evaluatorName}`,
+    `code: ${args.code}`,
+  ];
+  if (args.frequencyCount !== undefined) {
+    frontmatter.push(`frequency-count: ${args.frequencyCount}`);
+  }
+  if (args.fileLine !== undefined) {
+    frontmatter.push(`file-line: ${args.fileLine}`);
+  }
+  frontmatter.push('---', '');
+
+  const heading = args.classification === 'recurring' ? '# Learning draft' : '# Learning draft';
+  const bodyKind = args.classification === 'recurring'
+    ? `**Recurring evaluator finding** — \`${args.evaluatorName}\` flagged \`${args.code}\``
+      + (args.frequencyCount !== undefined ? ` on ${args.frequencyCount} occurrences` : '')
+      + `.\n\nEvidence: ${args.evidence}`
+      + (args.fileLine !== undefined ? `\n\nSource: \`${args.fileLine}\`` : '')
+      + `\n\nThis pattern recurs in this project; future work in the same domain should avoid it.`
+    : `**Generator antipattern** — output flagged by \`${args.evaluatorName}\` as \`${args.code}\`.\n\nEvidence: ${args.evidence}`
+      + (args.fileLine !== undefined ? `\n\nSource: \`${args.fileLine}\`` : '')
+      + `\n\nThis is a recurring shape in generator output for this project; future generator invocations in this domain should avoid it.`;
+
+  const provenance = `\n\n_Draft auto-generated from an evaluator finding via \`capture.ts --evaluator-finding=${args.classification}\`. The compaction pipeline (\`/griot-compact\`) will route classification-aware promotion._`;
+
+  return [frontmatter.join('\n'), heading, '', bodyKind, provenance].join('\n') + '\n';
+}
+
+function buildEvaluatorFindingPromptMd(args: EvaluatorFindingArgs): string {
+  return [
+    `# Triggering finding`,
+    ``,
+    `## Source`,
+    ``,
+    `Evaluator: \`${args.evaluatorName}\``,
+    `Code: \`${args.code}\``,
+    `Classification: \`${args.classification}\``,
+    args.frequencyCount !== undefined ? `Frequency count at capture: ${args.frequencyCount}` : '',
+    args.fileLine !== undefined ? `File:line: \`${args.fileLine}\`` : '',
+    ``,
+    `## Evidence`,
+    ``,
+    args.evidence,
+  ].filter((line) => line !== '').join('\n') + '\n';
+}
+
+function buildEvaluatorFindingWrongMd(args: EvaluatorFindingArgs): string {
+  // No "wrong Claude output" exists for an evaluator-finding capture —
+  // the finding IS the input, not a Claude response. Document the carve-out
+  // so /griot-compact's judges see why this file is a stub.
+  return [
+    `# Flagged output`,
+    ``,
+    `_This session-note was captured from a \`${args.classification}\` evaluator finding via_`,
+    `_\`capture.ts --evaluator-finding=...\`. There is no "wrong Claude output" to point at —_`,
+    `_the evaluator's flag itself is the captured signal._`,
+    ``,
+    `Evaluator: \`${args.evaluatorName}\``,
+    `Code: \`${args.code}\``,
+    `Evidence: ${args.evidence}`,
+  ].join('\n') + '\n';
+}
+
+function buildEvaluatorFindingCorrectionMd(args: EvaluatorFindingArgs): string {
+  return `correction: avoid \`${args.code}\` (flagged by \`${args.evaluatorName}\`): ${args.evidence}\n`;
+}
+
+function buildEvaluatorFindingTranscriptMd(args: EvaluatorFindingArgs): string {
+  return JSON.stringify(
+    {
+      kind: 'evaluator-finding',
+      classification: args.classification,
+      evaluator: args.evaluatorName,
+      code: args.code,
+      evidence: args.evidence,
+      fileLine: args.fileLine ?? null,
+      frequencyCount: args.frequencyCount ?? null,
+    },
+    null,
+    2,
+  ) + '\n';
+}
+
+function captureFromEvaluatorFinding(values: Record<string, string | undefined>): void {
+  const classificationRaw = values['evaluator-finding'];
+  if (!classificationRaw) fail('--evaluator-finding=<classification> is required');
+  if (!VALID_CLASSIFICATIONS.includes(classificationRaw as Classification)) {
+    process.stderr.write(`capture-error: unknown classification '${classificationRaw}'; valid: ${VALID_CLASSIFICATIONS.join(', ')}\n`);
+    process.exit(1);
+  }
+  const classification = classificationRaw as Classification;
+
+  if (NOT_YET_SUPPORTED.has(classification)) {
+    process.stderr.write(`capture-error: not-yet-supported: ${classification}\n`);
+    process.exit(1);
+  }
+  if (!IMPLEMENTED_CLASSIFICATIONS.has(classification)) {
+    // Defensive — should be unreachable given the partition above.
+    fail(`classification not implemented: ${classification}`);
+  }
+
+  const evaluatorName = values['evaluator-name'];
+  const code = values.code;
+  const evidence = values.evidence;
+  if (!evaluatorName) fail('--evaluator-name=<name> is required with --evaluator-finding');
+  if (code === undefined) fail('--code=<code> is required with --evaluator-finding');
+  if (evidence === undefined) fail('--evidence=<text> is required with --evaluator-finding');
+
+  const fileLine = values['file-line'];
+  const frequencyCountRaw = values['frequency-count'];
+  let frequencyCount: number | undefined;
+  if (frequencyCountRaw !== undefined) {
+    const n = Number.parseInt(frequencyCountRaw, 10);
+    if (!Number.isFinite(n) || n < 1) fail('--frequency-count must be a positive integer');
+    frequencyCount = n;
+  }
+  if (classification === 'recurring' && frequencyCount === undefined) {
+    fail('--frequency-count=<N> is required when --evaluator-finding=recurring');
+  }
+
+  const explicitSlug = values.slug;
+  const slug = explicitSlug ?? kebabize(`${classification}-${evaluatorName}-${code}`);
+  if (!slug) fail('could not derive slug; pass --slug explicitly');
+
+  const ts = timestamp();
+  const folderName = `${ts}-${slug}`;
+  const folderPath = join(SESSION_NOTES_ROOT, folderName);
+  if (existsSync(folderPath)) {
+    fail(`folder already exists: ${folderPath}`);
+  }
+
+  const args: EvaluatorFindingArgs = {
+    classification,
+    evaluatorName,
+    code,
+    evidence,
+    fileLine,
+    frequencyCount,
+  };
+
+  mkdirSync(folderPath, { recursive: true });
+  writeFileSync(join(folderPath, 'prompt.md'), buildEvaluatorFindingPromptMd(args));
+  writeFileSync(join(folderPath, 'wrong.md'), buildEvaluatorFindingWrongMd(args));
+  writeFileSync(join(folderPath, 'correction.md'), buildEvaluatorFindingCorrectionMd(args));
+  writeFileSync(join(folderPath, 'full_transcript.md'), buildEvaluatorFindingTranscriptMd(args));
+  writeFileSync(join(folderPath, 'learning.md'), buildEvaluatorFindingLearningMd(args));
+
+  process.stdout.write(`captured: learnings/session-notes/${folderName}/ from --evaluator-finding=${classification}\n`);
+}
+
 function main(): void {
   let parsed;
   try {
@@ -152,6 +325,12 @@ function main(): void {
         'from-checkin': { type: 'string' },
         'slug': { type: 'string' },
         'correction-text': { type: 'string' },
+        'evaluator-finding': { type: 'string' },
+        'evaluator-name': { type: 'string' },
+        'code': { type: 'string' },
+        'evidence': { type: 'string' },
+        'file-line': { type: 'string' },
+        'frequency-count': { type: 'string' },
       },
       allowPositionals: false,
       args: process.argv.slice(2),
@@ -161,9 +340,20 @@ function main(): void {
   }
   const { values } = parsed;
 
+  // Mode dispatch: --evaluator-finding routes to the new flow.
+  const hasFinding = values['evaluator-finding'] !== undefined;
+  const hasCheckin = values['from-checkin'] !== undefined;
+  if (hasFinding && hasCheckin) {
+    fail('--evaluator-finding and --from-checkin are mutually exclusive');
+  }
+  if (hasFinding) {
+    captureFromEvaluatorFinding(values as Record<string, string | undefined>);
+    return;
+  }
+
   const checkinPath = values['from-checkin'] as string | undefined;
   if (!checkinPath) {
-    process.stderr.write(`capture-error: --from-checkin=<path> is required\nusage: ${ARG_HINT}\n`);
+    process.stderr.write(`capture-error: --from-checkin=<path> is required\nusage:\n${ARG_HINT}\n`);
     process.exit(1);
   }
 

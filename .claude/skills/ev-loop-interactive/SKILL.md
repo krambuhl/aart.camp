@@ -208,7 +208,88 @@ For each deliverable (picked per the ordering rule):
 4. **Iterate or commit.**
    - Flagged: address the specific reasons, re-invoke `/guild-validate`.
      Up to 2 retries (3 panel runs total).
-   - Approved: finalize the checkin.
+   - Approved: continue to step 4.5 (findings append + threshold) and
+     then finalize the checkin.
+4.5. **Append findings + detect recurring threshold.** On approved
+     verdict (and ONLY on approved — flagged findings that get
+     addressed in iterations do NOT count toward the recurring counter;
+     we count what landed in the substrate, not what was caught and
+     fixed):
+
+     For each entry in the verdict's `blocking_findings` AND
+     `advisory_findings` lists:
+
+     a. Append the finding to the project's `.guild-findings.jsonl`:
+
+        ```bash
+        node .claude/scripts/guild/findings.ts append \
+          --slug=<slug> \
+          --evaluator=<finding.evaluator> \
+          --code=<finding.code> \
+          --evidence=<finding.evidence> \
+          --severity=<blocking|advisory> \
+          --branch=<branch> \
+          --unit=<NN>
+        ```
+
+        Caveat: `--evidence` may contain quote characters that break
+        the shell. Pipe via stdin or use a heredoc if the evidence
+        string is at risk. The script trims and normalizes whitespace
+        internally, so any safe escape that preserves the semantic
+        content is fine.
+
+     b. Query the recurring threshold for that finding's signature:
+
+        ```bash
+        node .claude/scripts/guild/findings.ts count \
+          --slug=<slug> \
+          --evaluator=<finding.evaluator> \
+          --code=<finding.code> \
+          --evidence=<finding.evidence>
+        ```
+
+        The script writes a single integer to stdout.
+
+     c. **If the count is ≥ 3** (the recurring threshold for this
+        SKILL — hardcoded; configurability is post-Phase-5), append
+        a `correction:` line to this checkin's `## Notes for the PR`
+        section in the shape:
+
+        ```
+        - correction: recurring evaluator finding — `<evaluator>` flagged `<code>` on <count> occurrences. Evidence: <evidence>. Avoid this pattern.
+        ```
+
+        Threshold-triggered corrections are how `/trout-save-session`
+        → `griot-capture --evaluator-finding=recurring` fires at
+        session close without manual intervention. The loop does not
+        invoke `capture.ts` directly here; capture happens at session
+        close as today, but with the new arg shape:
+
+        ```bash
+        node .claude/scripts/griot/capture.ts \
+          --evaluator-finding=recurring \
+          --evaluator-name=<evaluator> \
+          --code=<code> \
+          --evidence=<evidence> \
+          --frequency-count=<count>
+        ```
+
+        (The `/trout-save-session` integration is post-D1 work — D1
+        only writes the `correction:` line. D2 or a follow-up wires
+        the recurring-shape line through to capture's new arg group.)
+
+     d. Generator-antipattern detection is NOT done here. That
+        classification requires human judgment about whether the
+        generator output represents a recurring shape, not just
+        whether an evaluator flagged it. A specialist evaluator's
+        `Notes for the PR` may explicitly call out a generator
+        antipattern; that's the channel for D2 to wire through.
+
+     Skip step 4.5 entirely for substrate-only units whose panel had
+     no domain findings (every finding was a `parse-failure` from
+     `evaluator-contract-fit` against the contract itself, not against
+     an artifact). The frequency counter is for evaluator findings
+     about real artifacts, not contract-shape issues.
 5. **Autosave.** `Bash("node .claude/scripts/trout/autosave.ts <slug> --event=checkin-created --detail='<NN> on <branch>' --phase-update=<N>:in-progress:branch=<branch>:checkin=<NN>")`.
 6. **Checkpoint.** Free mode: after every deliverable. Sequential mode:
    after every deliverable **or** when the human explicitly asks.
