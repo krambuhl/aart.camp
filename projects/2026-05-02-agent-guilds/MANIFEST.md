@@ -19,7 +19,7 @@ Extract `guild-*` agent-panel substrate alongside trout/griot, thin ev-loop into
 | 2 | Antagonist evaluator panel | completed | ev.agent-guilds.antagonist-evaluator-panel-8 | 01 | #52 (merged) |
 | 3 | Whiteboard mechanism + engineers | completed | ev.agent-guilds.whiteboard-3 | 01 | #64 (merged) |
 | 4 | Domain pairs | completed | ev.agent-guilds.domain-pairs-3 | 01 | #79 (merged) |
-| 5 | Griot integration + composability proof | in-progress | ev.agent-guilds.griot-integration | 01 | — |
+| 5 | Griot integration + composability proof | in-progress | ev.agent-guilds.griot-integration | 01 | #87 (open) |
 
 ## Dependencies
 
@@ -203,3 +203,4 @@ Phase 1 merged via PR #8. Phase 1.5 split into a sequence of PRs after a post-me
 | 2026-05-15 13:26 | pr-merged | #79 |
 | 2026-05-15 13:29 | note | griot-integration branch cut from main post-#79-merge; Phase 5 (final phase — griot integration + composability proof) begins here |
 | 2026-05-15 15:48 | checkin-created | 01 on ev.agent-guilds.griot-integration |
+| 2026-05-15 15:50 | pr-opened | #87 |
