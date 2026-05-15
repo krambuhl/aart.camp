@@ -3,8 +3,8 @@
 **Slug**: draft-cli
 **Started**: 2026-05-15
 **Status**: active
-**Current branch**: ev.draft-cli.trout-resolver
-**Latest checkin**: checkins/ev.draft-cli.trout-resolver (D3: trout resolver)/01.md
+**Current branch**: ev.draft-cli.plan-verb
+**Latest checkin**: checkins/ev.draft-cli.plan-verb (D4: plan verb)/01.md
 
 ## Strategy
 
@@ -14,7 +14,7 @@ interactive
 
 | # | Name | Status | Branch | Latest checkin | PR |
 |---|------|--------|--------|----------------|----|
-| 1 | Phase 1: Ship CLI + skill + loop wiring | in-progress | ev.draft-cli.trout-resolver | 01 | #75 (open) |
+| 1 | Phase 1: Ship CLI + skill + loop wiring | in-progress | ev.draft-cli.plan-verb | 01 | #77 (open) |
 
 ## Dependencies
 
@@ -37,3 +37,5 @@ Project initialized. No work started yet.
 | 2026-05-15 11:24 | pr-opened | #74 |
 | 2026-05-15 11:31 | checkin-created | 01 on ev.draft-cli.trout-resolver (D3: trout resolver) |
 | 2026-05-15 11:32 | pr-opened | #75 |
+| 2026-05-15 13:04 | checkin-created | 01 on ev.draft-cli.plan-verb (D4: plan verb) |
+| 2026-05-15 13:04 | pr-opened | #77 |
