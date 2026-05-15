@@ -81,13 +81,21 @@ For each deliverable (picked per the ordering rule):
    pair with the user — ask when you hit a fork, report when you hit a
    dead end, don't charge ahead.
 3. **Evaluate.** Invoke `/guild-validate` via the `Skill` tool to run
-   the antagonist panel against this unit. v1 panels are single-
-   evaluator lists; Phase 2+ phases will name larger panels in PLAN.md.
-   - `agents`: `evaluator-contract-fit`
+   the antagonist panel against this unit. Compose the panel by
+   auto-derivation from the unit's file list (see § Panel
+   auto-derivation below) — the result is contextual to the artifact
+   rather than a fixed list. `evaluator-contract-fit` is always
+   included as the baseline. The spec (file-type → evaluator mapping,
+   precedence list, tokens-vs-naming boundary) lives in
+   `.claude/agents/PANEL-COMPOSITION.md`; the derivation logic is
+   `.claude/scripts/guild/derive-panel.ts`.
+   - `agents`: comma-separated output of
+     `node .claude/scripts/guild/derive-panel.ts --files=<paths>`
+     (see § Panel auto-derivation for `<paths>` composition).
    - `packet`: build a **dense packet** (see shape below). The substrate
      default is dense — verbose packets correlate with budget-exhaustion
-     failures under `evaluator-contract-fit`'s `maxTurns=5`. Live
-     examples in PR #13's checkins 02-06.
+     failures under `evaluator-*`'s `maxTurns=5`. Live examples in
+     PR #13's checkins 02-06.
 
    **Dense packet shape** (three sections, in this order):
 
@@ -152,6 +160,52 @@ For each deliverable (picked per the ordering rule):
 6. **Checkpoint.** Free mode: after every deliverable. Sequential mode:
    after every deliverable **or** when the human explicitly asks.
    Invoke `/trout-pull-request <slug> <branch>`.
+
+### Panel auto-derivation
+
+The `agents` list passed to `/guild-validate` is computed from the
+unit's file list at evaluation time, not hardcoded. The composition
+rules (file-type → evaluator mapping, precedence ordering, conflict
+policy) live in `.claude/agents/PANEL-COMPOSITION.md` and are the
+source of truth.
+
+1. **Collect file paths.** Take the unit's changed and created files.
+   Practical recipe: `git status --short` minus any deletions, minus
+   the carryover stash file (typically `MANIFEST.md` from a prior
+   reconcile), plus any freshly-authored untracked paths that will
+   land in the artifact commit. Substrate-only mutations
+   (`projects/<slug>/MANIFEST.md` reconcile events) generally should
+   be excluded — they shipped in the prelude commit and don't
+   represent the unit's artifact.
+2. **Derive the panel.** Run
+   `node .claude/scripts/guild/derive-panel.ts --files=<comma-
+   separated paths>`. The script prints a comma-separated list of
+   `subagent_type` names on stdout, precedence-ordered, with
+   `evaluator-contract-fit` always first.
+3. **Pass to `/guild-validate`.** Use the script's stdout as the
+   `agents=` argument verbatim. The skill body composes the dense
+   packet as before; only the `agents` list changes.
+
+Edge cases the script handles, documented for reviewer awareness:
+
+- **Empty file list** (substrate-only unit, no artifact files yet) →
+  `evaluator-contract-fit`. Same single-evaluator behavior as before
+  D7's auto-derivation landed.
+- **Substrate-only files** (`.claude/agents/*.md`, skill `SKILL.md`,
+  checkin `*.md`, `projects/**/{MANIFEST,PLAN}.md`) → contract-fit
+  only. Domain evaluators don't apply to agent definitions, skill
+  bodies, or project artifacts.
+- **Substrate scripts** (`.claude/scripts/**/*.ts`) → contract-fit
+  + naming. Script identifiers are public-API surface for substrate
+  consumers.
+- **L-004 session-boundary constraint.** A newly-authored evaluator
+  agent that didn't exist at session start is registered as of next
+  session start. If the derive-panel output includes such an
+  evaluator AND that evaluator was added during this session, drop
+  it from the `agents=` list manually and note the manual override
+  in the checkin's `Notes for the PR` section. The script does NOT
+  know which evaluators are session-cached vs newly-authored; that
+  metadata is the caller's responsibility.
 
 ### Step 3. Phase close
 
