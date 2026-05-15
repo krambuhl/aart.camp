@@ -3,7 +3,7 @@
 **Slug**: 2026-05-02-agent-guilds
 **Started**: 2026-05-02
 **Status**: active
-**Current branch**: ev.agent-guilds.griot-integration-3
+**Current branch**: —
 **Latest checkin**: checkins/ev.agent-guilds.griot-integration-3/01.md
 
 ## Strategy
@@ -19,7 +19,7 @@ Extract `guild-*` agent-panel substrate alongside trout/griot, thin ev-loop into
 | 2 | Antagonist evaluator panel | completed | ev.agent-guilds.antagonist-evaluator-panel-8 | 01 | #52 (merged) |
 | 3 | Whiteboard mechanism + engineers | completed | ev.agent-guilds.whiteboard-3 | 01 | #64 (merged) |
 | 4 | Domain pairs | completed | ev.agent-guilds.domain-pairs-3 | 01 | #79 (merged) |
-| 5 | Griot integration + composability proof | in-progress | ev.agent-guilds.griot-integration-3 | 01 | #89 (open) |
+| 5 | Griot integration + composability proof | completed | ev.agent-guilds.griot-integration-3 | 01 | #89 (merged) |
 
 ## Dependencies
 
@@ -211,3 +211,7 @@ Phase 1 merged via PR #8. Phase 1.5 split into a sequence of PRs after a post-me
 | 2026-05-15 16:13 | note | Cut ev.agent-guilds.griot-integration-3 for Phase 5 D3 (composability-proof loop /a11y-review-file) |
 | 2026-05-15 16:19 | checkin-created | 01 on ev.agent-guilds.griot-integration-3 |
 | 2026-05-15 16:20 | pr-opened | #89 |
+| 2026-05-15 16:25 | pr-merged | #89 (Phase 5 D3 composability-proof close) |
+| 2026-05-15 16:25 | phase-completed | 5 — Griot integration + composability proof |
+| 2026-05-15 16:25 | note | Phase 5 closed; #89 reconciled to merged for phase row |
+| 2026-05-15 16:25 | note | Phase row PR text reconciled |
