@@ -260,6 +260,27 @@ Edge cases the script handles, documented for reviewer awareness:
   know which evaluators are session-cached vs newly-authored; that
   metadata is the caller's responsibility.
 
+### Specialist-evaluator gate-then-review (Phase 4)
+
+When a unit's panel includes a **specialist evaluator** paired with
+a `generator-*` agent (e.g. `evaluator-css-architecture` paired with
+`generator-css-codemod`), the specialist runs as part of the
+parallel panel — its verdict participates with **elevated
+precedence** per `.claude/agents/PANEL-COMPOSITION.md`. **No
+control-flow change** to the loop is needed: the existing
+parallel-spawn + precedence-resolution mechanism carries it.
+
+The substrate signal worth honoring is **fail-fast on specialist
+rejection**: when the aggregated panel verdict shows a specialist's
+finding in `blocking_findings`, treat that as a stronger
+re-iterate-or-flag signal than a generic evaluator's blocking
+finding. Concretely: if a unit's specialist evaluator flagged but
+other evaluators approved, do not treat the overall verdict as
+`approved` — the specialist's blocking finding stands. The loop's
+verdict-handling already does this (any blocking finding → flagged);
+this section just documents the *why* in case future loops want
+specialist-specific retry budgets or escalation thresholds.
+
 ### Step 3. Phase close
 
 - All deliverables accounted for.

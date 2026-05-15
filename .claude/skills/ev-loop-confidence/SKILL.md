@@ -347,6 +347,23 @@ auto-derivation:
   evaluator authored during this session, drop it from `agents=`
   manually and note the override in the checkin's Notes section.
 
+### Specialist-evaluator gate-then-review (Phase 4)
+
+When a tier's panel includes a **specialist evaluator** paired with
+a `generator-*` agent (e.g. `evaluator-css-architecture` paired
+with `generator-css-codemod`), the specialist runs as part of the
+parallel panel with **elevated precedence** per PANEL-COMPOSITION.
+No control-flow change is needed.
+
+**Fail-fast on specialist rejection**: when the aggregated tier
+verdict shows a specialist's finding in `blocking_findings`, treat
+that as a strong fail-fast signal — surface the specialist's
+remedy more prominently in the tier retro and consider whether the
+tier's overall approach needs reshaping. The loop's verdict-
+handling already does the right thing structurally (any blocking
+finding → flagged); this section documents the *why* for tier
+retros and future per-specialist tier budgets.
+
 ### Should-checkpoint policy
 
 Checkpoint (invoke `/trout-pull-request`) when any of the following

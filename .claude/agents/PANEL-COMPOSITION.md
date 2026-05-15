@@ -91,21 +91,31 @@ remedies. Higher position = higher precedence.
    incorrect route export shapes), the artifact may not run at all
    in production. High stakes, but downstream of a11y because the
    broken artifact may still build.
-4. **`evaluator-react-api`** — runtime correctness within React
+4. **`evaluator-css-architecture`** (Phase 4 specialist) —
+   structural CSS correctness when paired with
+   `generator-css-codemod`. Selector specificity, cascade
+   behavior, composition vs. duplication, `:global` leakage,
+   shared-primitive bypass, sketch-CSS load-bearing-pattern
+   regressions. Elevated precedence over `evaluator-react-api`
+   because cascade fragility produces visual breakage; bumped
+   below `evaluator-nextjs` because a build that won't ship is
+   more urgent than one that ships fragile.
+5. **`evaluator-react-api`** — runtime correctness within React
    itself (hooks rules, state mutation, ref-in-render). These don't
    crash the build but produce subtle runtime bugs.
-5. **`evaluator-tokens`** — design-system drift. Bypassing the
+6. **`evaluator-tokens`** — design-system drift. Bypassing the
    token system doesn't break the artifact at runtime, but it
    drifts the visual system over time.
-6. **`evaluator-naming`** — rhetoric and readability. The lowest-
+7. **`evaluator-naming`** — rhetoric and readability. The lowest-
    stakes lens in the panel; flags here affect how code reads, not
    whether it works.
 
 **Rationale for the ordering**: blast radius. Contract failures are
 unit-fatal. Accessibility failures harm users. Framework breakage
-prevents shipping. Runtime correctness produces hidden bugs. Token
-drift degrades the visual system. Naming affects comprehension.
-Each step down the list is a smaller blast radius.
+prevents shipping. CSS-architecture fragility produces visual
+breakage on shipped code. Runtime correctness produces hidden bugs.
+Token drift degrades the visual system. Naming affects
+comprehension. Each step down the list is a smaller blast radius.
 
 ### Conflict vs overlap
 
@@ -125,12 +135,43 @@ These are different operations on the panel result:
   policy — until then, precedence resolves the easy cases and
   conflicts surface for human review.
 
-## Tokens-vs-naming boundary
+## Tokens-vs-naming-vs-architecture three-way boundary
 
-The two evaluators most likely to flag the same artifact line are
-`evaluator-tokens` (D4) and `evaluator-naming` (D5). Their
-boundary is consolidated here from the per-evaluator boundary
-sections.
+Three evaluators can flag the same `.module.css` line:
+`evaluator-tokens` (Phase 2 D4), `evaluator-naming` (Phase 2 D5),
+and `evaluator-css-architecture` (Phase 4). The boundary among the
+three is consolidated here.
+
+The clean test, when a single line could match more than one
+evaluator's catalog:
+
+- **"This line should use a token instead of a literal"** →
+  `evaluator-tokens`. The artifact is using `#ff0000` where a
+  `token(...)` would apply.
+- **"This token is the wrong name for the role"** →
+  `evaluator-naming`. The artifact uses `token("color.gray.200")`
+  where `token("color.background.surface")` is the semantic
+  choice.
+- **"This line's selector / cascade / structure will fight the
+  rest of the file or codebase"** →
+  `evaluator-css-architecture`. The artifact's structural shape
+  is fragile, regardless of which tokens or names it uses.
+
+The vocabulary axis (tokens) and the right-name axis (naming) are
+upstream of the structure axis (architecture). Architecture
+assumes vocabulary is correct and grades the *shape* of the CSS
+that uses it.
+
+When two evaluators flag the same scope with compatible remedies,
+**`evaluator-css-architecture` wins overlap-resolution** when
+paired with `generator-css-codemod` (its elevated-precedence
+pairing); otherwise, the precedence list above resolves the tie.
+
+### Tokens-vs-naming sub-boundary
+
+The original two-way boundary between `evaluator-tokens` (D4) and
+`evaluator-naming` (D5) — these are the two evaluators that
+overlap most often on artifact lines independent of codemod work.
 
 ### D4 owns the literal-vs-token decision
 
