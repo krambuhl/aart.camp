@@ -4,7 +4,7 @@
 **Started**: 2026-05-02
 **Status**: active
 **Current branch**: ev.agent-guilds.griot-integration-2
-**Latest checkin**: checkins/ev.agent-guilds.griot-integration/01.md
+**Latest checkin**: checkins/ev.agent-guilds.griot-integration-2/01.md
 
 ## Strategy
 
@@ -206,3 +206,4 @@ Phase 1 merged via PR #8. Phase 1.5 split into a sequence of PRs after a post-me
 | 2026-05-15 15:50 | pr-opened | #87 |
 | 2026-05-15 15:55 | pr-merged | #87 |
 | 2026-05-15 15:55 | note | Cut ev.agent-guilds.griot-integration-2 for Phase 5 D2 (rollup section + /griot-use injection + A/B verify) |
+| 2026-05-15 16:09 | checkin-created | 01 on ev.agent-guilds.griot-integration-2 |

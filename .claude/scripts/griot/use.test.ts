@@ -158,6 +158,129 @@ test('citation contract: includes the three load-bearing phrases verbatim', () =
   }
 });
 
+function antipatternEntry(n: number, title: string): string {
+  const id = `AP-${String(n).padStart(3, '0')}`;
+  return `### ${id}: ${title}\n\nPromoted: 2026-05-15\nOrigin: synthetic-${n}\nClassification: generator-antipattern\nEvaluator: evaluator-x\nCode: code-${n}\n\nAvoid this antipattern. Body of entry ${n}.\n\n`;
+}
+
+function buildRollupWith(opts: { learnings: number; antipatterns: number }): string {
+  let out = '# Curated learnings\n\n';
+  for (let i = 1; i <= opts.learnings; i++) {
+    out += `## L-${String(i).padStart(3, '0')}: learning ${i}\n\nBody of learning ${i}.\n\n`;
+  }
+  if (opts.antipatterns > 0) {
+    out += '## Project antipatterns\n\n';
+    for (let i = 1; i <= opts.antipatterns; i++) {
+      out += antipatternEntry(i, `synthetic antipattern ${i}`);
+    }
+  }
+  return out;
+}
+
+test('antipatterns: status line reports antipattern count when present', () => {
+  const fx = makeFixture({ rollup: buildRollupWith({ learnings: 2, antipatterns: 3 }) });
+  try {
+    const result = run(fx.root);
+    assert.equal(result.status, 0, `stderr: ${result.stderr}`);
+    assert.match(result.stdout, /^griot-use: loaded 2 learnings \+ 3 antipatterns from learnings\/rollup\.md\n/);
+  } finally {
+    fx.cleanup();
+  }
+});
+
+test('antipatterns: N=3 entries → all 3 emitted, no tail line', () => {
+  const fx = makeFixture({ rollup: buildRollupWith({ learnings: 1, antipatterns: 3 }) });
+  try {
+    const result = run(fx.root);
+    assert.equal(result.status, 0, `stderr: ${result.stderr}`);
+    for (let i = 1; i <= 3; i++) {
+      assert.ok(result.stdout.includes(`AP-00${i}`), `AP-00${i} should be present`);
+    }
+    assert.ok(!result.stdout.includes('more antipatterns not shown'), 'no tail line when N <= 10');
+  } finally {
+    fx.cleanup();
+  }
+});
+
+test('antipatterns: N=12 entries → first 10 emitted, tail line summarizes remainder', () => {
+  const fx = makeFixture({ rollup: buildRollupWith({ learnings: 1, antipatterns: 12 }) });
+  try {
+    const result = run(fx.root);
+    assert.equal(result.status, 0, `stderr: ${result.stderr}`);
+    // First 10 present
+    for (let i = 1; i <= 10; i++) {
+      const tag = `AP-${String(i).padStart(3, '0')}`;
+      assert.ok(result.stdout.includes(tag), `${tag} should be present`);
+    }
+    // Last 2 (AP-011, AP-012) NOT in emitted body
+    assert.ok(!result.stdout.includes('AP-011:'), 'AP-011 must be elided (over top-10 cap)');
+    assert.ok(!result.stdout.includes('AP-012:'), 'AP-012 must be elided (over top-10 cap)');
+    // Tail line names the elided count
+    assert.match(result.stdout, /\+2 more antipatterns not shown — top-10 curated/);
+    // Status line still reports the full count
+    assert.match(result.stdout, /loaded 1 learnings \+ 12 antipatterns from/);
+  } finally {
+    fx.cleanup();
+  }
+});
+
+test('antipatterns: only antipatterns (0 learnings) → status reports both counts, content emitted', () => {
+  const fx = makeFixture({ rollup: buildRollupWith({ learnings: 0, antipatterns: 2 }) });
+  try {
+    const result = run(fx.root);
+    assert.equal(result.status, 0, `stderr: ${result.stderr}`);
+    // Must NOT say "rollup empty"
+    assert.ok(!result.stdout.includes('rollup empty'), 'rollup with antipatterns is not empty');
+    assert.match(result.stdout, /^griot-use: loaded 0 learnings \+ 2 antipatterns from/);
+    assert.ok(result.stdout.includes('AP-001'));
+    assert.ok(result.stdout.includes('AP-002'));
+    // Citation contract still present (it's about both L-NNN and AP-NNN now)
+    assert.ok(result.stdout.includes('Applied:'), 'citation contract should be present');
+  } finally {
+    fx.cleanup();
+  }
+});
+
+test('antipatterns: zero learnings + zero antipatterns → existing rollup-empty message', () => {
+  const fx = makeFixture({ rollup: '# Curated learnings\n\nNo entries.\n' });
+  try {
+    const result = run(fx.root);
+    assert.equal(result.status, 0, `stderr: ${result.stderr}`);
+    assert.match(result.stdout, /^griot-use: rollup empty — no validated learnings yet\n$/);
+  } finally {
+    fx.cleanup();
+  }
+});
+
+test('citation contract: mentions Applied: AP-NNN shape when antipatterns are present', () => {
+  const fx = makeFixture({ rollup: buildRollupWith({ learnings: 1, antipatterns: 1 }) });
+  try {
+    const result = run(fx.root);
+    assert.equal(result.status, 0);
+    assert.ok(result.stdout.includes('Applied: L-NNN'), 'L-NNN citation form preserved');
+    assert.ok(result.stdout.includes('Applied: AP-NNN'), 'AP-NNN citation form must be present');
+  } finally {
+    fx.cleanup();
+  }
+});
+
+test('antipatterns: existing single-learning path still emits unchanged status (no antipatterns)', () => {
+  // Regression: status line for 0-antipattern rollups stays in the legacy
+  // "loaded N learnings from <path>" shape (no "+ 0 antipatterns" noise).
+  // The citation-contract body may mention "antipatterns" as a known
+  // citation form; we only assert the status line shape, not the whole body.
+  const fx = makeFixture({ rollup: SAMPLE_ONE_LEARNING });
+  try {
+    const result = run(fx.root);
+    assert.equal(result.status, 0);
+    const statusLine = result.stdout.split('\n')[0];
+    assert.equal(statusLine, 'griot-use: loaded 1 learnings from learnings/rollup.md');
+    assert.ok(!statusLine.includes('antipatterns'), 'no antipatterns word in zero-antipattern status line');
+  } finally {
+    fx.cleanup();
+  }
+});
+
 test('tier-separation invariant: script source contains exactly one learnings/ path and zero session-notes/nightly references', () => {
   const source = readFileSync(SCRIPT, 'utf-8');
   // Strip the citation-contract literal text — it intentionally documents
