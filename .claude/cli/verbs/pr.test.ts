@@ -10,7 +10,7 @@ import {
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { prDiscover, prOpen, prUpdate } from './pr.ts';
+import { prDiscover, prOpen, prUpdate, prComments, prRespond } from './pr.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FIXTURES = join(__dirname, '..', 'fixtures');
@@ -270,4 +270,129 @@ test('prUpdate: gh failure surfaces as gh-failed', () => {
   );
   expect(result.exitCode).toBe(1);
   expect(JSON.parse(result.stderr as string).error).toBe('gh-failed');
+});
+
+// ---------- prComments tests ----------
+
+test('prComments: fetches via gh and returns structured output', () => {
+  setupProjectWithCheckins(['01']);
+  const ghRunner = () =>
+    JSON.stringify({
+      headRefName: 'loom-cli/test-branch',
+      comments: [
+        { id: 1, author: { login: 'alice' }, body: 'looks good', createdAt: '2026-05-15T10:00:00Z' },
+        { id: 2, author: { login: 'bob' }, body: 'one thing', createdAt: '2026-05-15T11:00:00Z' },
+      ],
+    });
+  const result = prComments(['test-loom', '--pr=42'], { projectsRoot, ghRunner });
+  expect(result.exitCode).toBe(0);
+  const out = JSON.parse(result.stdout as string);
+  expect(out.pr).toBe(42);
+  expect(out.branch).toBe('loom-cli/test-branch');
+  expect(out.comments).toHaveLength(2);
+});
+
+test('prComments: missing --pr returns missing-args', () => {
+  setupProjectWithCheckins(['01']);
+  const result = prComments(['test-loom'], { projectsRoot });
+  expect(result.exitCode).toBe(1);
+  expect(JSON.parse(result.stderr as string).error).toBe('missing-args');
+});
+
+test('prComments: gh failure surfaces as gh-failed', () => {
+  setupProjectWithCheckins(['01']);
+  const ghRunner = () => { throw new Error('gh: not found'); };
+  const result = prComments(['test-loom', '--pr=99'], { projectsRoot, ghRunner });
+  expect(result.exitCode).toBe(1);
+  expect(JSON.parse(result.stderr as string).error).toBe('gh-failed');
+});
+
+// ---------- prRespond tests ----------
+
+test('prRespond: writes one file per response under checkins/<branch>/responses/', () => {
+  setupProjectWithCheckins(['01']);
+  const projectPath = join(projectsRoot, '2026-05-15-test-loom');
+  const responsesFile = join(projectsRoot, 'responses.json');
+  writeFileSync(
+    responsesFile,
+    JSON.stringify({
+      pr: 42,
+      branch: 'loom-cli/test-branch',
+      responses: [
+        { comment_id: 1, body: 'Acknowledged, will fix' },
+        { comment_id: 2, body: 'Disagree — see X' },
+      ],
+    }),
+    'utf8',
+  );
+  const result = prRespond(
+    ['test-loom', `--responses-file=${responsesFile}`],
+    { projectsRoot },
+  );
+  expect(result.exitCode).toBe(0);
+  const out = JSON.parse(result.stdout as string);
+  expect(out.paths).toHaveLength(2);
+  // Both files exist
+  expect(out.paths[0]).toContain('checkins/loom-cli/test-branch/responses');
+  // Re-read first file
+  const written = JSON.parse(readFileSync(out.paths[0], 'utf8'));
+  expect(written.comment_id).toBe(1);
+  expect(written.body).toBe('Acknowledged, will fix');
+});
+
+test('prRespond: advances to next number when responses already exist', () => {
+  setupProjectWithCheckins(['01']);
+  const responsesFile = join(projectsRoot, 'responses.json');
+  // First batch
+  writeFileSync(
+    responsesFile,
+    JSON.stringify({
+      pr: 42,
+      branch: 'loom-cli/test-branch',
+      responses: [{ comment_id: 1, body: 'first' }],
+    }),
+    'utf8',
+  );
+  const first = prRespond(
+    ['test-loom', `--responses-file=${responsesFile}`],
+    { projectsRoot },
+  );
+  expect(first.exitCode).toBe(0);
+  expect((JSON.parse(first.stdout as string).paths[0] as string)).toContain('response-01.json');
+
+  // Second batch — should pick up from 02
+  writeFileSync(
+    responsesFile,
+    JSON.stringify({
+      pr: 42,
+      branch: 'loom-cli/test-branch',
+      responses: [{ comment_id: 2, body: 'second' }],
+    }),
+    'utf8',
+  );
+  const second = prRespond(
+    ['test-loom', `--responses-file=${responsesFile}`],
+    { projectsRoot },
+  );
+  expect(second.exitCode).toBe(0);
+  expect((JSON.parse(second.stdout as string).paths[0] as string)).toContain('response-02.json');
+});
+
+test('prRespond: missing --responses-file returns missing-args', () => {
+  setupProjectWithCheckins(['01']);
+  const result = prRespond(['test-loom'], { projectsRoot });
+  expect(result.exitCode).toBe(1);
+  expect(JSON.parse(result.stderr as string).error).toBe('missing-args');
+});
+
+test('prRespond: malformed responses-file returns invalid-responses-file', () => {
+  setupProjectWithCheckins(['01']);
+  const responsesFile = join(projectsRoot, 'bad-responses.json');
+  writeFileSync(responsesFile, JSON.stringify({ pr: 42 }), 'utf8'); // no branch, no responses
+  const result = prRespond(
+    ['test-loom', `--responses-file=${responsesFile}`],
+    { projectsRoot },
+  );
+  expect(result.exitCode).toBe(1);
+  expect(JSON.parse(result.stderr as string).error).toBe('invalid-responses-file');
 });
