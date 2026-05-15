@@ -251,6 +251,119 @@ export function projectScaffold(rest: string[], ctx: CliContext): DispatchResult
   };
 }
 
+const ADOPT_OPTIONS = {
+  pretty: { type: 'boolean' as const },
+  'config-file': { type: 'string' as const },
+  'manifest-init-file': { type: 'string' as const },
+};
+
+export function projectAdopt(rest: string[], ctx: CliContext): DispatchResult {
+  const { values, positionals } = parseArgs({
+    args: rest,
+    options: ADOPT_OPTIONS,
+    allowPositionals: true,
+    strict: false,
+  });
+  const slugArg = positionals[0];
+  if (slugArg === undefined) {
+    return errToResult(
+      new LoomError('missing-args', 'project adopt requires a slug'),
+    );
+  }
+  const configFile = values['config-file'];
+  const manifestInitFile = values['manifest-init-file'];
+  if (configFile === undefined || manifestInitFile === undefined) {
+    return errToResult(
+      new LoomError(
+        'missing-args',
+        'project adopt requires --config-file and --manifest-init-file',
+      ),
+    );
+  }
+  let slug: string;
+  try {
+    slug = normalizeSlug(slugArg);
+  } catch (err) {
+    return errToResult(err);
+  }
+  const projectDir = join(ctx.projectsRoot, slug);
+  if (!existsSync(projectDir)) {
+    return errToResult(
+      new LoomError(
+        'project-not-found',
+        `project ${slug} does not exist at ${projectDir} (use 'project scaffold' to create one)`,
+      ),
+    );
+  }
+  const planMdPath = join(projectDir, 'PLAN.md');
+  if (!existsSync(planMdPath)) {
+    return errToResult(
+      new LoomError(
+        'plan-not-found',
+        `cannot adopt ${slug}: ${planMdPath} is missing (project must already have a PLAN.md, e.g. from 'bin/draft plan')`,
+      ),
+    );
+  }
+  const manifestPath = join(projectDir, 'manifest.json');
+  if (existsSync(manifestPath)) {
+    return errToResult(
+      new LoomError(
+        'already-adopted',
+        `project ${slug} already has manifest.json at ${manifestPath} (loom is already adopted)`,
+      ),
+    );
+  }
+  let manifestInit: ManifestInit;
+  try {
+    manifestInit = JSON.parse(readFileSync(manifestInitFile, 'utf8'));
+  } catch (err: unknown) {
+    return errToResult(
+      new LoomError(
+        'invalid-manifest-init',
+        `cannot read manifest-init file ${manifestInitFile}: ${(err as Error).message}`,
+      ),
+    );
+  }
+  let config;
+  try {
+    config = readConfig(configFile);
+  } catch (err) {
+    return errToResult(err);
+  }
+  try {
+    mkdirSync(join(projectDir, 'checkins'), { recursive: true });
+    mkdirSync(join(projectDir, 'sessions'), { recursive: true });
+
+    const manifest: Manifest = {
+      schema_version: 1,
+      title: manifestInit.title,
+      slug,
+      started: manifestInit.started,
+      status: 'active',
+      current_branch: null,
+      latest_checkin: null,
+      strategy: manifestInit.strategy,
+      phases: manifestInit.phases,
+    };
+    writeManifest(manifestPath, manifest);
+    writeConfig(join(projectDir, 'config.json'), config);
+    appendEvent(join(projectDir, 'events.jsonl'), {
+      at: new Date().toISOString(),
+      event: 'project-initialized',
+      detail: {},
+    });
+  } catch (err: unknown) {
+    if (err instanceof LoomError) return errToResult(err);
+    return errToResult(
+      new LoomError('adopt-failed', `adopt failed: ${(err as Error).message}`),
+    );
+  }
+  return {
+    stdout: emit({ slug, path: projectDir }, values.pretty === true),
+    exitCode: 0,
+  };
+}
+
 const ARCHIVE_OPTIONS = {
   pretty: { type: 'boolean' as const },
 };
@@ -319,5 +432,6 @@ export const PROJECT_VERBS = {
   ls: projectList,
   status: projectStatus,
   scaffold: projectScaffold,
+  adopt: projectAdopt,
   archive: projectArchive,
 };

@@ -16,6 +16,7 @@ import {
   projectList,
   projectStatus,
   projectScaffold,
+  projectAdopt,
   projectArchive,
 } from './project.ts';
 
@@ -238,6 +239,160 @@ test('projectScaffold: missing --plan-file returns missing-args', () => {
   const result = projectScaffold(
     [
       'no-plan',
+      `--config-file=${inputs.configFile}`,
+      `--manifest-init-file=${inputs.manifestInitFile}`,
+    ],
+    { projectsRoot },
+  );
+  expect(result.exitCode).toBe(1);
+  expect(JSON.parse(result.stderr as string).error).toBe('missing-args');
+});
+
+// ---------- Adopt tests ----------
+
+// Adopt expects a directory that already has PLAN.md (e.g. from
+// `bin/draft plan`). It writes the loom files alongside without
+// touching PLAN.md or INTERVIEW.md.
+function writeAdoptInputs(dir: string): {
+  configFile: string;
+  manifestInitFile: string;
+} {
+  const configFile = join(dir, 'config.json');
+  const manifestInitFile = join(dir, 'manifest-init.json');
+  writeFileSync(
+    configFile,
+    JSON.stringify({
+      schema_version: 1,
+      base_branch: 'main',
+      reviewers: [],
+      labels: [],
+      verification: ['npm run lint'],
+      worker_bindings: {},
+    }),
+    'utf8',
+  );
+  writeFileSync(
+    manifestInitFile,
+    JSON.stringify({
+      title: 'Adopted Project',
+      started: '2026-05-15',
+      strategy: 'interactive',
+      phases: [
+        { number: 1, name: 'Phase one', status: 'not-started' },
+      ],
+    }),
+    'utf8',
+  );
+  return { configFile, manifestInitFile };
+}
+
+function makeDraftProject(slug: string): string {
+  const path = join(projectsRoot, slug);
+  mkdirSync(path, { recursive: true });
+  writeFileSync(join(path, 'PLAN.md'), '# Plan\n', 'utf8');
+  writeFileSync(join(path, 'INTERVIEW.md'), '# Interview\n', 'utf8');
+  return path;
+}
+
+test('projectAdopt: writes loom files alongside existing PLAN.md', () => {
+  const slug = '2026-05-15-draft-only';
+  const path = makeDraftProject(slug);
+  const inputs = writeAdoptInputs(projectsRoot);
+  const result = projectAdopt(
+    [
+      slug,
+      `--config-file=${inputs.configFile}`,
+      `--manifest-init-file=${inputs.manifestInitFile}`,
+    ],
+    { projectsRoot },
+  );
+  expect(result.exitCode).toBe(0);
+  const out = JSON.parse(result.stdout as string);
+  expect(out.slug).toBe(slug);
+  // Loom files now exist
+  expect(existsSync(join(path, 'manifest.json'))).toBe(true);
+  expect(existsSync(join(path, 'config.json'))).toBe(true);
+  expect(existsSync(join(path, 'events.jsonl'))).toBe(true);
+  expect(existsSync(join(path, 'checkins'))).toBe(true);
+  expect(existsSync(join(path, 'sessions'))).toBe(true);
+  // Draft files preserved untouched
+  expect(readFileSync(join(path, 'PLAN.md'), 'utf8')).toBe('# Plan\n');
+  expect(readFileSync(join(path, 'INTERVIEW.md'), 'utf8')).toBe(
+    '# Interview\n',
+  );
+  // Manifest carries the init values
+  const m = JSON.parse(readFileSync(join(path, 'manifest.json'), 'utf8'));
+  expect(m.slug).toBe(slug);
+  expect(m.title).toBe('Adopted Project');
+  expect(m.status).toBe('active');
+});
+
+test('projectAdopt: refuses if project dir is missing', () => {
+  const inputs = writeAdoptInputs(projectsRoot);
+  const result = projectAdopt(
+    [
+      '2026-05-15-nonexistent',
+      `--config-file=${inputs.configFile}`,
+      `--manifest-init-file=${inputs.manifestInitFile}`,
+    ],
+    { projectsRoot },
+  );
+  expect(result.exitCode).toBe(1);
+  expect(JSON.parse(result.stderr as string).error).toBe('project-not-found');
+});
+
+test('projectAdopt: refuses if PLAN.md is missing', () => {
+  const slug = '2026-05-15-no-plan';
+  const path = join(projectsRoot, slug);
+  mkdirSync(path, { recursive: true });
+  // Note: no PLAN.md written
+  const inputs = writeAdoptInputs(projectsRoot);
+  const result = projectAdopt(
+    [
+      slug,
+      `--config-file=${inputs.configFile}`,
+      `--manifest-init-file=${inputs.manifestInitFile}`,
+    ],
+    { projectsRoot },
+  );
+  expect(result.exitCode).toBe(1);
+  expect(JSON.parse(result.stderr as string).error).toBe('plan-not-found');
+});
+
+test('projectAdopt: refuses if manifest.json already exists', () => {
+  const slug = '2026-05-15-already-adopted';
+  const path = makeDraftProject(slug);
+  // Pre-existing loom marker
+  writeFileSync(join(path, 'manifest.json'), '{}', 'utf8');
+  const inputs = writeAdoptInputs(projectsRoot);
+  const result = projectAdopt(
+    [
+      slug,
+      `--config-file=${inputs.configFile}`,
+      `--manifest-init-file=${inputs.manifestInitFile}`,
+    ],
+    { projectsRoot },
+  );
+  expect(result.exitCode).toBe(1);
+  expect(JSON.parse(result.stderr as string).error).toBe('already-adopted');
+});
+
+test('projectAdopt: missing --config-file returns missing-args', () => {
+  const slug = '2026-05-15-missing-config';
+  makeDraftProject(slug);
+  const inputs = writeAdoptInputs(projectsRoot);
+  const result = projectAdopt(
+    [slug, `--manifest-init-file=${inputs.manifestInitFile}`],
+    { projectsRoot },
+  );
+  expect(result.exitCode).toBe(1);
+  expect(JSON.parse(result.stderr as string).error).toBe('missing-args');
+});
+
+test('projectAdopt: missing slug returns missing-args', () => {
+  const inputs = writeAdoptInputs(projectsRoot);
+  const result = projectAdopt(
+    [
       `--config-file=${inputs.configFile}`,
       `--manifest-init-file=${inputs.manifestInitFile}`,
     ],
