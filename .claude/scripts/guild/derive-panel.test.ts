@@ -306,6 +306,7 @@ describe('spec parsing', () => {
       'evaluator-contract-fit',
       'evaluator-a11y',
       'evaluator-nextjs',
+      'evaluator-css-architecture',
       'evaluator-react-api',
       'evaluator-tokens',
       'evaluator-naming',
