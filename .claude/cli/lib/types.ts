@@ -136,3 +136,94 @@ export type Config = {
   verification: string[];
   worker_bindings: Record<string, string>;
 };
+
+// ---------- Checkin ----------
+
+export type CheckinVerdictResult = 'approved' | 'flagged';
+
+export type CheckinContract = {
+  goal: string;
+  acceptance_criteria: string[];
+  rules_applied: string[];
+  disqualifiers: string[];
+  inputs: string[];
+};
+
+export type CheckinExecution = {
+  actions: string[];
+  files_touched: string[];
+  corrections: string[];
+};
+
+export type CheckinVerdict = {
+  result: CheckinVerdictResult;
+  reasons: string[];
+};
+
+export type CheckinPhaseRef = {
+  number: number;
+  name: string;
+};
+
+export type Checkin = {
+  schema_version: SchemaVersion;
+  number: string;
+  created: string;
+  phase: CheckinPhaseRef;
+  branch: string;
+  unit: string;
+  contract: CheckinContract;
+  execution: CheckinExecution;
+  scope: string[];
+  changes_since_previous: string;
+  verdict: CheckinVerdict;
+  notes_for_pr: string[];
+};
+
+// ---------- Session ----------
+
+export type Session = {
+  schema_version: SchemaVersion;
+  date: string;
+  letter: string;
+  phases_touched: number[];
+  checkins_written: string[];
+  pr_activity: string[];
+  what_happened: string[];
+  open_threads: string[];
+  notes: string[];
+};
+
+// ---------- Retro ----------
+
+export type RetroFindingCategory =
+  | 'kept-well'
+  | 'improvement'
+  | 'process-change'
+  | 'follow-up';
+
+export type RetroFinding = {
+  category: RetroFindingCategory;
+  description: string;
+  evidence?: string;
+};
+
+export type SessionRetro = {
+  schema_version: SchemaVersion;
+  type: 'session';
+  created: string;
+  phase: number;
+  tier: number;
+  findings: RetroFinding[];
+};
+
+export type ProjectRetro = {
+  schema_version: SchemaVersion;
+  type: 'project';
+  created: string;
+  findings: RetroFinding[];
+};
+
+export type Retro = SessionRetro | ProjectRetro;
+
+export type RetroType = Retro['type'];

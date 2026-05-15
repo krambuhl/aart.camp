@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "type": "session",
+  "created": "2026-05-15T20:15:00Z",
+  "phase": 2,
+  "tier": 3,
+  "findings": [
+    {
+      "category": "kept-well",
+      "description": "Pre-computed verification in evaluator packets cut spot-check tool use to one or zero per unit."
+    },
+    {
+      "category": "improvement",
+      "description": "Tier-3 batch size was too aggressive — 12 files in one tier strained the evaluator's context.",
+      "evidence": "Two of three contract-fit verdicts emitted parse-failure: budget-exhausted."
+    },
+    {
+      "category": "process-change",
+      "description": "Cap tier batch size at 8 files for evaluator panels of size 2+."
+    }
+  ]
+}

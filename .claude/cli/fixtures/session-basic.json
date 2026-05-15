@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "date": "2026-05-15",
+  "letter": "a",
+  "phases_touched": [1],
+  "checkins_written": ["01", "02", "03"],
+  "pr_activity": [
+    "#54 opened and merged",
+    "#56 opened and merged"
+  ],
+  "what_happened": [
+    "Authored LOOM-CONVENTIONS.md as the design contract",
+    "Shipped project-state schemas with TDD-ordered commits",
+    "Shipped unit-of-work schemas; Phase 1 closes here"
+  ],
+  "open_threads": [
+    "Panel-composition mapping needs an entry for .claude/cli/**/*.ts",
+    "Three evaluators were L-004 session-cache unavailable; fresh session will see them"
+  ],
+  "notes": [
+    "Remote branch wasn't auto-deleted after #54 merge — required explicit delete-then-push at unit 02 boundary",
+    "Phase 2 picks up the read API + storage lib next"
+  ]
+}
