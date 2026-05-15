@@ -2,7 +2,7 @@
 
 **Slug**: 2026-05-15-loom-cli
 **Started**: 2026-05-15
-**Status**: active
+**Status**: archived
 **Current branch**: —
 **Latest checkin**: checkins/loom-cli/phase-4-pr/04.md
 
@@ -69,3 +69,4 @@ Project initialized. No work started yet.
 | 2026-05-15 12:33 | checkin-created | 04 on loom-cli/phase-4-pr |
 | 2026-05-15 12:33 | pr-opened | #76 |
 | 2026-05-15 12:34 | phase-completed | 4 |
+| 2026-05-15 13:20 | archived | projects/archive/2026-05-15-loom-cli |
