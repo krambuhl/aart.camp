@@ -125,8 +125,16 @@ The detailed JSON shapes of each file land in `cli/lib/types.ts` (Phase
 - **retros/`<filename>`.json** — Retrospective records. The `type`
   field on every retro distinguishes `session` (per phase × tier,
   from confidence-loop work) from `project` (whole-project, at
-  archive time). Filenames are descriptive (`phase-1-tier-2.json`,
-  `project.json`); the type field is canonical.
+  archive time). Filenames are derived from the retro's content,
+  not free-form:
+  - `type: session` → `retros/phase-<N>-tier-<M>.json`
+    (`<N>` from `retro.phase`, `<M>` from `retro.tier`)
+  - `type: project` → `retros/project.json`
+    (exactly one project retro per project, written at archive time)
+  The `lib/retro.ts` module exports a `retroFilename(retro)` helper
+  so verbs and skills can derive the path without going through
+  the writer. The type field on disk is canonical; the filename is
+  derivable from it.
 
 ## CLI conventions
 
@@ -195,6 +203,20 @@ is the substrate domain and the verb is the operation. Examples:
 within a namespace are: `read`, `list`, `write`, `update`, `latest`,
 `scaffold`, `archive`, etc., chosen for consistency across
 namespaces.
+
+### Verbless namespaces
+
+A small set of namespaces have exactly one handler whose name matches
+the namespace itself. The signature is `loom <noun> [<args>]` — the
+first positional argument is the handler's first argument, not a
+sub-verb. Currently the only verbless namespace is `doctor`
+(`loom doctor [<slug>]`). The dispatch layer special-cases these via
+a `VERBLESS_NAMESPACES` set in `loom.ts`.
+
+Add a namespace to the verbless set only when there's truly one
+operation. If a second verb appears, retire the verbless form and
+move to the standard noun-verb shape (with the prior single verb
+becoming an explicit verb name).
 
 ### Argument conventions
 
