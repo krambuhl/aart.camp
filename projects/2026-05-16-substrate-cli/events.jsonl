@@ -35,3 +35,5 @@
 {"at":"2026-05-16T07:28:02.387Z","event":"pr-opened","detail":{"pr":104,"url":"https://github.com/krambuhl/aart.camp/pull/104"}}
 {"at":"2026-05-16T07:28:46.676Z","event":"phase-started","detail":{"phase":4,"name":"griot internal restructure"}}
 {"at":"2026-05-16T07:30:13.374Z","event":"session-saved","detail":{"filename":"2026-05-16-e.json"}}
+{"at":"2026-05-16T07:36:06.810Z","event":"phase-started","detail":{"phase":4,"name":"griot internal restructure"}}
+{"at":"2026-05-16T07:48:31.750Z","event":"session-saved","detail":{"filename":"2026-05-16-f.json"}}
