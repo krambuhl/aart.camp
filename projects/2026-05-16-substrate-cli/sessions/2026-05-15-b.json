@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "date": "2026-05-15",
+  "letter": "b",
+  "phases_touched": [
+    2
+  ],
+  "checkins_written": [
+    "01",
+    "02",
+    "03",
+    "04",
+    "05"
+  ],
+  "pr_activity": [
+    "#100 opened (substrate-cli/phase-2 — Phase 2: bin/guild CLI + scripts/guild kill)"
+  ],
+  "what_happened": [
+    "Resumed after #99 merge. Fetched + checked out main + pulled (main now at e0facac post-#99 squash + a small loom-archive SKILL.md tweak from another author).",
+    "Cut substrate-cli/phase-2 branch. Hand-edited manifest.json to backfill phases 2-6 (precursor commit 7cbf0fd) — one-time substrate workaround for missing bin/loom phase add verb. Also flipped Phase 1's PR state from open → merged.",
+    "D1: scaffolded bin/guild + .claude/cli/guild.ts (flat-verb shape mirroring bin/griot from Phase 1) + ported parse-and-aggregate verb. Discovered + fixed EAGAIN bug in both bin/griot and bin/guild dispatchers (eager readFileSync(0) → catch EAGAIN as empty stdin).",
+    "D2: ported findings verb (subverbs append + count; JSONL writes via ctx.cwd).",
+    "D3: ported whiteboard verb (4 subverbs: init, detect-round, append, read-state; path resolved against ctx.cwd; pure helpers re-exported for unit testing).",
+    "D4: ported derive-panel verb. loadSpec() signature changed to return {spec, warning} so the verb populates DispatchResult.stderr cleanly. Discovered while testing: PANEL-COMPOSITION.md's `.claude/cli/**/*.ts` pattern requires `**` to match at least one segment, so files DIRECTLY in .claude/cli/ fall through to generic *.ts — explains Phase 1's manual-panel rationale.",
+    "D5: deleted .claude/scripts/guild/ (8 files + __smoke-fixtures__/), swapped settings.json permission, updated 4 caller skill bodies (guild-whiteboard, guild-validate, ev-loop-interactive, ev-loop-confidence).",
+    "Opened PR #100 + marked Phase 2 completed in manifest."
+  ],
+  "open_threads": [
+    "Phase 3 (skill surface cleanup: audit + grill-me) is parallel-eligible with the remaining phases per PLAN.md — independent of P2/P4/P6 — and ready to dispatch now that the manifest has its row.",
+    "Phase 5 (new agent families) is also parallel-eligible. Same readiness.",
+    "Phase 4 (griot internal restructure) depends on P1 — now ready.",
+    "Phase 6 (§ extraction + integration sweep) depends on P1 + P2 — now ready (both merged or in-PR).",
+    "Substrate findings to file as sibling project (deferred manifest-vs-PLAN drift work): (a) bin/loom needs a phase add verb so projects don't have to hand-edit manifest.json when PLAN.md is revised post-scaffold; (b) PANEL-COMPOSITION.md's .claude/cli/**/*.ts pattern is too tight — add a sibling `.claude/cli/*.ts` row to cover files directly in the dir.",
+    "PR #100 is ready for human review."
+  ],
+  "notes": [
+    "Phase 2 followed the same 5-deliverable shape as Phase 1's 4-deliverable shape. Each port followed the established pattern: <verb>Verb + <verb>Subverb naming, ValidationError class for cross-function validation flow, sibling .test.ts adapted from legacy with direct verb-handler calls instead of subprocess spawnSync. Evaluator panel (contract-fit + naming) approved all 5 deliverables.",
+    "Recurring L-013 friction: cited line-number ranges from memory and they kept being off by 5-20 lines. Evaluator caught it as soft notes on D3, D4. Habitual fix needed: cite line ranges only after a fresh Read of the target file, not from working memory.",
+    "Whiteboard step skipped again this phase (same rationale as Phase 1: 5 of 6 registered whiteboard engineers are off-domain for substrate-CLI plumbing; substrate-engineer authored later in P5)."
+  ]
+}
