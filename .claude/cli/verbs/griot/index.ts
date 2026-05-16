@@ -3,6 +3,7 @@
 // (rollup, session-notes, judge panels). Modeled on bin/draft's
 // flat-verb shape.
 
+import { captureVerb } from './capture.ts';
 import { mediatePanelVerb } from './mediate-panel.ts';
 import { operatorChecksVerb } from './operator-checks.ts';
 import { useVerb } from './use.ts';
@@ -32,6 +33,7 @@ export type GriotVerbHandler = (
 
 export const GRIOT_VERBS: Record<string, GriotVerbHandler> = {
   use: useVerb,
+  capture: captureVerb,
   'operator-checks': operatorChecksVerb,
   'mediate-panel': mediatePanelVerb,
 };

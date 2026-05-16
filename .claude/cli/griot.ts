@@ -19,6 +19,8 @@ export type { DispatchResult, GriotCliContext };
 // reaffirmed for griot in projects/2026-05-16-substrate-cli/PLAN.md.
 export const VERBS: Record<string, string> = {
   use: 'Print learnings/rollup.md with citation contract for session injection',
+  capture:
+    'Capture a correction (from a checkin) or an evaluator finding into a session-note folder',
   'operator-checks':
     'Helper checks (verify-rubric | log-intervention) for griot scripts; reads JSON from stdin',
   'mediate-panel':
