@@ -56,3 +56,4 @@
 {"at":"2026-05-16T18:52:06.855Z","event":"pr-opened","detail":{"pr":109,"url":"https://github.com/krambuhl/aart.camp/pull/109"}}
 {"at":"2026-05-16T18:52:13.085Z","event":"phase-started","detail":{"phase":6,"name":"§ extraction + extension + integration sweep"}}
 {"at":"2026-05-16T18:57:21.425Z","event":"checkin-created","detail":{"number":"03","branch":"substrate-cli/phase-6"}}
+{"at":"2026-05-16T19:03:03.631Z","event":"checkin-created","detail":{"number":"04","branch":"substrate-cli/phase-6"}}

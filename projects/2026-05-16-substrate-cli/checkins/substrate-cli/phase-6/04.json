@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "number": "04",
+  "created": "2026-05-16T19:02:00.000Z",
+  "phase": {
+    "number": 6,
+    "name": "§ extraction + extension + integration sweep"
+  },
+  "branch": "substrate-cli/phase-6",
+  "unit": "Sweep 4 — parallel-work invariant test + CONVENTIONS.md category-header normalization",
+  "contract": {
+    "goal": "Author `.claude/cli/parallel-work-invariant.test.ts` — a vitest test file with an inline declarative registry of every mutating verb in the four CLI families, classified into the three categories named in CONVENTIONS.md (append-only / partitioned / single-writer-serialized). Tests assert registry well-formedness (valid categories, category-3-has-exception, partitioned-has-variable, no-exception-on-non-cat-3) AND alignment with CONVENTIONS.md (the doc names every category, every declared exception the registry uses, and has a `### Declared exceptions` subsection). Normalize CONVENTIONS.md `### Category N — <name>` headers to lowercase so doc strings match registry strings exactly.",
+    "acceptance_criteria": [
+      "`.claude/cli/parallel-work-invariant.test.ts` exists with an inline REGISTRY of mutating verbs covering all four CLI families (3 cat-1 + 5 cat-2 + 5 cat-3 = 13 entries).",
+      "Test asserts every registry entry has a valid category (one of append-only, partitioned, single-writer-serialized).",
+      "Test asserts every category-3 verb declares a known exception (PLAN.md | manifest.json | whiteboard); non-cat-3 entries assert no exception.",
+      "Test asserts every category-2 target string includes at least one `{partition-variable}` (regex `/\\{[^}]+\\}/`).",
+      "Test reads `projects/CONVENTIONS.md` at `process.cwd()/projects/CONVENTIONS.md` and asserts the doc contains every category string the registry uses (exact-substring, lowercase).",
+      "Test asserts CONVENTIONS.md contains every exception label the registry uses.",
+      "Test asserts CONVENTIONS.md has a `### Declared exceptions` subsection header (line-anchored regex).",
+      "CONVENTIONS.md category-3 headers normalized to lowercase (`### Category N — append-only`, `### Category N — partitioned`, `### Category N — single-writer-serialized`).",
+      "`npm run lint` clean; `npm run build` succeeds; `npm test` passes 503/503 (was 496/496; +7 new tests in this file).",
+      "Test is in-process — imports `node:fs` / `node:path` directly; no `execSync` or subprocess spawn (per Phase 6 whiteboard performance guidance)."
+    ],
+    "rules_applied": [
+      "L-001 Node 24 erasable TypeScript: test uses only type annotations + `as const`-style narrowing; no enums, namespaces, or parameter properties.",
+      "L-004 split agent-creation from agent-use: derive-panel returned `evaluator-contract-fit,evaluator-test-unit` for this unit; `evaluator-test-unit` was authored in session i and is session-cached (not runtime-callable this session). Manually dropped from the panel. Surfaced in Notes for the PR.",
+      "L-005 fresh git status before evaluator: re-ran `git status --porcelain` immediately before the evaluator packet.",
+      "L-006 parse markdown at runtime: the test reads `projects/CONVENTIONS.md` at test time and asserts substring presence — no duplicated TS-const of the categories or exceptions; the doc remains the source of truth.",
+      "L-009 dense evaluator packet: pre-computed verification + AC→line mappings + trust-precomputed instruction + suggested spot-check; evaluator returned approved on a single iteration.",
+      "L-013 ground prose claims in execution: every numerical claim (13 entries, 3+5+5, 7 tests, 503 total) is grounded in command output captured in this session."
+    ],
+    "disqualifiers": [
+      "Concurrency-stress tests (multi-process or fs-mock-based race tests) — Phase 6 PLAN said small test; the registry-driven tripwire is the small version.",
+      "Modifying any SUBSTRATE-COMPOSITIONS.md recipe.",
+      "Editing ev-loop bodies further.",
+      "Refactoring any cat-3 verb to remove the read-modify-write shape; the declared-exceptions register is the contract, not a TODO.",
+      "Implementing the skeptic's duplicate-`## Foo`-header tripwire for `projects/*.md` (deferred to a future substrate-gaps sweep)."
+    ],
+    "inputs": [
+      "projects/CONVENTIONS.md § Parallel-work invariant (Sweep 3 catalog of the 3 categories + declared-exceptions register).",
+      "Existing test patterns in `.claude/cli/**/*.test.ts` (vitest + node:fs + in-process import; e.g., `.claude/cli/verbs/guild/findings.test.ts` as a shape reference).",
+      "vitest.config.ts (confirms include glob matches `.claude/cli/**/*.test.ts` and tests run with `process.cwd()` at repo root).",
+      "Phase 6 whiteboard Round 1 — performance + design-systems convergence on declarative-table tests over concurrency stress; performance also recommended in-process imports to avoid the ~50ms subprocess-spawn tax per verb."
+    ]
+  },
+  "execution": {
+    "actions": [
+      "Authored .claude/cli/parallel-work-invariant.test.ts (212 lines). Structure: imports (node:fs readFileSync, node:path join, vitest describe/expect/test) → comment block explaining the contract → type aliases (Category, Exception, VerbEntry) → REGISTRY const (13 entries: 3 append-only / 5 partitioned / 5 single-writer-serialized) → VALID_CATEGORIES + DECLARED_EXCEPTIONS sets → two describe blocks. First describe: 4 tests on registry well-formedness (valid-category, cat-3-has-known-exception, non-cat-3-no-exception, cat-2-has-partition-variable). Second describe: 3 tests on CONVENTIONS.md alignment (doc-names-every-category, doc-names-every-used-exception, doc-has-Declared-exceptions-header).",
+      "Ran the new test file standalone via `npx vitest run`. First run failed AC6: the doc said `### Category 3 — Single-writer-serialized` (title-case) but the registry uses lowercase `single-writer-serialized`. The test caught the mismatch.",
+      "Normalized CONVENTIONS.md category headers to lowercase: `Append-only` → `append-only`, `Partitioned` → `partitioned`, `Single-writer-serialized` → `single-writer-serialized`. Three targeted edits to projects/CONVENTIONS.md lines 134, 147, 165.",
+      "Re-ran the test file: 7/7 pass.",
+      "Ran full vitest suite: 503/503 pass (was 496/496 pre-sweep; +7 new tests in the new file).",
+      "Pre-evaluation fresh git status: M projects/CONVENTIONS.md, ?? .claude/cli/parallel-work-invariant.test.ts.",
+      "Derived panel via bin/guild derive-panel: evaluator-contract-fit, evaluator-test-unit. Manually dropped evaluator-test-unit per L-004 (session-cached from session i). Effective panel: evaluator-contract-fit only.",
+      "Composed dense evaluator packet with line-precise AC→file:line mappings and suggested spot-check on the REGISTRY block. evaluator-contract-fit returned VERDICT: approved on a single iteration after one read of the registry block (lines 30-110). bin/guild parse-and-aggregate confirmed: verdict=approved, blocking=[], advisory=[]. Aggregator parsed cleanly this time — the heredoc had `\\n\\nVERDICT: approved` with explicit newlines.",
+      "Skipped step 4.5 (findings append) per spec: substrate-only unit with zero findings."
+    ],
+    "files_touched": [
+      ".claude/cli/parallel-work-invariant.test.ts",
+      "projects/CONVENTIONS.md"
+    ],
+    "corrections": [
+      "correction: CONVENTIONS.md category-3 header was authored in Sweep 3 as `### Category 3 — Single-writer-serialized` (title-case) but the parallel-work-invariant test (Sweep 4) uses the lowercase `single-writer-serialized` form for the Category union type and assertion strings. The test caught this on first run (AC6 failed). Fixed by normalizing all three category headers in CONVENTIONS.md to lowercase. The registry strings (lowercase) are now the canonical form; the doc agrees. Worth noting as a substrate-shape observation: vocabulary should be cited consistently across artifacts; lowercase wins when the term is used as a string identifier (registry key) rather than a prose noun."
+    ]
+  },
+  "scope": [
+    "New .claude/cli/parallel-work-invariant.test.ts (212 lines, 13 registry entries, 7 tests in 2 describe blocks) as the tripwire that asserts every mutating verb in the substrate has a declared category and every category-3 verb names a declared exception.",
+    "3 single-line edits to projects/CONVENTIONS.md normalizing the `### Category N — <name>` headers to lowercase to match the registry's lowercase category strings.",
+    "No verb-implementation changes — the test reads the substrate's prose contract (CONVENTIONS.md) and asserts the registry aligns with it; refactor of any cat-3 verb is explicitly out of scope."
+  ],
+  "changes_since_previous": "Builds on Sweep 3 (checkin 03). Sweep 4 ships the test that makes the invariant declarative rather than aspirational — adding a new mutating verb to the substrate without classifying it in the registry now fails the test.",
+  "verdict": {
+    "result": "approved",
+    "reasons": []
+  },
+  "notes_for_pr": [
+    "Phase 6 Sweep 4 of 4 (final): the parallel-work invariant is now executable. .claude/cli/parallel-work-invariant.test.ts holds a 13-entry registry covering every mutating verb in the four CLI families, classified into the three CONVENTIONS.md categories. 4 tests assert registry well-formedness; 3 tests assert alignment with CONVENTIONS.md prose. Adding a new mutating verb now requires (a) a registry entry, (b) for category 3 a CONVENTIONS.md update naming the exception — otherwise the test fails loudly.",
+    "Test is in-process per Phase 6 whiteboard performance guidance: imports node:fs and process.cwd() directly, no subprocess spawn. Total test runtime: ~5ms (lower bound; vitest reports tests=2ms for the 7 cases). The full repo test suite went from 496/496 to 503/503.",
+    "L-004 boundary observed: derived panel was `evaluator-contract-fit, evaluator-test-unit`; evaluator-test-unit was authored in session i and is session-cached this session per L-004. Manually dropped from the effective panel. Smoke-testing the new evaluator against this unit's test file is the next-session follow-up (will be addressed when Phase 6 PR merges and a new session opens).",
+    "Substrate observation: vocabulary consistency tripwire caught itself. Sweep 3 authored CONVENTIONS.md category headers in title-case (`Append-only`, `Partitioned`, `Single-writer-serialized`); Sweep 4's test uses lowercase as the canonical form because the registry's `category` field is a string literal. The test failed on first run, surfacing the inconsistency. Fix was to lowercase the doc headers. The fixture-style mismatch suggests a future substrate-gaps idea: a project-wide lint that enforces vocabulary case-consistency across `projects/CONVENTIONS.md` headers and any TS string-literal that cites them.",
+    "Hotspot surfacing (from PLAN.md Phase 6 'Surface any remaining shared-mutable-state hotspots as advisory findings'): the only real read-modify-write hotspot identified during this phase is `bin/guild whiteboard append` (whiteboard.ts:188-204; surfaced by performance in whiteboard Round 1). It's a declared exception in CONVENTIONS.md (the orchestrator /guild-whiteboard serializes round-appends), so the invariant is honest. No additional hotspots discovered during Sweeps 1-4.",
+    "Deferred to a future substrate-gaps sweep: (a) skeptic's proposed projects/*.md duplicate-`## Foo`-header tripwire that guards bare-§ citation form against silent ambiguation; (b) parse-and-aggregator's line-anchored VERDICT: regex — first call this phase parse-failed because the heredoc-encoded evaluator output had VERDICT: inline rather than after a newline (Sweep 3 correction); a tolerance improvement would accept end-of-string VERDICT: without trailing newline; (c) the smoke-test for the two new session-i evaluators (test-integration, test-unit) is the natural follow-up unit once Phase 6 merges and a fresh Claude Code process picks them up."
+  ]
+}

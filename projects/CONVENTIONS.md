@@ -131,7 +131,7 @@ for that verb. Verbs that don't fit any of the three categories are
 hotspots and must either be refactored into one of the three or
 declared explicit exceptions with a written reason.
 
-### Category 1 — Append-only
+### Category 1 — append-only
 
 The verb's write uses `appendFileSync` semantics; concurrent writers
 on the same path are safe because each write is a single atomic
@@ -144,7 +144,7 @@ Examples in the substrate today:
 - `bin/loom event log` → `<project>/events.jsonl` (one event per line)
 - `bin/griot operator-checks log-intervention` → operator-log files
 
-### Category 2 — Partitioned
+### Category 2 — partitioned
 
 Each invocation writes to a path no other concurrent invocation will
 touch. The partition is encoded in the path itself — branch name,
@@ -162,7 +162,7 @@ Examples in the substrate today:
 - `bin/loom pr respond` → `checkins/<branch>/responses/<id>.md`
   (branch + comment-id-partitioned)
 
-### Category 3 — Single-writer-serialized
+### Category 3 — single-writer-serialized
 
 The verb is a read-modify-write of a shared file. Concurrent calls
 are NOT safe at the filesystem level; safety depends on the
