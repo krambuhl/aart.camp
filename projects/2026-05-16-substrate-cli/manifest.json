@@ -10,14 +10,39 @@
   "phases": [
     {
       "number": 1,
-      "name": "Phase 1",
+      "name": "bin/griot CLI + obvious wrapper kills",
       "status": "completed",
       "branch": "substrate-cli/phase-1",
       "pr": {
         "number": 99,
         "url": "https://github.com/krambuhl/aart.camp/pull/99",
-        "state": "open"
+        "state": "merged"
       }
+    },
+    {
+      "number": 2,
+      "name": "bin/guild CLI",
+      "status": "not-started"
+    },
+    {
+      "number": 3,
+      "name": "Skill surface cleanup (audit + grill-me)",
+      "status": "not-started"
+    },
+    {
+      "number": 4,
+      "name": "griot internal restructure",
+      "status": "not-started"
+    },
+    {
+      "number": 5,
+      "name": "New agent families",
+      "status": "not-started"
+    },
+    {
+      "number": 6,
+      "name": "§ extraction + extension + integration sweep",
+      "status": "not-started"
     }
   ]
 }
