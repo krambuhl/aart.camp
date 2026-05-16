@@ -20,6 +20,8 @@ export const VERBS: Record<string, string> = {
     'Append or count panel findings (.guild-findings.jsonl). Subverbs: append, count',
   'parse-and-aggregate':
     'Aggregate evaluator outputs into a structured verdict (JSON stdin → JSON stdout)',
+  whiteboard:
+    'Compose multi-round design whiteboards. Subverbs: init, detect-round, append, read-state',
 };
 
 // ---------- Pure helpers (exported for direct unit tests) ----------

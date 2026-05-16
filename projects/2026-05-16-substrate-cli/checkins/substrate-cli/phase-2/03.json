@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "number": "03",
+  "created": "2026-05-15T22:02:00.000Z",
+  "phase": {
+    "number": 2,
+    "name": "bin/guild CLI"
+  },
+  "branch": "substrate-cli/phase-2",
+  "unit": "D3: Port whiteboard verb",
+  "contract": {
+    "goal": "Port .claude/scripts/guild/whiteboard.ts (four subverbs: init, detect-round, append, read-state) to .claude/cli/verbs/guild/whiteboard.ts. Byte-equivalent behavior. Path resolved against ctx.cwd. Pure helpers (detectNextRound, formatRoundBlock, parseState) re-exported for unit testing. D3 of 5 in Phase 2.",
+    "acceptance_criteria": [
+      "whiteboardVerb(rest, ctx) exported; subverb from rest[0], path from rest[1] resolved against ctx.cwd.",
+      "init: creates file with topical header; idempotent; creates parent dirs as needed.",
+      "detect-round: returns next round number on stdout.",
+      "append: reads JSON array from ctx.stdin, appends Round N block, emits Result JSON.",
+      "read-state: parses and returns rounds JSON.",
+      "All legacy error paths preserved with guild-whiteboard-error: prefix.",
+      "Registered in GUILD_VERBS + help text.",
+      "27 sibling tests pass (pure helpers + each subverb's happy and error paths).",
+      "Legacy .claude/scripts/guild/whiteboard.ts preserved (D5)."
+    ],
+    "rules_applied": [
+      "Mirror <verb>Verb and <verb>Subverb naming from D2.",
+      "Re-export pure helpers verbatim from legacy (diff-only carve-out).",
+      "Erasable TypeScript; sibling .test.ts.",
+      "WhiteboardError class for module-local validation flow."
+    ],
+    "disqualifiers": [
+      "Modify or delete legacy whiteboard.ts/.test.ts (D5).",
+      "Change file-content shape (round block, header, Result JSON, parseState shape)."
+    ],
+    "inputs": [
+      ".claude/scripts/guild/whiteboard.ts + .test.ts (legacy)",
+      ".claude/cli/verbs/guild/index.ts + .claude/cli/guild.ts (D1+D2)"
+    ]
+  },
+  "execution": {
+    "actions": [
+      "Wrote .claude/cli/verbs/guild/whiteboard.ts (~265 lines, ports legacy with WhiteboardError class; subverb helpers renamed to <verb>Subverb pattern).",
+      "Registered 'whiteboard' in GUILD_VERBS and VERBS help registry.",
+      "Wrote whiteboard.test.ts (27 tests: 8 pure-helper unit tests + 19 verb tests adapted from legacy CLI tests).",
+      "Ran npm test: 38 files / 523 tests pass.",
+      "Ran npm run lint: clean.",
+      "Spawned evaluator-contract-fit + evaluator-naming in parallel. Both approved."
+    ],
+    "files_touched": [
+      ".claude/cli/verbs/guild/whiteboard.ts",
+      ".claude/cli/verbs/guild/whiteboard.test.ts",
+      ".claude/cli/verbs/guild/index.ts",
+      ".claude/cli/guild.ts"
+    ],
+    "corrections": []
+  },
+  "scope": [
+    "Port whiteboard verb (4 subverbs).",
+    "Register in GUILD_VERBS + help."
+  ],
+  "changes_since_previous": "Builds on D1 + D2 (checkins 01 + 02).",
+  "verdict": {
+    "result": "approved",
+    "reasons": []
+  },
+  "notes_for_pr": [
+    "D3 of 5 in Phase 2.",
+    "Naming evaluator surfaced one observation (not a flag): Section and State as type exports are quite generic; could collide with other modules at the consumer surface. Preserved verbatim from legacy per diff-only carve-out; worth a future-cleanup note.",
+    "Path argument resolved against ctx.cwd in the verb (vs legacy script's reliance on process.cwd). Byte-equivalent for absolute paths; for relative paths, behavior matches when ctx.cwd == process.cwd (which is the dispatcher's default)."
+  ]
+}

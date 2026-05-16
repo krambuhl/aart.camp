@@ -6,6 +6,7 @@
 
 import { findingsVerb } from './findings.ts';
 import { parseAndAggregateVerb } from './parse-and-aggregate.ts';
+import { whiteboardVerb } from './whiteboard.ts';
 
 export type GuildCliContext = {
   // The repo cwd. Used to resolve project-relative paths
@@ -35,4 +36,5 @@ export type GuildVerbHandler = (
 export const GUILD_VERBS: Record<string, GuildVerbHandler> = {
   findings: findingsVerb,
   'parse-and-aggregate': parseAndAggregateVerb,
+  whiteboard: whiteboardVerb,
 };
