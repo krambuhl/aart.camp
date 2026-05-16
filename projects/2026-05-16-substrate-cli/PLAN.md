@@ -655,7 +655,7 @@ them so future revisions preserve them.
 
 
 
-- 2026-05-16 — add Phase 3 followup 2: extend ev-loop-* frontmatter fix to guild-* family (guild-spawn/guild-validate/guild-whiteboard had disable-model-invocation: true that blocks Skill composition from ev-loop); amend audit-rubric Decision to correct the source-of-the-trap rule; pin new Decision for guild-* canonical shape; add Phase 3 followup 2 → Phase 4 dependency
+- 2026-05-16 — split Phase 4 into Phase 4 (session-notes only) + Phase 4 rollup (rollup format + /griot-load + /ev-run loader) per Phase 4 whiteboard skeptic Finding 3; pin rollup.json schema + format-detection error path + .claude/scripts/ migration home + /griot-load pure pass-through as new Decisions; add /learnings-use vs /griot-load resolution as Open question to settle in Phase 4 rollup's D2 contract
 
 - 2026-05-16 — add Phase 3 followup: flip ev-loop-* to top-level user-invocable (remove disable-model-invocation that blocks /ev-run Skill composition); reconcile PR #101 manifest drift; pin new Decision for top-level loops + add Phase 3 followup → Phase 4 dependency
 
