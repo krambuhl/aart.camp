@@ -1,5 +1,4 @@
-#!/usr/bin/env node
-import { readFileSync } from 'node:fs';
+import type { DispatchResult, GriotCliContext } from './index.ts';
 
 type Verdict = 'IMPROVED' | 'UNCHANGED' | 'REGRESSED' | 'DID_NOT_REPRODUCE';
 
@@ -55,13 +54,13 @@ type Output = {
   tiebreak_verdict: Verdict | null;
 };
 
-function fail(reason: string): never {
-  process.stderr.write(`mediate-panel-error: ${reason}\n`);
-  process.exit(1);
-}
+class ValidationError extends Error {}
 
-function readStdin(): string {
-  return readFileSync(0, 'utf8');
+function fail(reason: string): DispatchResult {
+  return {
+    stderr: `mediate-panel-error: ${reason}`,
+    exitCode: 1,
+  };
 }
 
 function isVerdict(s: unknown): s is Verdict {
@@ -79,7 +78,11 @@ function extractVerdictBlock(rawOutput: string): string | null {
   return m ? m[1].trim() : null;
 }
 
-function erroredVerdict(judgeId: string, tier: string, message: string): ParsedVerdict {
+function erroredVerdict(
+  judgeId: string,
+  tier: string,
+  message: string,
+): ParsedVerdict {
   // verdict field is a placeholder — the errored flag excludes it from tallies.
   return {
     judge_id: judgeId,
@@ -132,7 +135,9 @@ function parseSingleVerdict(input: RawVerdict): ParsedVerdict {
     judge_id: input.judge_id,
     tier: input.tier,
     verdict: obj.verdict,
-    control_evals: Array.isArray(obj.control_evals) ? (obj.control_evals as RubricEval[]) : [],
+    control_evals: Array.isArray(obj.control_evals)
+      ? (obj.control_evals as RubricEval[])
+      : [],
     treatment_evals: Array.isArray(obj.treatment_evals)
       ? (obj.treatment_evals as RubricEval[])
       : [],
@@ -187,7 +192,9 @@ function applyTiebreak(
   if (tiebreak.rule !== 'top_tier_consensus') {
     return { applied: false, verdict: null };
   }
-  const top = verdicts.filter((v) => !v.errored && v.tier === tiebreak.top_tier);
+  const top = verdicts.filter(
+    (v) => !v.errored && v.tier === tiebreak.top_tier,
+  );
   if (top.length < 2) {
     return { applied: false, verdict: null };
   }
@@ -204,51 +211,62 @@ function isInteger(n: unknown): n is number {
 }
 
 function validateInput(raw: unknown): Input {
-  if (!raw || typeof raw !== 'object') fail('input must be a JSON object');
+  if (!raw || typeof raw !== 'object') throw new ValidationError('input must be a JSON object');
   const obj = raw as Record<string, unknown>;
   if (obj.round_num !== 1 && obj.round_num !== 2) {
-    fail('round_num must be 1 or 2');
+    throw new ValidationError('round_num must be 1 or 2');
   }
-  if (!Array.isArray(obj.verdicts)) fail('verdicts must be an array');
-  if (obj.verdicts.length === 0) fail('verdicts array is empty');
+  if (!Array.isArray(obj.verdicts)) throw new ValidationError('verdicts must be an array');
+  if (obj.verdicts.length === 0) throw new ValidationError('verdicts array is empty');
   for (const v of obj.verdicts) {
-    if (!v || typeof v !== 'object') fail('each verdict must be an object');
+    if (!v || typeof v !== 'object') throw new ValidationError('each verdict must be an object');
     const ve = v as Record<string, unknown>;
-    if (typeof ve.judge_id !== 'string') fail('verdict.judge_id must be a string');
-    if (typeof ve.tier !== 'string') fail('verdict.tier must be a string');
-    if (typeof ve.raw_output !== 'string') fail('verdict.raw_output must be a string');
+    if (typeof ve.judge_id !== 'string') throw new ValidationError('verdict.judge_id must be a string');
+    if (typeof ve.tier !== 'string') throw new ValidationError('verdict.tier must be a string');
+    if (typeof ve.raw_output !== 'string') throw new ValidationError('verdict.raw_output must be a string');
   }
-  if (!obj.config || typeof obj.config !== 'object') fail('config must be an object');
+  if (!obj.config || typeof obj.config !== 'object') {
+    throw new ValidationError('config must be an object');
+  }
   const config = obj.config as Record<string, unknown>;
   if (!config.consensus || typeof config.consensus !== 'object') {
-    fail('config.consensus must be an object');
+    throw new ValidationError('config.consensus must be an object');
   }
   const consensus = config.consensus as Record<string, unknown>;
   if (!isInteger(consensus.round_1_blind)) {
-    fail('config.consensus.round_1_blind must be an integer');
+    throw new ValidationError('config.consensus.round_1_blind must be an integer');
   }
   if (!isInteger(consensus.round_2_debate)) {
-    fail('config.consensus.round_2_debate must be an integer');
+    throw new ValidationError('config.consensus.round_2_debate must be an integer');
   }
   if (!config.tiebreak || typeof config.tiebreak !== 'object') {
-    fail('config.tiebreak must be an object');
+    throw new ValidationError('config.tiebreak must be an object');
   }
   const tiebreak = config.tiebreak as Record<string, unknown>;
-  if (typeof tiebreak.rule !== 'string') fail('config.tiebreak.rule must be a string');
-  if (typeof tiebreak.top_tier !== 'string') fail('config.tiebreak.top_tier must be a string');
+  if (typeof tiebreak.rule !== 'string') throw new ValidationError('config.tiebreak.rule must be a string');
+  if (typeof tiebreak.top_tier !== 'string') throw new ValidationError('config.tiebreak.top_tier must be a string');
   return obj as Input;
 }
 
-function main(): void {
-  const stdin = readStdin();
-  if (stdin.trim() === '') fail('empty input on stdin');
+export function mediatePanelVerb(
+  _rest: string[],
+  ctx: GriotCliContext,
+): DispatchResult {
+  const stdin = ctx.stdin ?? '';
+  if (stdin.trim() === '') return fail('empty input on stdin');
   let raw: unknown;
   try {
     raw = JSON.parse(stdin);
   } catch (err) {
-    fail(`JSON parse error: ${(err as Error).message}`);
+    return fail(`JSON parse error: ${(err as Error).message}`);
   }
-  const input = validateInput(raw);
+  let input: Input;
+  try {
+    input = validateInput(raw);
+  } catch (err) {
+    if (err instanceof ValidationError) return fail(err.message);
+    throw err;
+  }
   const parsed = input.verdicts.map(parseSingleVerdict);
   const tally = tallyVerdicts(parsed);
   const { count: majorityCount, verdict: majorityVerdict } = pickMajority(tally);
@@ -273,7 +291,5 @@ function main(): void {
     tiebreak_applied: tiebreakApplied,
     tiebreak_verdict: tiebreakVerdict,
   };
-  process.stdout.write(`${JSON.stringify(output, null, 2)}\n`);
+  return { stdout: JSON.stringify(output, null, 2), exitCode: 0 };
 }
-
-main();

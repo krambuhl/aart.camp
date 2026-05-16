@@ -6,7 +6,7 @@ description: >-
   required). Use ONLY when explicitly invoked via /griot-compact.
   Processes every unprocessed session-note in learnings/session-notes/,
   runs the four-judge tier-based panel via parallel Agent calls,
-  mediates consensus through .claude/scripts/griot/mediate-panel.ts,
+  mediates consensus through `bin/griot mediate-panel`,
   attempts up to config.rewrite.max_attempts rewrites on
   UNCHANGED/REGRESSED outcomes, and escalates stuck notes to
   griot-operator for diagnosis. After per-note processing, re-runs
@@ -14,7 +14,7 @@ description: >-
   detect regressions, then composes a markdown PR body summarizing
   the run (delivered via the skill response — copy-paste into a
   GitHub PR). All JSONL writes go through
-  .claude/scripts/griot/operator-checks.ts log-intervention.
+  `bin/griot operator-checks log-intervention`.
 user-invocable: true
 disable-model-invocation: true
 allowed-tools: Read, Write, Bash, Agent
@@ -23,12 +23,11 @@ allowed-tools: Read, Write, Bash, Agent
 # Learnings Compact
 
 Drive the learnings validation pipeline using griot-* subagents and
-the deterministic helpers under `.claude/scripts/griot/`. The skill
-itself is the orchestrator — there is no Node script delegating
-orchestration. Each LLM call is a subagent spawn; each
-parsing/tally/threshold step is a Bash invocation of a helper script;
-each JSONL append is a Bash invocation of `operator-checks.ts
-log-intervention`.
+the deterministic verbs under `bin/griot`. The skill itself is the
+orchestrator — there is no Node script delegating orchestration.
+Each LLM call is a subagent spawn; each parsing/tally/threshold step
+is a Bash invocation of a `bin/griot` verb; each JSONL append is a
+Bash invocation of `bin/griot operator-checks log-intervention`.
 
 This skill is **idempotent**: if there are no unprocessed
 session-notes AND `learnings/rollup.md` is empty or missing, it
@@ -49,14 +48,14 @@ does nothing.
   (shared stance), `griot-judge`, `griot-rubric-author`,
   `griot-rewriter`, `griot-debate-summarizer`, `griot-operator`.
 - Tier-based config in `learnings/config.yaml`.
-- `.claude/scripts/griot/mediate-panel.ts` — pipes judge outputs
-  through to get parsed verdicts, tally, threshold check,
-  tier-split detection, tiebreak application.
-- `.claude/scripts/griot/operator-checks.ts` — two modes:
-  `verify-rubric` (rubric tampering detection, called between
-  rewrite attempts) and `log-intervention` (sole writer for all
-  JSONL appends in this pipeline: `operator-log.jsonl`,
-  `bench-history.jsonl`, and `regressions.jsonl`).
+- `bin/griot mediate-panel` — pipes judge outputs through to get
+  parsed verdicts, tally, threshold check, tier-split detection,
+  tiebreak application.
+- `bin/griot operator-checks` — two modes: `verify-rubric` (rubric
+  tampering detection, called between rewrite attempts) and
+  `log-intervention` (sole writer for all JSONL appends in this
+  pipeline: `operator-log.jsonl`, `bench-history.jsonl`, and
+  `regressions.jsonl`).
 
 The pipeline also spawns `general-purpose` subagents for the test
 subject (control and treatment outputs in §2 and §3) and for the
@@ -192,7 +191,7 @@ On attempt > 1, invoke `operator-checks.ts verify-rubric` via Bash
 with stdin JSON:
 
 ```bash
-node .claude/scripts/griot/operator-checks.ts verify-rubric <<'INPUT'
+bin/griot operator-checks verify-rubric <<'INPUT'
 {"rubric_path": "learnings/session-notes/<note>/rubric.md",
  "expected": "<full text of expected_rubric, JSON-escaped>"}
 INPUT
@@ -287,11 +286,11 @@ Capture each judge's full text as `raw_output[i]`, paired with
 ##### B.5 — Mediate round 1
 
 Pipe the four raw outputs through
-`.claude/scripts/griot/mediate-panel.ts` via Bash with stdin
+`bin/griot mediate-panel` via Bash with stdin
 JSON:
 
 ```bash
-node .claude/scripts/griot/mediate-panel.ts <<'INPUT'
+bin/griot mediate-panel <<'INPUT'
 {
   "round_num": 1,
   "verdicts": [
@@ -589,7 +588,7 @@ grow large). For each entry:
        `operator-checks.ts log-intervention`:
 
        ```bash
-       node .claude/scripts/griot/operator-checks.ts log-intervention <<'INPUT'
+       bin/griot operator-checks log-intervention <<'INPUT'
        {"log_path": "learnings/regressions.jsonl",
         "record": {
           "ts": "<ISO 8601 timestamp>",
@@ -670,7 +669,7 @@ Append the run record to `learnings/bench-history.jsonl` via
 `operator-checks.ts log-intervention`:
 
 ```bash
-node .claude/scripts/griot/operator-checks.ts log-intervention <<'INPUT'
+bin/griot operator-checks log-intervention <<'INPUT'
 {"log_path": "learnings/bench-history.jsonl",
  "record": {
    "ts": "<ISO 8601 timestamp>",
@@ -747,6 +746,9 @@ already in the user's chat; §5 just persists the record.
 
 ## After a successful run
 
-If `/griot-report` exists in the repo, remind the user it gives a
-one-pager on trend, cost, and judge calibration. They can skim that
-between runs to see how `corrections_per_session` is moving.
+The post-run summary is delivered via the skill response — copy-paste
+into a GitHub PR. Trend / cost / judge-calibration reporting was
+previously offered by the `/griot-report` wrapper skill, which was
+removed in `substrate-cli` Phase 1 once `bin/griot` made the wrapping
+unnecessary; future reporting can read `bench-history.jsonl` and
+`operator-log.jsonl` directly.

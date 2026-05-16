@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "number": "03",
+  "created": "2026-05-15T20:20:00.000Z",
+  "phase": {
+    "number": 1,
+    "name": "Phase 1: bin/griot CLI + obvious wrapper kills"
+  },
+  "branch": "substrate-cli/phase-1",
+  "unit": "D3: Port capture verb",
+  "contract": {
+    "goal": "Port the largest griot script (capture.ts, ~400 lines source) to a verb handler under .claude/cli/verbs/griot/capture.ts. Both modes preserved: --from-checkin=<path> and --evaluator-finding=<classification>. Byte-equivalent output for --from-checkin mode; --evaluator-finding mode is identical except for a deliberate `capture.ts` → `capture` invocation-reference swap in two prose lines (wrong.md + learning.md provenance footers). D3 of 4 in Phase 1.",
+    "acceptance_criteria": [
+      "captureVerb(rest, ctx) exported from .claude/cli/verbs/griot/capture.ts; parseArgs over rest; ctx.cwd resolves both sessionNotesRoot (learnings/session-notes) and relative checkin paths.",
+      "--from-checkin mode writes the same 5 files (prompt/wrong/correction/full_transcript/learning.md) with byte-equivalent content to the legacy script.",
+      "--evaluator-finding mode (recurring | generator-antipattern) writes the same 5 files with classification frontmatter; content matches legacy except for the `capture` (was `capture.ts`) invocation-reference swap in wrong.md and learning.md provenance footers.",
+      "All legacy error paths preserved: mutual exclusion of --from-checkin / --evaluator-finding; not-yet-supported classifications (catalog-gap, evaluator-conflict, sanctioned-exception); missing required args; folder-collision exit; ambiguous correction; missing checkin file; no-corrections checkin.",
+      "Registered in GRIOT_VERBS; help-text entry in VERBS registry.",
+      "Sibling test capture.test.ts: 26 tests adapted from legacy capture.test.ts, all passing.",
+      "Legacy .claude/scripts/griot/capture.ts + .test.ts preserved (deleted in D4)."
+    ],
+    "rules_applied": [
+      "Mirror D1/D2 <verb>Verb naming convention.",
+      "Erasable TypeScript (L-001).",
+      "Sibling .test.ts.",
+      "Class-throw-then-catch pattern for cross-function flow (CaptureError; matches D2's ValidationError pattern).",
+      "L-013: ground prose claims in execution evidence — byte-parity verified via diff against legacy script before writing the contract claim, not inferred from source-reading."
+    ],
+    "disqualifiers": [
+      "Modify or delete legacy .claude/scripts/griot/capture.ts or capture.test.ts (D4's scope).",
+      "Change file-content shape beyond the documented capture.ts → capture invocation-reference swap.",
+      "Diverge from bin/draft's flat-verb dispatcher architecture."
+    ],
+    "inputs": [
+      ".claude/scripts/griot/capture.ts + .test.ts (legacy source to port)",
+      ".claude/cli/verbs/griot/index.ts (D1+D2)",
+      ".claude/cli/griot.ts (D1+D2)",
+      "Checkins 01.json + 02.json (this branch)"
+    ]
+  },
+  "execution": {
+    "actions": [
+      "Wrote .claude/cli/verbs/griot/capture.ts (~400 lines, ports all legacy helpers + both mode handlers; fail() returns DispatchResult; CaptureError class replaces process.exit-from-validator pattern; --evaluator-finding invocation references updated to `capture` from `capture.ts`).",
+      "Updated .claude/cli/verbs/griot/index.ts to register capture in GRIOT_VERBS.",
+      "Updated .claude/cli/griot.ts VERBS map with help text for capture.",
+      "Live byte-parity check via /tmp/capture-parity-test/ fixture: diff of all 5 written files (prompt/wrong/correction/full_transcript/learning) between bin/griot capture --from-checkin and node .claude/scripts/griot/capture.ts --from-checkin → all empty.",
+      "Wrote capture.test.ts (389 lines, 26 tests adapted from legacy capture.test.ts to call captureVerb directly with controlled GriotCliContext + tmpdir-cwd fixture).",
+      "Ran npm test: 38 files / 525 tests pass (was 37/499 after D2; +1 file +26 tests).",
+      "Ran npm run lint: clean.",
+      "Invoked /guild-validate with evaluator-contract-fit + evaluator-naming; both VERDICT: approved; aggregated approved."
+    ],
+    "files_touched": [
+      ".claude/cli/verbs/griot/capture.ts",
+      ".claude/cli/verbs/griot/capture.test.ts",
+      ".claude/cli/verbs/griot/index.ts",
+      ".claude/cli/griot.ts"
+    ],
+    "corrections": [
+      "Initial artifact summary line-number pointers in the evaluator packet were ~20-25 lines off (cited 379-396 / 426 when actual is 401 / 428). Noted by contract-fit evaluator as soft summary-drift, not artifact drift — no rework required. Worth tightening in subsequent packets."
+    ]
+  },
+  "scope": [
+    "Port capture verb with both modes preserved.",
+    "Register in GRIOT_VERBS + help text.",
+    "26 sibling tests adapted from legacy."
+  ],
+  "changes_since_previous": "Builds on D1 + D2 (checkins 01 + 02). Adds the capture verb; dispatcher registry extended. Legacy scripts still preserved.",
+  "verdict": {
+    "result": "approved",
+    "reasons": []
+  },
+  "notes_for_pr": [
+    "D3 of 4 in Phase 1. PR refresh deferred until phase close (after D4).",
+    "Byte-for-byte parity verified for --from-checkin mode via diff against the legacy script across all 5 output files. --evaluator-finding mode is identical except for two prose lines (wrong.md + learning.md provenance) that intentionally update the invocation reference from `capture.ts` to `capture` to reflect the new CLI surface; that's a deliberate change documented in the contract.",
+    "CaptureError class replaces the legacy fail-then-process.exit pattern inside selectCorrection (which was thrown-and-rethrown anyway). Same caller-facing surface (stderr line + exit 1).",
+    "captureFromEvaluatorFinding signature changed slightly: now takes the resolved sessionNotesRoot as a parameter (vs computing it from a module-level constant in legacy). The legacy module-level constant pinned SESSION_NOTES_ROOT to process.cwd() at module-load time, which was already a testability issue (tests use execFileSync to chdir into a tmpdir). The new shape passes ctx.cwd explicitly per call, which composes cleanly with the verb-handler signature.",
+    "Self-reflection (L-013): packet line-number pointers were off by ~20 lines because I cited approximate positions from memory rather than re-reading the file. Contract-fit evaluator caught it as a soft note. Future packets: cite line ranges only after a fresh Read."
+  ]
+}

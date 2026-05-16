@@ -99,13 +99,13 @@ suspected drift as a one-line warning and let the user decide.
 
 ### 1.5. Load learnings
 
-Run `Bash("node .claude/scripts/griot/use.ts")`. The script reads
-`learnings/rollup.md`, prints the status line and (if loaded) the
-content + citation contract to stdout — the Bash result lands the
-load in conversation context. Do this once per `/ev-run` invocation —
-the rollup is session-scoped, not per-dispatch.
+Run `Bash("bin/griot use")`. The verb reads `learnings/rollup.md`,
+prints the status line and (if loaded) the content + citation
+contract to stdout — the Bash result lands the load in conversation
+context. Do this once per `/ev-run` invocation — the rollup is
+session-scoped, not per-dispatch.
 
-Handle the three outcomes the script's `griot-use:` status line reports:
+Handle the three outcomes the verb's `griot-use:` status line reports:
 - **`loaded N learnings`** — note it in the dispatch report.
 - **`rollup empty`** — note "no rollup entries" in the dispatch report
   and proceed.

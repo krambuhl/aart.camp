@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "number": "01",
+  "created": "2026-05-15T20:00:00.000Z",
+  "phase": {
+    "number": 1,
+    "name": "Phase 1: bin/griot CLI + obvious wrapper kills"
+  },
+  "branch": "substrate-cli/phase-1",
+  "unit": "D1: Scaffold bin/griot + port use verb",
+  "contract": {
+    "goal": "Scaffold the bin/griot CLI entry with a flat-verb dispatcher (mirroring bin/draft's shape), port .claude/scripts/griot/use.ts to a verb-handler under the new structure, and ensure bin/griot use is byte-for-byte equivalent to node .claude/scripts/griot/use.ts. First of four deliverables in Phase 1 (D1 use+scaffold, D2 operator-checks+mediate-panel, D3 capture, D4 wrapper kills + permissions cleanup). All four ship in one PR.",
+    "acceptance_criteria": [
+      "bin/griot shim exists, modeled on bin/draft/bin/loom (bash execs node .claude/cli/griot.ts).",
+      ".claude/cli/griot.ts is a flat-verb dispatcher modeled on .claude/cli/draft.ts; imports GRIOT_VERBS; registers the use verb with help text.",
+      ".claude/cli/verbs/griot/use.ts exports useVerb(rest, ctx) returning DispatchResult; output is byte-equivalent to the existing script when given the same cwd.",
+      ".claude/cli/verbs/griot/index.ts exports GRIOT_VERBS = { use: useVerb } plus GriotCliContext / DispatchResult / GriotVerbHandler types.",
+      "Sibling tests at .claude/cli/verbs/griot/use.test.ts and .claude/cli/griot.test.ts cover parity scenarios + dispatcher behavior + a spawnSync smoke test against bin/griot. All pass.",
+      "npm run lint clean; npm test clean.",
+      ".claude/scripts/griot/use.ts is preserved (deletion is D4's scope); both paths work during the migration."
+    ],
+    "rules_applied": [
+      "Mirror bin/draft's flat-verb architecture (per existing Decision rationale in projects/2026-05-15-draft-cli).",
+      "Erasable TypeScript only; no enums, no namespaces (L-001 + types.ts convention).",
+      "Sibling .test.ts files (.claude/scripts convention).",
+      "L-001: invoke TypeScript via node directly; no tsx."
+    ],
+    "disqualifiers": [
+      "Delete or modify .claude/scripts/griot/use.ts or its sibling test (D4's scope).",
+      "Modify the output format of use (status line text, citation contract phrases, antipattern curation).",
+      "Diverge from bin/draft's flat-verb dispatcher architecture.",
+      "Hand-edit PLAN.md or substrate-managed JSON outside of bin/loom or bin/draft verbs."
+    ],
+    "inputs": [
+      ".claude/scripts/griot/use.ts",
+      ".claude/scripts/griot/use.test.ts",
+      ".claude/cli/draft.ts",
+      ".claude/cli/verbs/draft.ts",
+      "bin/draft",
+      "projects/LOOM-CONVENTIONS.md",
+      "projects/2026-05-16-substrate-cli/PLAN.md"
+    ]
+  },
+  "execution": {
+    "actions": [
+      "Pre-flight: switched to main, fast-forwarded origin/main (b923b0c), cut new branch substrate-cli/phase-1.",
+      "bin/loom phase update substrate-cli 1 --status=in-progress --branch=substrate-cli/phase-1 (emits phase-started event).",
+      "Wrote bin/griot shim (18 lines, exec node .claude/cli/griot.ts), chmod +x.",
+      "Wrote .claude/cli/griot.ts dispatcher (131 lines, flat-verb shape patterned on draft.ts: parseInvocation, formatHelp, formatUnknownVerbError, dispatch, main, isEntryPoint).",
+      "Wrote .claude/cli/verbs/griot/index.ts (exports GRIOT_VERBS, GriotCliContext, DispatchResult, GriotVerbHandler).",
+      "Wrote .claude/cli/verbs/griot/use.ts (ported logic from .claude/scripts/griot/use.ts; returns DispatchResult, accepts cwd via GriotCliContext for testability).",
+      "Wrote .claude/cli/verbs/griot/use.test.ts (14 tests adapted from use.test.ts to call useVerb directly with a tmpdir cwd).",
+      "Wrote .claude/cli/griot.test.ts (17 tests: parseInvocation/formatHelp/formatUnknownVerbError unit tests + dispatch tests + spawnSync smoke tests against bin/griot).",
+      "Smoke-tested bin/griot --help, bin/griot bogus, bin/griot use; all behaviors match expected.",
+      "Confirmed byte-for-byte parity: diff <(bin/griot use) <(node .claude/scripts/griot/use.ts) exit 0 against the live repo's learnings/rollup.md.",
+      "Ran npm run lint (clean, 129 files, 2 pre-existing broken-symlink warnings unrelated to this diff).",
+      "Ran npm test (35 files / 461 tests pass; +2 files +31 tests from this unit).",
+      "Skipped the whiteboard step for this phase: 5 of 6 registered whiteboard-* engineers (a11y, design-systems, performance, react-architect, sketch-ideation) are aimed at aart.camp's UI/sketch surface, not substrate-CLI plumbing; the whiteboard-substrate-engineer that would be most relevant is being authored in this project's Phase 5. Documented in notes for the PR.",
+      "Composed dense evaluator packet; invoked /guild-validate with agents=evaluator-contract-fit,evaluator-naming. Both evaluators returned VERDICT: approved with no blocking or advisory findings; aggregated verdict is approved."
+    ],
+    "files_touched": [
+      "bin/griot",
+      ".claude/cli/griot.ts",
+      ".claude/cli/griot.test.ts",
+      ".claude/cli/verbs/griot/index.ts",
+      ".claude/cli/verbs/griot/use.ts",
+      ".claude/cli/verbs/griot/use.test.ts",
+      "projects/2026-05-16-substrate-cli/manifest.json",
+      "projects/2026-05-16-substrate-cli/events.jsonl"
+    ],
+    "corrections": []
+  },
+  "scope": [
+    "Scaffold bin/griot + .claude/cli/griot.ts dispatcher + verb-registry index.",
+    "Port the use verb (byte-equivalent to the legacy script).",
+    "Sibling vitest tests for both the verb and the dispatcher.",
+    "Phase 1 row in manifest moved to in-progress on branch substrate-cli/phase-1."
+  ],
+  "changes_since_previous": "First checkin on this branch; baseline is origin/main at b923b0c (post PR #97 merge of PLAN.md revision).",
+  "verdict": {
+    "result": "approved",
+    "reasons": []
+  },
+  "notes_for_pr": [
+    "D1 of 4 in Phase 1. PR will collect D1+D2+D3+D4 before request-for-review.",
+    "Byte-for-byte parity verified: diff <(bin/griot use) <(node .claude/scripts/griot/use.ts) exit 0 against the live rollup.md.",
+    "Manual override on panel composition: derive-panel.ts could not parse PANEL-COMPOSITION.md and fell back to FALLBACK_RULES (stderr: 'derive-panel-error: panel-spec-unreadable (using fallback)' + 'mapping-section-missing'). Fallback rules don't include the `.claude/cli/**/*.ts` carve-out from the spec, so the script's stdout incorrectly included evaluator-react-api. Per PANEL-COMPOSITION.md the correct panel for .claude/cli/**/*.ts is contract-fit + naming; ran with that manually. Filing this as a substrate finding for a sibling project to address; not in D1's scope.",
+    "Whiteboard step skipped this phase: 5 of 6 registered whiteboard-* engineers (a11y, design-systems, performance, react-architect, sketch-ideation) are aimed at aart.camp's UI/sketch surface; the substrate-engineer engineer that would be most relevant is being authored in this project's Phase 5. Documented as an intentional carve-out, not a substrate violation.",
+    "Manifest-vs-PLAN drift: manifest.json's phases[] still has only the placeholder Phase 1 from the scaffold (#96); PLAN.md (post #97) has 6 phases. bin/loom phase update worked for Phase 1, but Phases 2-6 will need a manifest-write verb that doesn't yet exist. This is the deferred #4 substrate gap (sibling project); doesn't block D1-D4 but will block later phases of this same project.",
+    "Legacy script .claude/scripts/griot/use.ts preserved — both paths work; D4 will delete the legacy."
+  ]
+}

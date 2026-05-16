@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "number": "02",
+  "created": "2026-05-15T20:10:00.000Z",
+  "phase": {
+    "number": 1,
+    "name": "Phase 1: bin/griot CLI + obvious wrapper kills"
+  },
+  "branch": "substrate-cli/phase-1",
+  "unit": "D2: Port operator-checks + mediate-panel verbs",
+  "contract": {
+    "goal": "Port the two stdin-driven griot scripts (operator-checks.ts handling verify-rubric/log-intervention; mediate-panel.ts handling judge-panel verdict aggregation) to verb handlers under .claude/cli/verbs/griot/. Extend GriotCliContext with an optional stdin field; capture process.stdin eagerly in the dispatcher main() when not TTY. Byte-equivalent behavior to the legacy scripts. D2 of 4 in Phase 1.",
+    "acceptance_criteria": [
+      "operatorChecksVerb(rest, ctx) exported from .claude/cli/verbs/griot/operator-checks.ts; mode from rest[0]; both verify-rubric and log-intervention modes preserved with identical output shape.",
+      "mediatePanelVerb(_rest, ctx) exported from .claude/cli/verbs/griot/mediate-panel.ts; same parse/tally/tiebreak logic as legacy; JSON.stringify(output, null, 2) body.",
+      "GriotCliContext extended with optional stdin?: string; .claude/cli/griot.ts main() populates ctx.stdin via readFileSync(0, 'utf8') when !process.stdin.isTTY, else empty string.",
+      "GRIOT_VERBS contains use, operator-checks, mediate-panel; help text registered for all three.",
+      "Sibling tests adapted from legacy: 19 operator-checks tests + 17 mediate-panel tests, all passing; 2 spawnSync smoke tests added to griot.test.ts for stdin piping end-to-end.",
+      "npm run lint clean; npm test clean; byte parity confirmed via diff against legacy scripts on representative fixtures.",
+      "Legacy .claude/scripts/griot/{operator-checks,mediate-panel}.ts preserved (deleted in D4)."
+    ],
+    "rules_applied": [
+      "Mirror D1's <verb>Verb suffix naming convention.",
+      "Erasable TypeScript (L-001).",
+      "Sibling .test.ts files.",
+      "Preserve external JSON schema vocabulary (snake_case fields like round_num, judge_id, consensus_verdict — out of naming evaluator's lane per its carve-out)."
+    ],
+    "disqualifiers": [
+      "Modify or delete legacy .claude/scripts/griot/{operator-checks,mediate-panel}.ts (D4's scope).",
+      "Change the output shape of either verb (panel JSON structure, ok:true/false shape, error message text).",
+      "Diverge from bin/draft's flat-verb dispatcher architecture."
+    ],
+    "inputs": [
+      ".claude/scripts/griot/operator-checks.ts + .test.ts",
+      ".claude/scripts/griot/mediate-panel.ts + .test.ts",
+      ".claude/cli/verbs/griot/index.ts (D1)",
+      ".claude/cli/griot.ts (D1)"
+    ]
+  },
+  "execution": {
+    "actions": [
+      "Wrote .claude/cli/verbs/griot/operator-checks.ts (75 lines, ports verify-rubric + log-intervention; mode from rest[0]; JSON from ctx.stdin; fail() returns {stderr, exitCode: 1}).",
+      "Wrote .claude/cli/verbs/griot/mediate-panel.ts (269 lines, ports validateInput/parseSingleVerdict/tallyVerdicts/pickMajority/detectTierSplit/applyTiebreak; ValidationError class replaces the legacy fail-and-exit pattern; main verb composes Output and returns JSON.stringify body).",
+      "Extended GriotCliContext with optional stdin?: string field; preserves backward compat for existing use verb / tests.",
+      "Registered both verbs in GRIOT_VERBS map.",
+      "Updated .claude/cli/griot.ts main() to read stdin eagerly via readFileSync(0, 'utf8') when !process.stdin.isTTY (TTY check prevents blocking on interactive invocations).",
+      "Updated VERBS help-text registry with entries for operator-checks and mediate-panel.",
+      "Wrote operator-checks.test.ts (19 tests adapted from legacy: mode dispatch, verify-rubric exact/diff/missing-file/missing-fields, log-intervention create/append/parent-dir/multiple/arbitrary records).",
+      "Wrote mediate-panel.test.ts (17 tests adapted from legacy: input validation, round-1 unanimity, round-1 non-unanimity, round-2 supermajority, round-2 tiebreak fires, round-2 tiebreak no-fire, tier-split detection, errored verdicts).",
+      "Added 2 spawnSync smoke tests to griot.test.ts for end-to-end stdin handling via bin/griot.",
+      "Verified parity: diff <(bin/griot operator-checks verify-rubric < x) <(node .claude/scripts/griot/operator-checks.ts verify-rubric < x) → exit 0; same for log-intervention; same for mediate-panel on a 3-judge fixture.",
+      "Ran npm test: 37 files / 499 tests pass (was 35/461 after D1; +2 files +38 tests).",
+      "Ran npm run lint: clean.",
+      "Invoked /guild-validate with evaluator-contract-fit + evaluator-naming; both VERDICT: approved; aggregated approved."
+    ],
+    "files_touched": [
+      ".claude/cli/verbs/griot/operator-checks.ts",
+      ".claude/cli/verbs/griot/operator-checks.test.ts",
+      ".claude/cli/verbs/griot/mediate-panel.ts",
+      ".claude/cli/verbs/griot/mediate-panel.test.ts",
+      ".claude/cli/verbs/griot/index.ts",
+      ".claude/cli/griot.ts",
+      ".claude/cli/griot.test.ts"
+    ],
+    "corrections": []
+  },
+  "scope": [
+    "Port operator-checks verb (stdin-driven; verify-rubric + log-intervention modes).",
+    "Port mediate-panel verb (stdin-driven; panel-verdict aggregation).",
+    "Extend GriotCliContext with optional stdin field.",
+    "Update dispatcher main() to capture process.stdin when not TTY.",
+    "Sibling tests for both new verbs + 2 spawnSync smoke tests."
+  ],
+  "changes_since_previous": "Builds on D1 (checkin 01.json). New files alongside D1's verb. Dispatcher modified to register new verbs and capture stdin. Legacy scripts still preserved.",
+  "verdict": {
+    "result": "approved",
+    "reasons": []
+  },
+  "notes_for_pr": [
+    "D2 of 4 in Phase 1. PR refresh deferred until phase close (after D4).",
+    "Byte-for-byte parity verified against the legacy scripts for all three representative fixtures (operator-checks verify-rubric error-path, operator-checks log-intervention append, mediate-panel 3-judge aggregation).",
+    "stdin handling: dispatcher reads stdin eagerly via readFileSync(0, 'utf8') when !process.stdin.isTTY. TTY check prevents bin/griot --help / use from blocking when invoked interactively without a pipe.",
+    "ValidationError class added to mediate-panel.ts — replaces the legacy fail-and-exit pattern (which directly called process.exit from inside a validator). The verb-handler shape requires returning DispatchResult, so validation errors throw ValidationError and the top-level handler catches and converts. Same surface for the caller (stderr + exit 1).",
+    "snake_case fields on Input/Output types (round_num, judge_id, consensus_verdict, etc.) are preserved verbatim — they're the external JSON schema crossing the stdin boundary, not internal style choices. Naming evaluator's external-schema carve-out applies."
+  ]
+}
