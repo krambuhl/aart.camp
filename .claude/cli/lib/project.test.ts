@@ -10,7 +10,8 @@ function makeLoomProject(root: string, slug: string): void {
   const path = join(root, slug);
   mkdirSync(path, { recursive: true });
   // Marker file: loom-managed projects carry manifest.json. Filtering
-  // by this marker excludes trout (markdown) projects from listings.
+  // by this marker excludes any directory without it (e.g. draft-only
+  // projects that haven't been adopted yet).
   writeFileSync(join(path, 'manifest.json'), '{}');
 }
 
@@ -23,10 +24,9 @@ beforeEach(() => {
   makeLoomProject(join(projectsRoot, 'archive'), '2026-04-01-old-project');
   // Add some non-project entries that should be ignored
   writeFileSync(join(projectsRoot, 'CONVENTIONS.md'), '# noise\n');
-  // Add a trout-style project (no manifest.json) — must NOT appear in
-  // listProjects output. Lives alongside loom projects to exercise the
-  // coexistence filter.
-  mkdirSync(join(projectsRoot, '2026-05-12-trout-only'));
+  // Add a bare project (no manifest.json) — must NOT appear in
+  // listProjects output. Exercises the manifest-marker filter.
+  mkdirSync(join(projectsRoot, '2026-05-12-bare-only'));
 });
 
 afterEach(() => {
@@ -75,10 +75,10 @@ test('resolveProject: ambiguous suffix throws slug-ambiguous with candidates', (
   }
 });
 
-test('listProjects: filters out trout-only projects (no manifest.json)', () => {
+test('listProjects: filters out projects without manifest.json', () => {
   const list = listProjects(projectsRoot);
   for (const p of list) {
-    expect(p.slug).not.toBe('2026-05-12-trout-only');
+    expect(p.slug).not.toBe('2026-05-12-bare-only');
   }
 });
 

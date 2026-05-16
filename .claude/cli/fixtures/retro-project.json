@@ -23,7 +23,7 @@
     },
     {
       "category": "process-change",
-      "description": "Add a panel-composition pre-flight check to /trout-plan when scaffolding new substrate directories."
+      "description": "Add a panel-composition pre-flight check to /draft-plan when scaffolding new substrate directories."
     }
   ]
 }

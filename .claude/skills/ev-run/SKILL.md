@@ -14,20 +14,21 @@ allowed-tools: Read, Skill
 
 # /ev-run
 
-Router. Reads state via `.claude/scripts/trout/autoload.ts`, decides
-what to run next, invokes the right loop. Owns no work of its own.
+Router. Reads state via `bin/loom`, decides what to run next, invokes
+the right loop. Owns no work of its own.
 
 ## Arguments
 
-- `<project-slug-or-path>` — resolved like `.claude/scripts/trout/autosave.ts`
-  (exact slug → suffix match → full path).
+- `<project-slug-or-path>` — resolved by loom's standard slug resolution
+  (full slug → date-less suffix → relative or absolute path).
 - Optional free-form message — if present, interpret it as a redirect
   (e.g. "address feedback on #14", "pause and save session", "start
   phase 3 even though phase 2 isn't merged yet").
 
-Invocations of `/trout-*` skills and `/ev-loop-*` skills below mean
-`Skill(skill: <name>, args: "…")` — the Skill tool is how the router
-dispatches.
+Invocations of `/ev-loop-*` and `/loom-archive` and `/draft-plan` skills
+below mean `Skill(skill: <name>, args: "…")` — the Skill tool is how
+the router dispatches. CLI invocations like `bin/loom project read`
+mean `Bash("bin/loom project read <args>")`.
 
 ## Process
 
@@ -70,23 +71,31 @@ working with.
 
 ### 1. Orient
 
-Invoke `Bash("node .claude/scripts/trout/autoload.ts <slug> --reconcile")`.
-Take in the briefing on stdout. This tells you:
-- Current phase status
-- Latest checkin
-- Open PRs and their freshness (verified against gh; the `--reconcile`
-  flag auto-flips `(open) → merged` drift in MANIFEST so the next
-  session sees an accurate row)
-- Suggested next action
-- Open threads from the last session handoff
+Refresh state via the loom CLI:
 
-The `--reconcile` flag is the user-facing default for orientation: if a
-PR was merged between sessions but the manifest still shows `(open)`,
-autoload invokes `autosave --event=pr-merged` automatically and notes
-the reconciliation inline in the briefing (e.g. `> Reconciled drift:
-PR #33 marked merged (was open).`). The `(merged) → open` case (rare,
-typically a misedit) is surfaced as a `⚠` warning but never
-auto-corrected — flipping there would erase a recorded merge event.
+```
+bin/loom project read <slug> --pretty
+bin/loom events read <slug> --limit=20 --pretty
+bin/loom session list <slug> --pretty   # for the last session's open_threads
+```
+
+Take in the manifest, recent events, and the latest session handoff.
+This tells you:
+- Current phase status (from `phases[].status`)
+- Latest checkin (from manifest's `latest_checkin`)
+- Open PRs (from `pr-opened` / `pr-updated` / `pr-merged` events; the
+  latest event for each phase's branch is authoritative)
+- Suggested next action (inferable from phase statuses)
+- Open threads from the last session handoff (read it via
+  `bin/loom session read <slug> --filename=<latest>`)
+
+**PR-merged reconciliation**: if a PR was merged between sessions but
+no `pr-merged` event has been recorded, the router should append one
+via the upstream loop's checkpoint flow rather than auto-emit. (Loom
+emits `pr-merged` only from explicit reconciliation, not a CLI verb
+today — see the open question in projects/2026-05-15-trout-sunset/PLAN.md
+about whether `bin/loom pr reconcile` should ship.) For now, surface
+suspected drift as a one-line warning and let the user decide.
 
 ### 1.5. Load learnings
 
@@ -113,9 +122,9 @@ If the user provided a message, parse its intent:
 
 | Intent | Action |
 |--------|--------|
-| "address feedback on #N" | Verify #N belongs to this project. Dispatch to the loop that owns the branch, passing the redirect message. |
-| "save session" / "wrap up" | Invoke `/trout-save-session <slug>` and stop. |
-| "archive" / "close out" | Verify all phases are complete. Invoke `/trout-archive <slug>`. |
+| "address feedback on #N" | Verify #N belongs to this project. Dispatch to the loop that owns the branch, passing the redirect message. The loop's § Triage PR comments handles the rest. |
+| "save session" / "wrap up" | Compose and write a session handoff per the ev-loop's § Save session recipe (`bin/loom session corrections` + `bin/loom events read` → compose Session JSON → `bin/loom session write`), then stop. |
+| "archive" / "close out" | Verify all phases are complete (every `phases[].status == "completed"`). Invoke `/loom-archive <slug>`. |
 | "skip to phase N" | Warn if dependencies aren't satisfied. Confirm with the user. If confirmed, dispatch to the loop for phase N. |
 | "pause" | Stop and report. Do not dispatch. |
 | ambiguous | Ask the user one clarifying question; do not guess. |
@@ -128,14 +137,14 @@ With no message, pick the phase using this policy:
 2. Otherwise, pick the lowest-numbered `not-started` phase whose
    dependencies are all satisfied (all named prior PRs merged).
 3. If no phase qualifies, surface the blocker: "waiting on PR #X to
-   merge" or "all phases completed — run `/trout-archive`."
+   merge" or "all phases completed — run `/loom-archive`."
 
 ### 4. Dispatch
 
 Determine which loop to invoke:
 - Per-phase override in PLAN.md wins.
-- Otherwise, use the preferred loop from `config.md` (`## Worker
-  bindings`).
+- Otherwise, use the preferred loop from `config.json`
+  (`worker_bindings` field, e.g. `{"default": "ev-loop-interactive"}`).
 - Otherwise, default to `/ev-loop-confidence`.
 
 Invoke the loop with `<slug> <phase-number>` and, if a redirect message
@@ -180,10 +189,10 @@ args: "<slug> <phase-number> [<redirect-message>]"
 
 ## Failure modes
 
-- Project not found → forward the autoload error; suggest
-  `/trout-plan`.
+- Project not found → forward the loom error; suggest `/draft-plan`
+  to scaffold a new one.
 - Manifest inconsistent with git state → stop, report the drift, let
   the user resolve.
 - No actionable phase and not all phases done → list open blockers and
   stop.
-- All phases done → recommend `/trout-archive` and stop.
+- All phases done → recommend `/loom-archive` and stop.

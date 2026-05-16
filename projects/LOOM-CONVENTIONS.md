@@ -7,10 +7,17 @@ doc is the contract every loom verb implements and every `loom-*`
 skill reads from. If a substrate detail is ambiguous, this file is
 authoritative.
 
-This document describes a *new* substrate. It does not replace or
-modify `projects/CONVENTIONS.md`, which governs the existing trout
-substrate. The two substrates coexist; they share neither file paths
-nor file shapes.
+This document is the canonical conventions reference for loom + draft
+projects. Loom owns execution (manifest, events, checkins, sessions,
+retros, PRs); draft owns planning (PLAN.md, INTERVIEW.md, revisions).
+The two are paired halves of one substrate — see § Pairing with draft
+below.
+
+The earlier trout substrate (markdown MANIFEST.md, prose checkins,
+`.claude/scripts/trout/*` autoload/autosave/etc.) was retired in
+trout-sunset Phase 3. Historical references to trout remain in
+archived projects under `projects/archive/` and are preserved as
+read-only artifacts.
 
 ## Design principles
 
@@ -432,18 +439,11 @@ bumps. Loom refuses to operate on a project whose `schema_version` it
 does not understand. Migration tooling is deferred; the surface is
 reserved.
 
-## Relationship to existing substrate
+## Historical note
 
-`projects/CONVENTIONS.md` (trout substrate) and this file
-(LOOM-CONVENTIONS.md) define **separate, coexisting substrates**:
-
-- Distinct directory layouts (trout: `MANIFEST.md`; loom:
-  `manifest.json`).
-- Distinct skill prefixes (`trout-*` vs `loom-*`).
-- No shared files, no shared paths, no auto-migration.
-
-A project belongs to one substrate or the other based on the files
-present at scaffold time. Loom's verbs operate only on
-loom-substrate projects; trout's tools operate only on trout-substrate
-projects. `loom doctor` reports a clear error when invoked against a
-trout project (`{"error": "wrong-substrate", "candidates": [...]}`).
+The earlier trout substrate (this file used to be one of two —
+LOOM-CONVENTIONS.md alongside CONVENTIONS.md) was retired in
+trout-sunset Phase 3. `projects/CONVENTIONS.md` no longer exists.
+Archived projects under `projects/archive/` may still use the trout
+format (markdown `MANIFEST.md`, prose checkins); they are read-only
+historical artifacts and live tooling does not operate on them.

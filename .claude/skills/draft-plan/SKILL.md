@@ -4,8 +4,10 @@ description: >-
   Interview the user relentlessly about a plan or design — one decision
   at a time, recommendation each time, walking down every branch of the
   tree — then synthesize PLAN.md and INTERVIEW.md and commit them via
-  `bin/draft plan`. Use when the user wants to grill-me into a plan;
-  prefer `/trout-plan` for the lighter "I know what I want" path.
+  `bin/draft plan` (which also auto-adopts the loom substrate so the
+  project is loom + draft from minute zero). Use when the user wants to
+  grill-me into a plan; for lighter "I know what I want" scaffolding,
+  just answer the questions tersely.
 argument-hint: "<topic or short description>"
 allowed-tools: Read, Write, Bash(bin/draft *), Bash(date *), AskUserQuestion
 ---
@@ -19,12 +21,14 @@ shape — Context / Scope / Phases / Dependencies / Verification / Risks /
 Open questions, optionally Decisions) and an `INTERVIEW.md` next door
 (the walked decision tree as transcript).
 
-This is the heavyweight planning path. For lighter "I already know what I
-want" scaffolding, use `/trout-plan`. The two coexist.
+This is the canonical project-birth path. There's no lighter alternative
+skill — when you "know what you want," just answer the interview's
+questions tersely and the loop closes fast. `bin/draft plan` auto-adopts
+the loom substrate by default; pass `--no-loom` if you genuinely want
+planning artifacts only (rare).
 
-**Format reference**: `projects/CONVENTIONS.md` for PLAN.md structure;
-project's own PLAN.md (`projects/2026-05-15-draft-cli/PLAN.md`) for the
-draft-vs-trout split.
+**Format reference**: `projects/LOOM-CONVENTIONS.md` for PLAN.md
+structure and the loom + draft pairing.
 
 ## Process
 
@@ -119,9 +123,9 @@ Compose PLAN.md from the resolved interview tree. Structure:
 - <optional; load-bearing choices worth pinning>
 ```
 
-Match the prose voice of the existing `/trout-plan` PLAN.md template;
-the difference between draft and trout is interview style, not
-artifact shape.
+Use the PLAN.md shape documented in `projects/LOOM-CONVENTIONS.md`.
+The shape is stable; the interview style is what this skill specializes
+(one decision at a time, recommendation each turn).
 
 ### 5. Synthesize INTERVIEW.md
 
@@ -190,8 +194,8 @@ One short paragraph in this shape:
 ```
 Created draft plan: <title>
 Location: projects/<date>-<slug>/
-Files: PLAN.md, INTERVIEW.md
-Next: run /trout-plan <slug> to add the execution substrate (MANIFEST.md, config.md, sessions/, checkins/), or /ev-run <slug> if it's already trout-scaffolded.
+Files: PLAN.md, INTERVIEW.md, manifest.json, config.json, events.jsonl, checkins/, sessions/
+Next: run /ev-loop-interactive <slug> <phase> to execute a phase, or /ev-loop-confidence for bulk-transform work. Edit manifest.json / config.json first if the auto-synthesized defaults need tuning.
 ```
 
 ## Rules

@@ -47,8 +47,8 @@ Naked-substrate composability demo. Takes one `.tsx` path; spawns
   confidence-loop territory.
 - **Read-only.** No remediation, no Edit/Write, no auto-fix.
 - **No ev-loop composition.** No unit contract, no whiteboard, no
-  checkin, no `.guild-findings.jsonl` append, no autosave, no
-  `/trout-pull-request`. The substrate's `guild-*` primitives are
-  the only ones composed.
+  checkin, no `.guild-findings.jsonl` append, no `bin/loom phase update`,
+  no `bin/loom pr open|update`. The substrate's `guild-*` primitives
+  are the only ones composed.
 - **Single-evaluator panel.** No conflict resolution path runs.
 - **No emojis.**

@@ -192,7 +192,7 @@ describe('globToRegex', () => {
   test('** matches any path segments', () => {
     const re = globToRegex('.claude/scripts/**/*.ts');
     assert.ok(re.test('.claude/scripts/guild/derive-panel.ts'));
-    assert.ok(re.test('.claude/scripts/trout/autosave.ts'));
+    assert.ok(re.test('.claude/scripts/griot/capture.ts'));
     assert.ok(!re.test('app/foo/bar.ts'));
   });
 

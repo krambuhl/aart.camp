@@ -9,7 +9,7 @@ import {
 import { join, relative } from 'node:path';
 import { LoomError } from '../lib/errors.ts';
 import { createSlug } from '../lib/project.ts';
-import { resolveTroutProject } from '../lib/draft-project.ts';
+import { resolveProject } from '../lib/draft-project.ts';
 import { type GitRunner, defaultGitRunner } from '../lib/draft-git.ts';
 import {
   writeLoomSubstrate,
@@ -284,7 +284,7 @@ export function reviseVerb(
 
   let targetDir: string;
   try {
-    targetDir = resolveTroutProject(slug, ctx.projectsRoot);
+    targetDir = resolveProject(slug, ctx.projectsRoot);
   } catch (err) {
     return errToResult(err);
   }
@@ -382,7 +382,7 @@ export function readVerb(
 
   let targetDir: string;
   try {
-    targetDir = resolveTroutProject(slug, ctx.projectsRoot);
+    targetDir = resolveProject(slug, ctx.projectsRoot);
   } catch (err) {
     return errToResult(err);
   }

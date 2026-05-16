@@ -7,24 +7,16 @@ import { ARCHIVE_DIRNAME } from './project.ts';
 // project iff it contains `PLAN.md` (the file draft reads and revises).
 // Loom-managed projects (which also carry `manifest.json`) qualify,
 // because PLAN.md is plain markdown that draft owns regardless of
-// whether loom owns the rest of the substrate. Trout-managed projects
-// (which carry `MANIFEST.md` alongside `PLAN.md`) qualify for the same
-// reason. The substrate model treats loom + draft as paired halves of
-// one project: draft owns planning, loom owns execution, and resolvers
-// must see across both.
-//
-// Earlier iterations excluded loom-managed projects to preserve a
-// "draft only sees what it owns end-to-end" boundary. That boundary
-// turned out to be wrong — it blocked `bin/draft revise` on the
-// (intended-to-be-common) loom+draft project, which is the post-trout
-// default. Exclusion removed in trout-sunset Phase 1 D2.
+// whether loom owns the rest of the substrate. The substrate model
+// treats loom + draft as paired halves of one project: draft owns
+// planning, loom owns execution, and resolvers must see across both.
 const PLAN_MARKER = 'PLAN.md';
 
 // Slug-grammar regexes are duplicated locally rather than imported
 // because they are not exported from `./project.ts`. The substrate
 // convention is for each lib to own its grammar; SLUG_RE and
-// DATELESS_RE here match loom's exactly so trout and loom slugs are
-// indistinguishable at the syntax level.
+// DATELESS_RE here match loom's exactly so the two resolvers agree on
+// slug shape.
 const SLUG_RE = /^\d{4}-\d{2}-\d{2}-[a-z0-9][a-z0-9-]*[a-z0-9]$/;
 const DATELESS_RE = /^[a-z0-9][a-z0-9-]*[a-z0-9]$/;
 
@@ -41,14 +33,10 @@ export type ListProjectsOptions = {
 // directory.
 //
 // Behaviour parallels loom's `resolveProject` exactly, with one
-// substantive difference: directories that carry `PLAN.md` qualify
-// regardless of whether they also carry `manifest.json`. This
-// includes:
-//   - Trout-managed projects (PLAN.md + MANIFEST.md)
-//   - Draft-only projects (PLAN.md + INTERVIEW.md, no manifest.json)
-//   - Loom + draft projects (PLAN.md + manifest.json + ...)
-// The third case is the post-trout default and is the reason this
-// resolver no longer excludes loom-managed dirs.
+// substantive difference: directories qualify on the presence of
+// `PLAN.md`, not `manifest.json`. The loom+draft project (PLAN.md +
+// manifest.json + ...) is the substrate default and is seen by both
+// resolvers.
 //
 // Accepts:
 //   - full slug:        2026-05-15-draft-cli
@@ -59,7 +47,7 @@ export type ListProjectsOptions = {
 // Active directories are scanned first; archive/ is only matched if
 // active resolution fails. Ambiguous suffix matches throw
 // `slug-ambiguous` with `candidates`.
-export function resolveTroutProject(
+export function resolveProject(
   slugOrPath: string,
   projectsRoot: string,
 ): string {
@@ -72,8 +60,8 @@ export function resolveTroutProject(
     return abs;
   }
 
-  const active = listTroutProjects(projectsRoot, { archived: false });
-  const archived = listTroutProjects(projectsRoot, { archived: true });
+  const active = listProjects(projectsRoot, { archived: false });
+  const archived = listProjects(projectsRoot, { archived: true });
 
   if (SLUG_RE.test(slugOrPath)) {
     const inActive = active.find((p) => p.slug === slugOrPath);
@@ -82,7 +70,7 @@ export function resolveTroutProject(
     if (inArchive !== undefined) return inArchive.path;
     throw new LoomError(
       'project-not-found',
-      `no trout project with slug ${slugOrPath}`,
+      `no project with slug ${slugOrPath}`,
     );
   }
 
@@ -101,7 +89,7 @@ export function resolveTroutProject(
   if (activeMatches.length > 1) {
     throw new LoomError(
       'slug-ambiguous',
-      `slug '${slugOrPath}' matches multiple active trout projects`,
+      `slug '${slugOrPath}' matches multiple active projects`,
       activeMatches.map((p) => p.slug),
     );
   }
@@ -115,18 +103,18 @@ export function resolveTroutProject(
   if (archiveMatches.length > 1) {
     throw new LoomError(
       'slug-ambiguous',
-      `slug '${slugOrPath}' matches multiple archived trout projects`,
+      `slug '${slugOrPath}' matches multiple archived projects`,
       archiveMatches.map((p) => p.slug),
     );
   }
 
   throw new LoomError(
     'project-not-found',
-    `no trout project matching '${slugOrPath}'`,
+    `no project matching '${slugOrPath}'`,
   );
 }
 
-export function listTroutProjects(
+export function listProjects(
   projectsRoot: string,
   opts: ListProjectsOptions = {},
 ): ProjectSummary[] {
@@ -148,7 +136,7 @@ export function listTroutProjects(
     }
     // Draft filter: project must have PLAN.md. Loom-managed projects
     // (which also carry manifest.json) qualify — see the file header
-    // for why the loom-marker exclusion was removed.
+    // for the rationale.
     if (!existsSync(join(fullPath, PLAN_MARKER))) continue;
     projects.push({ slug: entry, path: fullPath });
   }

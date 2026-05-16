@@ -129,9 +129,10 @@ location (under archive/retros/project.json after the move), and
 any follow-up findings worth surfacing immediately.
 
 The skill stops here. Authoring the archive PR is a separate
-concern — typically the user will `/trout-pull-request` (during
-the transition period) or a future `loom-pr` skill, then squash-
-merge.
+concern — compose the body inline per the PR-composition recipe
+in `ev-loop-confidence` / `ev-loop-interactive` § Compose PR (or
+just run `bin/loom pr open` directly with a hand-written body),
+then squash-merge.
 
 ## Rules
 
