@@ -6,8 +6,8 @@ description: >-
   it. Applies a capture gate, then writes a five-file folder under
   learnings/session-notes/ via the Write tool. Fast, synchronous. The
   real value gate is /griot-compact, not this skill. For programmatic
-  from-checkin captures (called by /trout-save-session), use the script
-  directly: Bash("node .claude/scripts/griot/capture.ts --from-checkin=...").
+  from-checkin captures (invoked by ev-loop-* at session close), use
+  the script directly: Bash("node .claude/scripts/griot/capture.ts --from-checkin=...").
 user-invocable: true
 argument-hint: "(no args; uses live transcript)"
 allowed-tools: Bash, Read, Write
@@ -19,7 +19,7 @@ Write a new `learnings/session-notes/<ts>-<slug>/` folder with the five input
 files the judge panel will later need. Interactive mode only — for
 programmatic captures from a checkin's `correction:` lines, the script
 `.claude/scripts/griot/capture.ts` handles that path (called automatically
-by `/trout-save-session`).
+by ev-loop-* at session close, the same step that runs § Save session).
 
 This skill is **synchronous and fast**. It does not call any LLMs. It does
 not write `rubric.md` — that's the rubric-author agent's job during
