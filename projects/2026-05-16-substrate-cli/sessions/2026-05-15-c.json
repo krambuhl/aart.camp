@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "date": "2026-05-15",
+  "letter": "c",
+  "phases_touched": [
+    3
+  ],
+  "checkins_written": [
+    "01",
+    "02"
+  ],
+  "pr_activity": [
+    "#101 opened (substrate-cli/phase-3 — Phase 3: skill surface cleanup)"
+  ],
+  "what_happened": [
+    "Resumed after #100 merge. Fetched + checked out main + pulled (now at bf96317 post-#100 squash).",
+    "Cut substrate-cli/phase-3 branch. Flipped Phase 2 PR state open → merged in manifest. Marked Phase 3 in-progress.",
+    "D1: audited all 11 local skills against the two-axis rubric. Applied 9 frontmatter edits: 3 user-invocable+disable-model-invocation pairs for user-facing synthesis skills (a11y-review-file, draft-plan, review-skill); 2 ev-loop-* flag pairs (composed via Skill from /ev-run, never ambient); 3 guild-* primitives gain disable-model-invocation; ev-run gains explicit user-invocable for consistency. griot-compact + loom-archive untouched (already correct).",
+    "D2: reshaped /loom-archive interview body to grill-me pace. Swapped §2/§3 (corpus-first so the model can draft opinionated recommendations from real evidence); new §3 walks the four retro dimensions one at a time with AskUserQuestion (4 options: Looks right / Yes and add more / Replace with mine / Skip). §4-7 unchanged.",
+    "Opened PR #101 + marked Phase 3 completed in manifest."
+  ],
+  "open_threads": [
+    "Phase 4 (griot internal restructure) is ready — depends on P1 (done). Includes session-notes shape change (YAML frontmatter → state.json sidecar), rollup format change (rollup.md → rollup.json), new /griot-load skill, and bin/griot use --as=llm flag.",
+    "Phase 5 (new agent families) is ready — parallel-eligible with P4. Ships 4 new agent files: evaluator-playwright, evaluator-vitest, whiteboard-testing-strategy, whiteboard-substrate-engineer. L-004 caveat applies (new agents not in same-session registry).",
+    "Phase 6 (§ extraction + extension + integration sweep) is ready — depends on P1 + P2 (both merged/in-PR). Extracts duplicated 'Substrate compositions' § from ev-loop-confidence + ev-loop-interactive into shared reference BEFORE extending with griot + guild recipes.",
+    "Substrate findings open for sibling project (deferred manifest-vs-PLAN drift work): (a) bin/loom needs phase add verb; (b) PANEL-COMPOSITION.md's .claude/cli/**/*.ts pattern needs sibling .claude/cli/*.ts row.",
+    "Skill registry session cache: this session's frontmatter flips on local skills don't activate until next session start (mirrors L-004 for agents). On-disk state is correct.",
+    "PR #101 is ready for human review."
+  ],
+  "notes": [
+    "Phase 3 was structurally lighter than Phase 1+2 (no CLI port, just frontmatter + body edits across substrate skills). 2 deliverables instead of 4-5.",
+    "The /loom-archive reshape mirrors /draft-plan's grill-me pattern. Same recommended-first + AskUserQuestion-with-4-options shape. Worth pinning as a substrate convention if more interview-style skills land.",
+    "Three sessions today (a, b, c) shipped Phase 1, 2, 3. Pace is sustained because each phase is one conceptual change and the contract+evaluator loop is fast."
+  ]
+}
