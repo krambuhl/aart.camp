@@ -43,3 +43,5 @@
 {"at":"2026-05-16T08:20:26.615Z","event":"session-saved","detail":{"filename":"2026-05-16-g.json"}}
 {"at":"2026-05-16T12:24:31.046Z","event":"phase-completed","detail":{"phase":4}}
 {"at":"2026-05-16T12:26:46.336Z","event":"session-saved","detail":{"filename":"2026-05-16-h.json"}}
+{"at":"2026-05-16T16:32:47.194Z","event":"checkin-created","detail":{"number":"01","branch":"substrate-cli/phase-5"}}
+{"at":"2026-05-16T16:33:05.441Z","event":"phase-started","detail":{"phase":5,"name":"New agent families"}}
