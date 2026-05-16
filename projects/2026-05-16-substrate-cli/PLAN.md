@@ -247,6 +247,52 @@ SKILL.md body uses AskUserQuestion for its interview steps.
 
 **One PR.**
 
+### Phase 3 followup: top-level ev-loop-* + PR #101 manifest reconciliation
+
+Discovered post-#101-merge while `/ev-run` attempted to dispatch
+Phase 4: the audit's `disable-model-invocation: true` flag on
+`ev-loop-confidence` and `ev-loop-interactive` blocks `/ev-run`
+from composing them via the Skill tool. The intended rule was
+"composed via `/ev-run`, never ambient," but the flag's actual
+semantics block *all* model-driven Skill invocation, including
+composition from another slash command — strictly broader than the
+"no ambient routing" intent. Phase 3 shipped without a smoke-test
+of the composition path, so this didn't surface until dispatch.
+
+Two deliverables in one PR:
+
+- **Top-level ev-loop-***: remove `disable-model-invocation: true`
+  from `ev-loop-confidence.md` and `ev-loop-interactive.md`. Both
+  remain `user-invocable: true`. Net result: `/ev-run`,
+  `/ev-loop-confidence`, and `/ev-loop-interactive` are all
+  directly invocable top-level slash commands; `/ev-run` composes
+  the loops as needed and the user can also invoke a loop directly
+  for a single-phase escape hatch. Update the Decisions section to
+  pin the new rule against the original Phase 3 intent.
+- **PR #101 manifest reconciliation**: PR #101 merged at
+  2026-05-16T05:48:18Z but `manifest.json`'s Phase 3 row still
+  records `pr.state: "open"`. Run
+  `bin/loom phase update substrate-cli 3 --status=completed
+  --pr=101 --url=https://github.com/krambuhl/aart.camp/pull/101
+  --pr-state=merged` to reconcile. (The #4 substrate-gaps sibling
+  project will land `bin/loom pr reconcile` for the general case;
+  this is the one-off catch-up for #101.)
+
+**Branch:** `substrate-cli/phase-3-followup`. No new manifest phase
+row is added (loom lacks a `phase add` verb today, per the #4
+substrate-gaps sibling project); Phase 3's manifest row stays
+`completed`. This section documents the work in PLAN.md so it's
+part of the project's plan history.
+
+**Verification:** `/ev-run substrate-cli` successfully composes
+`/ev-loop-interactive` via the Skill tool (smoke verifiable next
+session, after the registry reloads the frontmatter changes — same
+session-cache pattern as L-004). `bin/loom project read
+substrate-cli --pretty` shows Phase 3's PR row with `state:
+"merged"`. `npm run lint` clean.
+
+**One PR.**
+
 ### Phase 4: griot internal restructure
 
 Two restructures shipped together:
@@ -370,6 +416,12 @@ mutable-state hotspots are documented in the sweep's checkin Notes.
   point at `bin/griot` + `bin/guild` verbs that need to exist first.
   Independent of Phase 3's audit timing (the § work is orthogonal to
   the frontmatter audit).
+
+- **Phase 3 followup precedes Phase 4** — the followup unblocks
+  `/ev-run` → `/ev-loop-*` Skill composition; Phase 4 (and every
+  later phase) expects to be dispatched via that composition path.
+  The frontmatter edit propagates at session boundary (registry
+  reload), same shape as L-004.
 
 Recommended execution order: cut P1+P2+P3+P5 parallel branches → P4
 starts when P1 lands → P6 starts when P1+P2 land.
@@ -511,9 +563,26 @@ them so future revisions preserve them.
   skills**. `/draft-plan` established the pattern; `/loom-archive`
   adopts it in P3. Any future interview-shaped skill defaults to
   AskUserQuestion-with-recommendations + walk-the-tree pacing.
+- **`/ev-run`, `/ev-loop-confidence`, and `/ev-loop-interactive`
+  are all top-level user-invocable slash commands**. The two loops
+  are `user-invocable: true` and NOT `disable-model-invocation`.
+  Composition shape: `/ev-run` dispatches to the loops via the
+  Skill tool; users can also invoke a loop directly for a single-
+  phase escape hatch. This pins against Phase 3's original audit
+  intent ("composed via /ev-run, never ambient") — the
+  `disable-model-invocation` flag's actual semantics are stricter
+  than the "no ambient routing" intent and block legitimate
+  composition from another slash command. The
+  meaningful-synthesis-with-routing-needs shape is
+  `disable-model-invocation: false` + `user-invocable: true`, not
+  the substrate-internal-primitive shape
+  (`disable-model-invocation: true`).
 
 ## Revision log
 
+
+
+- 2026-05-16 — add Phase 3 followup: flip ev-loop-* to top-level user-invocable (remove disable-model-invocation that blocks /ev-run Skill composition); reconcile PR #101 manifest drift; pin new Decision for top-level loops + add Phase 3 followup → Phase 4 dependency
 
 - 2026-05-16 — restore revision-1 log entry that was lost when revision-2 replaced PLAN.md wholesale; substrate finding: bin/draft revise REPLACES PLAN.md with the revision file then appends one log entry — revision-file authors must carry forward prior ## Revision log entries explicitly to preserve history; flagged for the revisions-folder-substrate sibling project
 
