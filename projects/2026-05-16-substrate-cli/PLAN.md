@@ -653,11 +653,16 @@ blocker remains.
   directory survives at least until those one-time migrations are
   considered safe to delete (which is "never" in practice — the
   scripts are documentation of what the migration did).
-- Does the Stop hook for citation-contract greps (looks for
-  `Applied: L-NNN` / `Applied: AP-NNN`) need to know about the new
-  rollup.json location, or does it operate purely on the
-  transcript text? Likely transcript-only, but verify in Phase 4
-  rollup before that PR lands.
+- ~~Does the Stop hook for citation-contract greps need to know about
+  the new rollup.json location?~~ **Resolved in Phase 4 rollup
+  whiteboard round 2 (Finding 6 — performance + skeptic + design-
+  systems converging).** Empirical verification: no Stop hook is
+  configured in `.claude/settings.json` or `.claude/settings.local.json`.
+  The `scripts/learnings-post-session.sh` script that would be the
+  Stop hook is staged but not wired; it is transcript-only (greps for
+  `Applied: L-NNN`, updates `citations.json`). Phase 4 rollup is a
+  no-op for the citation-grep concern. See the new "Citation
+  enforcement is soft" Decision below.
 - Should the parallel-work invariant get a CONVENTIONS.md test
   (lint rule) that flags new CRUD verbs without append-only or
   branch-partitioned semantics? Decided in P6.
@@ -668,10 +673,17 @@ blocker remains.
   way to fix the placeholder URL on already-set rows (the verb is
   monotonic by default). Should this fold into the parallel-work
   hardening (P6) audit or punt to #4 substrate-gaps sibling project?
-- `/learnings-use` vs `/griot-load` naming resolution (raised by
-  whiteboard design-systems): rename `/learnings-use` →
-  `/griot-load` (consolidate under griot-*) or keep as peers with
-  documented difference? Decided in Phase 4 rollup's D2 contract.
+- ~~`/learnings-use` vs `/griot-load` naming resolution.~~
+  **Resolved in Phase 4 rollup whiteboard round 2 (Finding 7 +
+  design-systems Round 2).** Empirical verification: `ls
+  .claude/skills/` returned no `learnings-*` skill directories —
+  only `griot-compact` (and now `griot-load`). The "rename"
+  collapsed to a README skill-table sweep removing stale rows; no
+  `/learnings-use` SKILL.md body existed to lose synthesis from.
+  The user-facing surface is consolidated under the `griot-*`
+  family per design-systems' Round 2 reasoning (`learnings/` is the
+  directory namespace; `griot-*` is the skill family operating on
+  it). See the new "Griot-family consolidation" Decision below.
 
 ## Decisions
 
@@ -775,6 +787,51 @@ them so future revisions preserve them.
   bucket for the entire "griot internal restructure" work; the row
   stays in-progress across both PRs and completes when Phase 4
   rollup merges.
+- **Phase 4 bucket close: `bin/loom phase update --status=completed`
+  with no `--pr=<new>`** (per Phase 4 rollup whiteboard round 2 —
+  skeptic Finding 5). The manifest's `pr` field is single-valued
+  (`PhasePR`, not `PhasePR[]`); passing `--pr=<new>` when Phase 4
+  rollup's PR merges would silently overwrite the #104 (D1)
+  linkage. The remedy is the minimal option: at phase close, omit
+  `--pr=<new>` — only set `--status=completed`. The manifest's `pr`
+  field stays pointing at #104 (D1's PR); the bucket's second-PR
+  history lives in `events.jsonl` and the checkin files (the
+  actual source of truth). The schema migration to
+  `prs: PhasePR[]` + the verb support for tracking multiple PRs
+  per phase + bucket-completion semantics is queued for the #4
+  substrate-gaps sibling project as a concrete deliverable.
+- **Citation enforcement is soft / model-trusted, not hook-enforced**
+  (per Phase 4 rollup whiteboard round 2 — Finding 6, performance +
+  skeptic + design-systems converged). No Stop hook is configured
+  in `.claude/settings.json` or `.claude/settings.local.json`. The
+  citation contract is purely prose injected by `bin/griot use
+  --as=llm` asking the LLM to emit `Applied: L-NNN` (or `AP-NNN`)
+  when a learning or antipattern is applied. The
+  `scripts/learnings-post-session.sh` script that would be the
+  Stop hook is staged but not wired; if it ever wires up, it is
+  transcript-only (greps for `Applied: L-NNN`, updates
+  `citations.json`) and does NOT read `rollup.json` or `rollup.md`.
+  Future hook design — if any — should read `rollup.json` rather
+  than the legacy `rollup.md` location. Phase 4 rollup is a no-op
+  for the citation-grep concern.
+- **Griot-family consolidation: `griot-*` is the user-surface skill
+  family; `learnings/` is the directory namespace** (per Phase 4
+  rollup whiteboard round 2 — Finding 7 + design-systems Round 2).
+  The previously-documented `/learnings-capture`, `/learnings-use`,
+  and `/learnings-report` skills were never authored as SKILL.md
+  bodies under `.claude/skills/` — they appeared in `learnings/README.md`
+  as the user-facing surface, but the actual implementations were
+  always either CLI verbs (`bin/griot capture`, `bin/griot use`,
+  `bin/griot report`) or simply absent. The "rename" of
+  `/learnings-use` → `/griot-load` is therefore not a rename but a
+  README-table sweep: the table now lists only the two skills that
+  actually exist on disk (`/griot-load` + `/griot-compact`).
+  Captures and reports go via the CLI directly. The `learnings/`
+  directory is the data namespace operated on by the `griot-*`
+  family, not a parallel skill-name family. Surviving substrate
+  skill families: `loom-*`, `draft-*`, `griot-*`, `guild-*` plus
+  the two ev-loop-* loops + `ev-run` — matches the four-family
+  taxonomy + ~12-skill target.
 - **No family has more than ~4 substrate skills**. The four-family
   taxonomy with this constraint is the consistency target; if a
   family grows past 4, audit for CRUD-masquerading-as-orchestration.
@@ -829,6 +886,9 @@ them so future revisions preserve them.
 
 
 
+
+
+- 2026-05-16 — Phase 4 rollup close: resolve Open Q's (Stop hook absence + /learnings-use rename collapse) per whiteboard round 2 Findings 5/6/7; pin three new Decisions (Phase 4 bucket close omits --pr=<new>; citation enforcement is soft/model-trusted; griot-* family consolidation)
 
 - 2026-05-16 — apply intended Phase 4 split (prior revision cea7c1e committed with the correct rationale but a stale revision-file from a prior session — the file at /tmp/loom-revision-substrate-cli.md predated this session; Write tool refused to overwrite without Read-first, bin/draft revise applied the stale file unchanged); this revision actually splits Phase 4 into Phase 4 (session-notes) + Phase 4 rollup, pins the new Decisions, and adds the Open question
 
