@@ -100,11 +100,15 @@ suspected drift as a one-line warning and let the user decide.
 
 ### 1.5. Load learnings
 
-Run `Bash("bin/griot use")`. The verb reads `learnings/rollup.md`,
-prints the status line and (if loaded) the content + citation
-contract to stdout — the Bash result lands the load in conversation
-context. Do this once per `/ev-run` invocation — the rollup is
-session-scoped, not per-dispatch.
+Run `Bash("bin/griot use --as=llm")`. The verb reads
+`learnings/rollup.json` and renders it as LLM-friendly prose, prints
+the status line and (if loaded) the content + citation contract to
+stdout — the Bash result lands the load in conversation context. Do
+this once per `/ev-run` invocation — the rollup is session-scoped,
+not per-dispatch. The `--as=llm` flag is the default render mode and
+is currently the only mode shipped; `/ev-run` calls the CLI directly
+via Bash rather than composing the `/griot-load` skill, to keep the
+loader-step path skill-composition-free.
 
 Handle the three outcomes the verb's `griot-use:` status line reports:
 - **`loaded N learnings`** — note it in the dispatch report.
@@ -112,6 +116,13 @@ Handle the three outcomes the verb's `griot-use:` status line reports:
   and proceed.
 - **`no rollup yet`** — note "no rollup yet — `/griot-compact` has
   not run" and proceed. Do not stop.
+
+A format-detection error from the verb (exit 1, stderr names
+`learnings/rollup.md` as a legacy artifact requiring migration)
+indicates a mid-flight session running an older skill body against
+post-cutover on-disk state, or vice-versa. Surface the verb's stderr
+message to the user verbatim and stop — the remedy is in the message
+(run `node .claude/scripts/migrate-rollup-md-to-json.ts` and restart).
 
 Do not read `learnings/session-notes/` or `learnings/nightly/` from the
 router — the tier separation is a hard rule of the learnings system,
@@ -166,7 +177,7 @@ Dispatching <slug> → phase <N> "<phase-title>" via <loop-name>.
 ```
 
 The learnings-loaded sentence is one of:
-- `Loaded N learnings from rollup.md (citation contract active).`
+- `Loaded N learnings from rollup.json (citation contract active).`
 - `No rollup yet — proceeding without citation contract.`
 - `Rollup empty — proceeding without citation contract.`
 

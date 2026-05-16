@@ -18,7 +18,7 @@ export type { DispatchResult, GriotCliContext };
 // the rationale lives in projects/2026-05-15-draft-cli/PLAN.md and is
 // reaffirmed for griot in projects/2026-05-16-substrate-cli/PLAN.md.
 export const VERBS: Record<string, string> = {
-  use: 'Print learnings/rollup.md with citation contract for session injection',
+  use: 'Render learnings/rollup.json as LLM prose with citation contract for session injection (--as=llm, the default)',
   capture:
     'Capture a correction (from a checkin) or an evaluator finding into a session-note folder',
   'operator-checks':

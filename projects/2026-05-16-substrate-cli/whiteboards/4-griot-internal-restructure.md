@@ -398,3 +398,346 @@ Carving out. Deferring to design-systems on schema/naming consistency across gri
 
 No relevant file paths from the sketch lens.
 
+## Round 2
+
+### From whiteboard-a11y
+
+Carve-out for round 2 as well.
+
+Both open questions sit entirely in the substrate/CLI-internal layer — skill naming inside `.claude/skills/` and a Stop-hook citation grep that runs against transcript text. Neither has a user-facing UI surface, neither produces terminal output that a screen-reader user would consume in an interactive way (Stop hooks run in the background of Claude Code's own runtime, not in a TTY a user is reading), and neither involves keyboard interaction, focus management, color/contrast, or motion. The naming question is a vocabulary-cohesion question that whiteboard-design-systems is correctly positioned to lead on; the hook question is a "does this file get read?" verification question that whiteboard-performance is correctly positioned to lead on.
+
+One small note in passing, not a position to pin: skill names like `/learnings-use` vs `/griot-load` do carry a plain-language tax for anyone (human or agent) reading the README skill table cold. `griot` is inside-baseball — it requires knowing the project's metaphor (the griot as keeper of the oral record) to understand what the skill does, where `learnings-use` is self-describing. That's a readability concern that brushes against the "plain language wins" lens, but it's design-systems' call on whether the metaphor's coherence value across the family (`griot-compact`, `griot-load`) outweighs the per-skill opacity. I'd defer to design-systems and not push on it — the audience here is engineers and agents working inside the substrate, not end users, and the metaphor probably earns its keep once you're in the system. Just flagging that if the resolution goes toward unifying everything under `learnings-*` (renaming `/griot-compact` → `/learnings-compact`), that direction is also the more plain-language-friendly direction, for what little that's worth as a tiebreaker.
+
+Carving out cleanly on both open questions. Round 1's carve-out holds; nothing in round 2 changes it.
+
+### From whiteboard-design-systems
+
+I have enough now to write a sharp round-2 design-systems section.
+
+---
+
+### From whiteboard-design-systems (round 2)
+
+I want to start by saying out loud that round 1 left this thread half-finished — I raised the `/learnings-use` vs `/griot-load` cohesion smell, gave a recommendation, but PLAN.md pinned only the half I was confident about (`/griot-load` exists as a `disable-model-invocation: true` + `user-invocable: true` pure pass-through wrapper) and left the family-coherence question open for D2. Now I'm being asked to land it. Round 1 sketched three options without choosing; let me actually choose, and then sharpen it.
+
+Before that, two observations from re-reading the artifacts that change the calculus a little:
+
+**1. The skill-files-on-disk reality is different from the README.** I globbed `.claude/skills/` looking for `learnings-*` and `griot-*` skill folders. The only one that exists is `griot-compact/SKILL.md`. There is no `learnings-use/SKILL.md`, no `learnings-capture/SKILL.md`, no `learnings-report/SKILL.md` in the tracked skill registry. The skill table in `learnings/README.md` lines 28-33 lists four skills as if they're all live, but at the level of *what Claude actually loads from `.claude/skills/`* — only `griot-compact` is real. The other three are either gitignored, not-yet-implemented, or live elsewhere as documented intent rather than as skill bodies. That changes the rename framing: there is no `git mv .claude/skills/learnings-use → .claude/skills/griot-load` PR to write, because there is no `learnings-use/SKILL.md` to rename. The "rename" is really *"author /griot-load as a new skill body and update the README table to match"*, and the open question collapses to "what does the README table say after Phase 4 rollup ships?"
+
+That's a relief. The cohesion fix is mostly a docs sweep, not a substrate refactor.
+
+**2. The Phase 1 wrapper kills already happened.** PLAN.md Phase 1 deletes `/griot-capture` and `/griot-report`. That's the parallel surface on the `learnings-*` side disappearing on the `griot-*` side. The `learnings-*` README labels were already misaligned with the substrate's *implementation* family even before Phase 4 rollup; the family-coherence question has been quietly answered by the substrate work — *the substrate is already griot-shaped; the README is the lagging artifact*. So the question isn't really "which family do we consolidate under" — it's "the README needs to stop describing a `learnings-*` user surface that the substrate no longer ships."
+
+---
+
+### Open question 1: `/learnings-use` vs `/griot-load` — resolution
+
+Given those two observations, my round-1 recommendation holds and I'd sharpen it:
+
+**Consolidate the addressable user surface under `griot-*`. Update the README skill table in the same PR as the Phase 4 rollup. Drop the `learnings-*` user-surface label entirely from the table.**
+
+Here's the reasoning in design-systems terms:
+
+The `griot-*` family is the orchestration tier (compact, load, future verbs). The `learnings-*` family was *the directory the artifacts live in* (`learnings/rollup.md`, `learnings/session-notes/`, `learnings/config.yaml`). Round 1 I gestured at "griot-* is orchestration; learnings-* is user surface" as the framing the project *might* have intended — but looking at it now, that framing is muddled. `/learnings-capture` is an orchestration verb. `/griot-compact` is an orchestration verb. Same job-shape, different family prefix. Same concept named two different things — the canonical naming-is-architecture smell.
+
+The cleaner story: `learnings/` is the **directory namespace** (a folder under the repo root, holding the artifacts). `griot-*` is the **skill / CLI verb family** (the substrate that operates on those artifacts). You don't need a `/learnings-*` skill prefix any more than you need a `/projects-*` skill prefix for things that operate on `projects/`. The folder-name doesn't have to become a skill-name prefix. That's the same instinct that says `<Stack>` shouldn't be called `<FlexboxStack>` — the artifact's underlying technology (or, here, storage location) isn't load-bearing for the consumer's API.
+
+What does the README table look like after this resolution? Something like:
+
+| Skill | When you run it | What it does |
+|---|---|---|
+| `/griot-load` | Start of a session where you want the rollup active | Loads `rollup.json` (rendered to prose) and installs the citation contract. |
+| `/griot-compact` | Manually, when you feel like processing captures | Runs the judge panel. Promotes IMPROVED entries. Opens a PR. |
+
+And `/learnings-capture` / `/learnings-report` either get renamed to `/griot-capture` / `/griot-report` if they ever come back as real skills, or get removed from the README entirely since `bin/griot capture` and `bin/griot report` are the real surfaces now. Looking at PLAN.md: P1 deletes `/griot-capture` (the skill) in favor of `bin/griot capture` (the CLI); P3 likely does the same for `/griot-report`. The README table needs to reflect that — most of those rows are stale. **The Phase 4 rollup PR is the right place to fix this**, because the PR is already touching the skill table to add `/griot-load`; sweeping the stale rows in the same diff is single-conceptual-change.
+
+What I'd write into the D2 contract:
+
+- `/griot-load` lands as the addressable user surface (`disable-model-invocation: true` + `user-invocable: true`).
+- README skill table sweeps in the same PR: remove `/learnings-capture`, `/learnings-use`, `/learnings-report` rows (they no longer exist as skill bodies); the table reflects only the skills that have real `.claude/skills/<name>/SKILL.md` files after Phase 4 rollup merges.
+- README directory-layout block and prose elsewhere can keep referring to "the learnings system" or "`learnings/` directory" — the *folder name* isn't changing, only the *skill prefix* is consolidating to `griot-*`.
+- The `bin/griot` CLI surface (`capture`, `use`, `report`, `mediate-panel`, `operator-checks`) doesn't change — those are already griot-shaped.
+
+This also clears up a subtle thing in the substrate framing I want to name: PLAN.md's Decisions section talks about "the four-family taxonomy (loom, draft, griot, guild)." `learnings` isn't a family in that taxonomy — it's a *data folder* operated on by the `griot` family. Keeping a `/learnings-*` skill prefix would have implied a fifth family that doesn't exist. The consolidation honors the four-family count the project is targeting (~12 substrate skills across loom + draft + griot + guild).
+
+A defensible counter-option I want to acknowledge: **keep `/learnings-use` as a familiar muscle-memory alias for `/griot-load`**. The argument is "I've typed `/learnings-use` for weeks; the rename costs nothing operationally but loses familiarity." My pushback: an alias is *exactly* the kind of "same concept named two ways" that the design-systems lens flags. If you want the rename to be soft, the place to soften it is the deprecation message in the old skill body — but since there's no old skill body to deprecate (it doesn't exist on disk), there's nothing to alias. Just author `/griot-load` and update the README. Clean break, single PR, no parallel vocabulary.
+
+Skeptic's round-1 Finding 4 lands underneath this nicely: `/griot-load` is a pure pass-through wrapper because L-004 prevents testing synthesis in the authoring session. The skill exists *only* to give users an addressable, name-stable handle on `bin/griot use --as=llm rollup`. That's a real reason for the skill to exist, and it strengthens the case for picking *one* name — the wrapper's name should match the CLI verb family it wraps. `griot-*` wins by that logic too.
+
+---
+
+### Open question 2: Stop-hook citation grep — does it read rollup.md?
+
+I read `scripts/learnings-post-session.sh`. It does not read `rollup.md` (or `rollup.json`). It is **purely transcript-only**: greps the transcript for `Applied: L-NNN` patterns, updates `citations.json` with incremented counts and `last_used` timestamps, appends a session metadata line to `sessions.jsonl`. The script never opens the rollup file. I confirmed this with a grep — `rollup.md` and `rollup.json` literals are absent from the script.
+
+I know performance is the lead on this open question, but since I'm here and it's a quick verification I'll just close it: **Phase 4 rollup does not need to update the Stop hook**. The hook's contract is "validate the format of citation tokens that appear in the transcript and update bookkeeping JSON" — it doesn't validate that those L-NNN ids exist in any rollup. That's a deliberate separation-of-concerns: the hook is hot-path (runs after every assistant turn) and only does cheap grep + jsonl-append work; rollup membership validation is implicitly the responsibility of the LLM (it shouldn't cite an L-NNN it didn't apply), and `/griot-report`'s weekly trend analysis is where citation accuracy gets a real sanity-check.
+
+The design-systems read on why this is the right shape: the hook's job is **token-shape validation**, not **token-membership validation**. Those are two different concerns. Membership lives upstream (the rollup is the registry); the hook just records what was applied. Updating the hook to cross-reference rollup.json would couple it to a JSON parse on every turn for marginal benefit — and would invert the cleaner contract where the rollup is authoritative for *what learnings exist* and the citations file is authoritative for *what learnings have been used*. Two append-only-ish files, two clear jobs. Don't conflate them.
+
+What I'd write into the D2 contract:
+
+- Stop hook is out-of-scope for Phase 4 rollup. Verified transcript-only.
+- A one-line note in the PR description ("Verified Stop hook is transcript-only at `scripts/learnings-post-session.sh`; no rollup.md/rollup.json reads. No hook changes needed in this PR.") closes the PLAN.md "Open question" cleanly.
+
+---
+
+### Contradictions / consensus from round 1
+
+- **My round-1 ask for a `--as=human` render mode** was accepted as a soft future-optionality note in the pinned Decision ("rollup is LLM-only output... `--as=llm` is the only render mode shipped in Phase 4 rollup; future render modes can be added without re-shaping the schema"). That's a satisfying resolution — the schema doesn't paint itself into a corner.
+- **Skeptic's Finding 3 PR split (4a/4b)** got adopted; Phase 4 became Phase 4 (session-notes) + Phase 4 rollup. Round 2 is the rollup half. The split also lets the naming resolution (Open question 1) land cleanly in *this* PR without dragging the session-notes work along with it.
+- **Skeptic's Finding 4 pure-pass-through framing for `/griot-load`** is now a pinned Decision. That gives the design-systems naming question additional weight: a pure wrapper *must* be named consistently with the CLI it wraps, because there's literally nothing else to distinguish it from the CLI. `/griot-load → bin/griot use --as=llm rollup` is a near-1:1 mapping; the skill name should make that mapping obvious to the next reader.
+- **Skeptic's Finding 1 format-detection error path** also pinned, and from the design-systems lens this is the right shape: explicit named opt-out for the cutover boundary, not silent dual-read leakage. That's exactly the "off-the-rails escape hatch as a named opt-out" principle the lens leans on.
+
+I don't see contradictions with my round-1 position. The naming question is the one I left half-answered; round 2 is where I land it.
+
+---
+
+### Files referenced in this section
+
+- `/home/krambuhl/work/aart.camp/learnings/README.md` — skill table (lines 28-33) that needs the sweep in this PR; directory-layout block remains accurate
+- `/home/krambuhl/work/aart.camp/.claude/skills/griot-compact/SKILL.md` — the only `griot-*` or `learnings-*` skill body currently on disk; confirms `learnings-use` isn't a tracked skill file (the rename collapses to a docs sweep)
+- `/home/krambuhl/work/aart.camp/scripts/learnings-post-session.sh` — Stop hook script; confirmed transcript-only (no `rollup.md` or `rollup.json` reads anywhere in the file)
+- `/home/krambuhl/work/aart.camp/.claude/settings.json` — top-level permissions; no Stop hook wired here (the user wires it in their gitignored `.claude/settings.local.json` per the README opt-in instructions)
+- `/home/krambuhl/work/aart.camp/projects/2026-05-16-substrate-cli/PLAN.md` — round-1 pinned Decisions, particularly the "rollup is LLM-only output" caveat, the `/griot-load` pure-pass-through Decision, and the four-family taxonomy framing that argues for consolidating the user surface under `griot-*`
+- `/home/krambuhl/work/aart.camp/projects/2026-05-16-substrate-cli/whiteboards/4-griot-internal-restructure.md` lines 98-114 — my own round-1 articulation of the naming question, now landed
+
+### From whiteboard-performance
+
+Settings.local.json has no `hooks` either — the script ships in `scripts/` but isn't currently wired. The script itself is the source of truth for what would-be-fired-as-Stop-hook behavior looks like. Now I have everything I need.
+
+Key findings from the script:
+
+- Line 71-73: the citation grep is `grep -oE 'Applied:[[:space:]]*L-[0-9]+(,[[:space:]]*L-[0-9]+)*' "$TRANSCRIPT"` — operates purely on the transcript file path. It does NOT open `rollup.md` or any rollup artifact.
+- Line 80-101: the python block that updates `citations.json` only reads its own previous state (`citations.json`) and writes back. Never touches `rollup.md`.
+- Line 109-145: the corrections-nudge is also transcript-only.
+- Line 169-185: the sessions.jsonl append only reads counts already in-memory.
+- Also note: the script greps for `L-[0-9]+` only — there is no `AP-NNN` citation grep here, despite PLAN.md mentioning both. That's a small fact but worth flagging.
+
+Now let me deliver the round-2 performance section.
+
+---
+
+## Round 2 — performance
+
+### Open question 2 (lead): the Stop-hook citation grep is transcript-only. Phase 4 rollup does not touch it.
+
+I read `/home/krambuhl/work/aart.camp/scripts/learnings-post-session.sh` end-to-end — that's the actual Stop hook script the system would wire up. (Side note: neither `.claude/settings.json` nor `.claude/settings.local.json` currently has a `hooks` block, so the script is *staged* but not active. That's a separate question, not Phase-4-rollup's; the script's behavior is the right thing to verify against because that's what *would* fire if/when it gets opted in.) Here is what it actually does, by responsibility:
+
+**Responsibility 1 — citations.json update.** Lines 71-77: one grep over `$TRANSCRIPT` for `Applied:[[:space:]]*L-[0-9]+(,[[:space:]]*L-[0-9]+)*`. Pipe through a second grep to extract bare `L-NNN` tokens, sort -u. Then lines 80-101 hand those IDs to a python block that reads `citations.json` (its own state file), bumps counts, and writes back. `rollup.md` is never opened. The hook does not validate that an ID exists in the rollup — it just counts whatever IDs the assistant cited.
+
+**Responsibility 2 — correction-starter nudge.** Lines 108-145: walks the transcript JSONL, filters user-role turns, regex-matches correction starters. Transcript-only.
+
+**Responsibility 3 — sessions.jsonl append.** Lines 169-185: writes a summary line from variables already in memory. Reads nothing.
+
+**The settled answer to Open question 2: the hook is pure transcript-grep + own-state-update. Phase 4 rollup does not need to update the hook to read `rollup.json`.** The hook is agnostic about *where* rollup lives, because it doesn't read rollup at all. The PLAN.md risk is closed: confirmed transcript-only.
+
+Two follow-on observations from reading the actual script — small, worth folding into the contract anyway:
+
+1. **The grep only matches `L-NNN`, not `AP-NNN`.** PLAN.md's risk language said "looks for `Applied: L-NNN` / `Applied: AP-NNN`" — that overstates what the hook does. As shipped in this script, antipattern citations don't increment `citations.json` at all. Whether that's a deliberate "we only track learning citations, not antipattern citations" call or a latent gap is a separate question (likely substrate-cli followup territory, not Phase-4-rollup territory). Worth knowing it's the case before the contract author paraphrases the hook's behavior.
+2. **The hot-path cost is unchanged by Phase 4 rollup.** The Stop hook fires after every assistant turn. Its cost today is dominated by transcript I/O (the JSONL walk for correction starters) — order of magnitude single-digit milliseconds for typical transcript sizes, hundreds of ms only if the transcript is enormous. Phase 4 rollup adds zero work to this hot path. Net Stop-hook performance delta for Phase 4 rollup: zero. That's the cleanest possible answer to the perf question.
+
+If a later phase ever *does* want the hook to validate citation IDs against the rollup ("warn me if the assistant cited L-999 which doesn't exist"), that future hook would open `rollup.json` instead of `rollup.md`, parse it once, and lookup IDs — cheaper than greppling markdown, actually, because `JSON.parse` + object key access beats regex-scanning a prose file. But that's a future phase, not Phase 4 rollup.
+
+### Open question 1 (defer to design-systems, brief cost note): naming resolution
+
+Design-systems leads here per the round-2 cue. From the cost lens I'll add only this: the four options all have effectively zero runtime cost difference — skill bodies are loaded into context, the marginal-tokens cost of one extra skill in the registry is in the dozens-of-tokens range, not the thousands. So the call is purely cohesion/discoverability, which is squarely design-systems' lens. My only flag: whichever option lands, **don't keep two skills with overlapping function**. Two near-identical skills both loaded into the agent's available-skill list waste a little context per session forever, and more importantly the next reader pays a comprehension cost figuring out which to invoke. The "consolidate under `griot-*`" recommendation from round 1 still reads right to me on that axis: one name for one job is cheaper than two names for one job.
+
+### Confirming round-1 positions against round-2 framing
+
+Reading my round-1 section back against the round-1 sections from design-systems and skeptic and the new PLAN.md pinned Decisions, nothing contradicts. Specifically:
+
+- **Hard cutover, no dual-read**: PLAN.md pinned this. My round-1 cost argument (dual-read costs forever, migration costs once) lines up cleanly with skeptic's Finding 1 (which prefers format-detection-and-loud-error over dual-read; that's not dual-read, that's a one-branch defensive check, which I agree with and which the contract author should fold in). No contradiction; reinforcement.
+- **`body` as markdown string**: PLAN.md pinned this. My round-1 cost argument (don't introduce a markdown AST library; concat-template the render) holds. Skeptic's Finding 2 reinforces from the schema-discipline angle.
+- **`/griot-load` pure pass-through**: PLAN.md pinned this. My round-1 "skill body should be near-zero tokens above the bash invocation" still applies — every paragraph in a skill body is tokens spent each invocation; keep it minimal.
+- **Migration script in `.claude/scripts/`, not `bin/griot migrate`**: PLAN.md pinned this. My round-1 instinct (throwaway-shaped scripts go in throwaway-shaped homes) holds; design-systems' counter-instinct (promote it to `bin/griot migrate` for discoverability) lost the pin, and I think the pinned outcome is right for this case — there are no future migration paths visible from here that would benefit from a permanent subcommand surface.
+- **Atomic single-PR vs skeptic's 4a/4b split**: round 1 had skeptic pushing for a 4a/4b split. PLAN.md instead split as D1 (session-notes, shipped as #104) + Phase 4 rollup (this work). That's morally the same split skeptic proposed, executed differently. My round-1 cost argument (bundling is justified within-D2 because reader+writer+migration must agree) is now moot — D1 already shipped, this round is just rollup.
+
+### What's left to measure after Phase 4 rollup lands
+
+Re-stating from round 1, narrowed to this scope:
+
+- **`/ev-run` session-start time delta.** Time from invocation to first agent action, before vs after. `bin/griot use --as=llm` rendering `rollup.json` vs the prior `cat rollup.md` (or whatever the prior loader did). Should be in the noise — both are single-digit-ms file reads followed by light formatting — but worth a one-time check to catch any surprise (e.g., accidentally pulling in a markdown library in `use.ts`).
+- **`/griot-compact` write time.** Cold path, low priority, but JSON.stringify over a body-as-markdown-string is heavier than appending to a markdown file. Still milliseconds; sanity check only.
+- **`rollup.json` file size growth curve.** PLAN.md should pin the entry cap (top-N curation) before learnings get unbounded. Round 1 noted 13 learnings currently — not urgent, but the cap policy is what keeps the session-start render cheap as the corpus grows.
+- **Stop hook delta: confirmed zero.** Per Open question 2 above — no measurement needed; the hook code path is untouched.
+
+### Files that informed this round-2 section
+
+- `/home/krambuhl/work/aart.camp/scripts/learnings-post-session.sh` — the actual Stop hook script; load-bearing for Open question 2. The relevant snippet is lines 67-101 (citation grep + citations.json update), which never touch `rollup.md`.
+- `/home/krambuhl/work/aart.camp/.claude/settings.json` — confirmed no `hooks` block; the script is staged in `scripts/` but the project-level settings don't wire it. Not Phase-4-rollup's problem.
+- `/home/krambuhl/work/aart.camp/.claude/settings.local.json` — confirmed no `hooks` block either.
+- `/home/krambuhl/work/aart.camp/projects/2026-05-16-substrate-cli/whiteboards/4-griot-internal-restructure.md` — round-1 whiteboard, including my prior performance section that round 2 builds on.
+
+### From whiteboard-react-architect
+
+This round is the same carve-out as round 1.
+
+Both open questions for round 2 are squarely outside my lens:
+
+1. **`/learnings-use` vs `/griot-load` naming resolution** — this is a naming and information-architecture question about CLI/Skill surfaces. Design-systems owns the semantic-naming lens; the React-API-shape lens has nothing to add when there is no component API in play.
+2. **Stop-hook citation grep verification** — this is a Node hook implementation and verification-strategy question. No React, no component boundaries, no `'use client'` decisions, no hook composition (in the React sense — the word "hook" here is a Claude Code lifecycle hook, not a React hook).
+
+No contradictions with my round-1 position to flag, no sibling section reframes a question into my lane, and no consensus is forming that I should weigh in on from the React-architecture angle. Defer to `whiteboard-design-systems` on the naming question and to whichever engineers hold the CLI-substrate and verification lenses on the Stop-hook question.
+
+Carving out cleanly.
+
+### From whiteboard-skeptic
+
+Confirmed: there's no Stop hook in either settings file. The "Stop hook for citation-contract greps" referenced in PLAN.md Open question 2 doesn't actually exist as a hook in this repo. The citation contract is just prose inside `bin/griot use`'s stdout asking the model to emit `Applied: L-NNN` lines; there's no programmatic enforcement on the Stop transition. Performance has the lead on this, but my pressure-test lens lights up: the framing of the open question presumes a hook exists.
+
+OK, I have enough. Here is my round-2 skeptic section.
+
+---
+
+# Skeptic — Phase 4 rollup, Round 2
+
+Round 1 landed cleanly — Findings 1, 2, 4 are pinned as Decisions; Finding 3 (the split) shipped as Phase 4 D1 via #104. Round 2's brief explicitly carves the bucket-completion-on-merge timing and any remaining round-1 gaps to me. Let me read the actual substrate state before pressing.
+
+The Phase 4 manifest row right now (manifest.json:44-54):
+
+```json
+{
+  "number": 4,
+  "name": "griot internal restructure",
+  "status": "in-progress",
+  "branch": "substrate-cli/phase-4-rollup",
+  "pr": {
+    "number": 104,
+    "url": "https://github.com/krambuhl/aart.camp/pull/104",
+    "state": "merged"
+  }
+}
+```
+
+D1's checkin (`phase-4/01.json:22`) pinned this as an explicit acceptance criterion: *"Phase 4 manifest row stays `in-progress` (Phase 4 rollup must merge before the bucket completes; this PR alone does not complete the 'griot internal restructure' bucket per the new Phase 4 split Decision)."* So the row is **intentionally** in a contradictory shape: status says "still working," pr says "the work merged." That contradiction is the round-2 territory.
+
+Three findings, then a clean pass.
+
+---
+
+## Finding 5: The single-valued `pr` field will silently overwrite #104 with #(next) when Phase 4 rollup runs `bin/loom phase update`
+
+Look at `.claude/cli/verbs/phase.ts:215-226`:
+
+```ts
+if (prNum !== undefined) {
+  // URL defaults to a placeholder when --url isn't passed; the
+  // placeholder is recognizable so callers know to set the real
+  // value. Once a URL is set, --url is required to change it
+  // (the verb is monotonic by default).
+  const placeholderUrl = `https://github.com/example/example/pull/${prNum}`;
+  updated.pr = {
+    number: prNum,
+    url: prUrl ?? phase.pr?.url ?? placeholderUrl,
+    state: (prStateArg ?? phase.pr?.state ?? 'open') as 'open' | 'merged' | 'closed',
+  };
+}
+```
+
+`updated.pr` is a single object replaced wholesale. The type `PhasePR` (lib/types.ts:23-27) is a scalar, not an array. When Phase 4 rollup's PR (call it #105) merges and someone runs:
+
+```
+bin/loom phase update substrate-cli 4 --status=completed --pr=105 --url=https://github.com/krambuhl/aart.camp/pull/105 --pr-state=merged
+```
+
+The manifest row will lose all trace of #104. The row will read as if Phase 4 was a single-PR bucket whose PR is #105, and the project's archival history will tell future-you that the "griot internal restructure" bucket was a single-PR deliverable. The PLAN.md Phase 4 / Phase 4 rollup phases will look like split phases that each shipped one PR, but the manifest will look like Phase 4 = one PR.
+
+Said differently: **the Phase 4 split Decision works at the PLAN.md narrative layer, but the manifest schema has no shape that represents "this bucket shipped across two PRs."** The schema was designed when one phase = one PR. The split is the first time the substrate exercises a one-phase-many-PRs pattern, and the schema breaks silently.
+
+The substrate impact is mostly archival, not behavioral — `/ev-run` doesn't read `phase.pr` to make decisions. But the events.jsonl record *will* preserve the history (a `pr-opened` for #104 already landed per the git log `9a0c5c1` commit message). So the data exists, it's just not addressable from the manifest.
+
+**Concrete remedy options, ranked:**
+
+1. *(preferred — minimal)* When Phase 4 rollup's PR merges, run the `bin/loom phase update` for status=completed but **don't pass `--pr=105`**. Leave the manifest's `pr` field pointing at #104 (which has the wrong number for the completion event, but at least preserves the first-PR linkage). Document the discontinuity in the Phase 4 rollup checkin Notes-for-the-PR. The bucket-archival history is captured in events.jsonl + checkin files, which is the actual source of truth anyway. This is "good enough for now" debt that doesn't compound — when the #4 substrate-gaps sibling project adds `bin/loom pr reconcile`, it can decide whether to extend the schema then.
+2. Promote `pr` to `prs: PhasePR[]` (an array) in a follow-up to the #4 substrate-gaps sibling project. Schema migration on the existing manifests. This is the "right" fix but it's substrate-gaps scope, not Phase 4 rollup scope. **Don't** smuggle the schema change into Phase 4 rollup — that's the kind of "we'll just add this little change" that compounds. Let it ship in the sibling project where it can be reviewed as a substrate-shape decision.
+3. Leave a placeholder PR row pointing at the meta-bucket URL or a "—" sentinel. This is worse than option 1; sentinel values invite "what does this mean?" reading.
+
+**Take option 1.** The unit contract for Phase 4 rollup should:
+
+- Explicitly NOT call `bin/loom phase update --pr=<new>` for Phase 4; only call `--status=completed` with no PR arg.
+- Add a Notes-for-the-PR line: *"Phase 4 manifest pr field intentionally retains #104 (D1's PR); D2's PR (this one) is recorded in events.jsonl + checkin. Substrate schema doesn't yet support multi-PR buckets (folded into #4 substrate-gaps sibling project)."*
+- Surface this as a finding to feed into #4 substrate-gaps: the `prs` array migration is now a concrete deliverable, not a hypothetical.
+
+The thing the round 1 panel didn't see: the Phase 4 split looked like a PLAN-layer decision but it punches through to the manifest schema in a way that's invisible until you try to update the row. The manifest is in a temporarily-illegal state right now (status=in-progress + pr.state=merged is supposed to be impossible per the verb's semantic intent, even if not enforced) and the cleanest exit from that state requires not-running the verb's normal "set the new PR" path.
+
+---
+
+## Finding 6: PLAN.md Open question 2's Stop hook doesn't exist; the question itself is malformed
+
+Round 1 deferred this to round 2 verification. PLAN.md (line 656-660):
+
+> Does the Stop hook for citation-contract greps (looks for `Applied: L-NNN` / `Applied: AP-NNN`) need to know about the new rollup.json location, or does it operate purely on the transcript text? Likely transcript-only, but verify in Phase 4 rollup before that PR lands.
+
+I read `.claude/settings.json` and `.claude/settings.local.json` end to end. Neither file contains a `hooks` block. There is no Stop hook configured in this repo. Grepping for `Stop` / `stop.?hook` / hook configuration across `.claude/` returns nothing relevant. The only files matching `Applied:\s*L-` are `bin/griot use.ts` and its test — that's the *citation contract prose* injected into context by `bin/griot use --as=llm`, not a hook that enforces anything.
+
+So the question is asking "do we need to update the citation-grep behavior of a hook that doesn't exist?" The answer is: there is nothing to update, because the citation contract is purely a model-level convention (the prose says "emit `Applied: L-NNN` when you cite a learning"; there's no programmatic validation that this actually happened).
+
+Performance is the lead on this, but my skeptic angle: **the open question is a vestigial assumption from an earlier substrate shape.** Somewhere along the line, someone thought a Stop hook was going to do citation enforcement, the PLAN.md note got written, and the hook never landed. The hook's *absence* is the real finding — citation-contract compliance is currently soft, model-trusted, unverified. That's fine as a "good enough for now" but it should be explicit:
+
+**Concrete remedy:** in Phase 4 rollup's PR, when closing out Open question 2 in PLAN.md, the resolution text should be: *"No Stop hook exists; citation-contract compliance is currently model-trusted prose, not hook-enforced. Phase 4 rollup is a no-op for the citation-grep concern. Future hook design — if any — should read rollup.json (the new canonical location) rather than rollup.md (which no longer exists post-cutover)."* Move the speculative "Future hook design" sentence to a Decision pin or a `learnings/antipatterns/` entry so the next person reaching for "let's add a Stop hook for citations" finds the constraint, not just the open question.
+
+This is small but worth catching: an unverified-but-stated assumption in PLAN.md ("there's a Stop hook to verify") becomes a finding about substrate shape ("citation enforcement is soft"), and the right move is to close the open question with the absence rather than verify a thing that doesn't exist.
+
+---
+
+## Finding 7: Naming resolution recommendation — keep `/learnings-use` AND `/griot-load` as peers with documented different jobs (push back on round-1 consolidation pull)
+
+This is round-2's Open question 1, and my pressure-test lands different from round 1's design-systems recommendation.
+
+Round 1 design-systems argued: "two skills with the same job and different names is a cohesion failure" and recommended renaming `/learnings-use` → `/griot-load`. I want to push back. Re-read what each does:
+
+- `/learnings-use` (today): start-of-session loader that *installs the citation contract*. It puts "when you cite a learning, write `Applied: L-NNN`" into the agent's working context. The rollup payload is the supporting evidence; the citation contract is the load-bearing instruction.
+- `/griot-load` (new, post-Phase 4 rollup): the addressable user surface that *renders the rollup at any time*. The bash invocation is `bin/griot use --as=llm rollup`. If the CLI emits the citation contract as part of the rendered output (which `use.ts` does today per the prior whiteboard observations), then yes, `/griot-load` and `/learnings-use` do overlap. But:
+
+The actual question is **does `/learnings-use` do anything beyond what `bin/griot use --as=llm rollup` emits?** If no, then `/learnings-use` is redundant the moment `/griot-load` ships, and the rename is correct. If yes (it has session-start framing prose, an interview step, anything beyond the CLI output), then `/griot-load` is a *mid-session reload* affordance and `/learnings-use` is a *session-start install* affordance, and those are different jobs deserving different names.
+
+I haven't read `/learnings-use`'s SKILL.md body in this round — that's a verification step the D2 contract needs to do before locking the rename. **The risk I'm flagging is the rename happening on round-1's design-systems argument without that verification.** Two scenarios:
+
+1. `/learnings-use` is already a pure pass-through that just invokes some flavor of `bin/griot use` and returns it → rename is fine, do it.
+2. `/learnings-use` has substantive session-start framing prose (multi-paragraph onboarding, the citation-contract install instructions phrased for first-load context, "you are starting a session; here's what to know") → rename loses that prose if `/griot-load` is a "pure pass-through" per Decision pin (PLAN.md:756-765). And the Decision pin explicitly says **synthesis lives in the CLI, not the skill body.** So if `/learnings-use` has session-start synthesis that *shouldn't* port into `/griot-load` (because `/griot-load` is pure pass-through), the right move is to either (a) port the synthesis into `bin/griot use --as=llm rollup`'s output (so it appears in both consumers' output identically), or (b) keep `/learnings-use` as the session-start-shaped variant and `/griot-load` as the mid-session reload variant.
+
+**Concrete remedy:** the D2 unit contract should include a *verification* step before locking the rename:
+
+1. Read `/learnings-use` SKILL.md body. Document what it does beyond `bin/griot use`.
+2. If pure wrapper → rename to `/griot-load`, update README skill table, kill `/learnings-use`. (Round-1 design-systems recommendation holds.)
+3. If has unique synthesis → either port it into `bin/griot use --as=llm rollup`'s CLI output (preferred — keeps the Decision pin's "synthesis in CLI" honest) OR keep both skills with documented differences in the skill bodies' opening prose.
+
+The fail mode I'm naming: the D2 author reads round-1 design-systems, accepts the rename, and silently drops session-start framing prose that turns out to be load-bearing. The Phase 4 rollup PR ships, the next `/ev-run` invocation calls `bin/griot use --as=llm rollup` directly (bypassing the rename anyway, per the Decision pin), and now session-start has lost prose that nobody noticed. **Verify before consolidating.**
+
+This is the only round-1 consensus I want to genuinely pressure-test: design-systems and round 1 skeptic both lined up on the cohesion read, but neither of us actually read `/learnings-use` to confirm it's safely renameable. That's the false-consensus shape I'm watching for.
+
+---
+
+## Passes (clean)
+
+- **Format-detection error path** (Finding 1, round 1) — pinned as Decision; D1 shipped it for session-notes; D2 will extend it to rollup. No round-2 concern.
+- **rollup.json schema with body-as-markdown-string** (Finding 2, round 1) — pinned as Decision. No round-2 concern.
+- **`/griot-load` pure pass-through** (Finding 4, round 1) — pinned as Decision and aligned with the rename verification in Finding 7 above (if rename happens, the CLI absorbs any session-start synthesis). No new round-2 concern.
+- **Migration script in `.claude/scripts/`** — D1 shipped its migration this way and it ran cleanly (24 folders migrated, idempotent re-run confirmed per `phase-4/01.json`). D2's rollup-migration script follows the same pattern. No concern.
+- **Atomic cutover with config.yaml `paths.rollup` update in the same commit** — round 1 design-systems' grep-sweep recommendation is in the D2 acceptance criteria territory; I don't have a sharper concern.
+
+---
+
+## Where the D2 unit contract should cite this section
+
+- **Finding 5 (single-valued `pr` field)**: D2's `bin/loom phase update` invocation must NOT pass `--pr=<new>` — only `--status=completed`. Notes-for-the-PR must explain the manifest discontinuity. The schema migration to `prs: PhasePR[]` becomes a concrete finding feeding into #4 substrate-gaps sibling project, not a Phase 4 rollup scope creep.
+- **Finding 6 (Stop hook doesn't exist)**: D2 closes PLAN.md Open question 2 with the absence-finding, not a verification of a thing that doesn't exist. Citation enforcement remains soft / model-trusted; this is acknowledged in a Decision or antipattern, not left implicit.
+- **Finding 7 (rename verification gate)**: D2 must read `/learnings-use` SKILL.md before locking the rename. The contract specifies a three-branch decision (pure-wrapper → rename; has-synthesis → port-to-CLI or keep-as-peers) and names which one the contract author picked, with the SKILL.md body content as evidence.
+
+---
+
+## Files referenced
+
+- `/home/krambuhl/work/aart.camp/projects/2026-05-16-substrate-cli/manifest.json` — the in-progress + pr.state=merged contradiction at lines 44-54
+- `/home/krambuhl/work/aart.camp/.claude/cli/verbs/phase.ts:215-226` — `updated.pr = {...}` wholesale replacement; the single-valued `pr` field that drives Finding 5
+- `/home/krambuhl/work/aart.camp/.claude/cli/lib/types.ts:23-37` — `PhasePR` is a scalar; `ManifestPhase.pr` is optional-singleton
+- `/home/krambuhl/work/aart.camp/.claude/settings.json` and `/home/krambuhl/work/aart.camp/.claude/settings.local.json` — neither contains a `hooks` block; the Stop hook PLAN.md Open question 2 references doesn't exist
+- `/home/krambuhl/work/aart.camp/projects/2026-05-16-substrate-cli/checkins/substrate-cli/phase-4/01.json:22` — D1's pinned AC that Phase 4 row stays in-progress until D2 merges, which is what creates Finding 5's manifest schema collision
+- `/home/krambuhl/work/aart.camp/projects/2026-05-16-substrate-cli/PLAN.md:656-660` and `:671-674` — the two Open questions round 2 is closing
+
+### From whiteboard-sketch-ideation
+
+Out of scope for this engineer. Phase 4's open questions — `/learnings-use` vs `/griot-load` naming and Stop-hook citation grep verification — sit entirely in substrate-CLI / griot territory, with no surface in `sketches/`, the `<Sketch>` wrapper, `registry.ts`, or the gallery framing. Same carve-out as round 1; deferring to the substrate-facing engineers (griot/skills authors, plus skeptic on the grep-verification rigor question).
+
+Pass.
+

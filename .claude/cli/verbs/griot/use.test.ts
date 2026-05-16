@@ -3,9 +3,9 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { test, expect, beforeEach, afterEach } from 'vitest';
-import { useVerb } from './use.ts';
+import { afterEach, beforeEach, expect, test } from 'vitest';
 import type { GriotCliContext } from './index.ts';
+import { useVerb } from './use.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const USE_SOURCE = join(__dirname, 'use.ts');
@@ -22,70 +22,62 @@ afterEach(() => {
   rmSync(workspace, { recursive: true, force: true });
 });
 
-function writeRollup(content: string): void {
+type RollupEntry = {
+  id: string;
+  title: string;
+  classification: 'L' | 'AP';
+  promoted: string;
+  origin: string;
+  body: string;
+  rubric: string[] | null;
+  evaluator?: string;
+  code?: string;
+};
+
+function writeRollupJson(entries: RollupEntry[]): void {
+  mkdirSync(join(workspace, 'learnings'), { recursive: true });
+  writeFileSync(
+    join(workspace, 'learnings', 'rollup.json'),
+    `${JSON.stringify(entries, null, 2)}\n`,
+  );
+}
+
+function writeLegacyRollupMd(content: string): void {
   mkdirSync(join(workspace, 'learnings'), { recursive: true });
   writeFileSync(join(workspace, 'learnings', 'rollup.md'), content);
 }
 
-const SAMPLE_ONE_LEARNING = `# Curated learnings
-
-## L-001: prefer X over Y
-
-Body of the first learning. Some rationale here.
-`;
-
-const SAMPLE_FIVE_LEARNINGS = `# Curated learnings
-
-## L-001: prefer X over Y
-
-First.
-
-## L-002: avoid Z under condition C
-
-Second.
-
-## L-003: pattern P emerges from frequency F
-
-Third.
-
-## L-004: catalog gap G observed
-
-Fourth.
-
-## L-005: generator antipattern A
-
-Fifth.
-`;
-
-const EMPTY_ROLLUP = `# Curated learnings
-
-No validated learnings yet — this file exists as a header so /griot-compact has a target to write into.
-`;
-
-function antipatternEntry(n: number, title: string): string {
-  const id = `AP-${String(n).padStart(3, '0')}`;
-  return `### ${id}: ${title}\n\nPromoted: 2026-05-15\nOrigin: synthetic-${n}\nClassification: generator-antipattern\nEvaluator: evaluator-x\nCode: code-${n}\n\nAvoid this antipattern. Body of entry ${n}.\n\n`;
+function learning(n: number, title: string, body = `Body of learning ${n}.`): RollupEntry {
+  return {
+    id: `L-${String(n).padStart(3, '0')}`,
+    title,
+    classification: 'L',
+    promoted: '2026-05-11',
+    origin: `slug-${n}`,
+    body,
+    rubric: null,
+  };
 }
 
-function buildRollupWith(opts: { learnings: number; antipatterns: number }): string {
-  let out = '# Curated learnings\n\n';
-  for (let i = 1; i <= opts.learnings; i++) {
-    out += `## L-${String(i).padStart(3, '0')}: learning ${i}\n\nBody of learning ${i}.\n\n`;
-  }
-  if (opts.antipatterns > 0) {
-    out += '## Project antipatterns\n\n';
-    for (let i = 1; i <= opts.antipatterns; i++) {
-      out += antipatternEntry(i, `synthetic antipattern ${i}`);
-    }
-  }
-  return out;
+function antipattern(n: number, title: string): RollupEntry {
+  return {
+    id: `AP-${String(n).padStart(3, '0')}`,
+    title,
+    classification: 'AP',
+    promoted: '2026-05-15',
+    origin: `synthetic-${n}`,
+    body: `Avoid this antipattern. Body of entry ${n}.`,
+    rubric: null,
+    evaluator: 'evaluator-x',
+    code: `code-${n}`,
+  };
 }
 
 test('loaded: one learning → status, content, citation contract', () => {
-  writeRollup(SAMPLE_ONE_LEARNING);
+  writeRollupJson([learning(1, 'prefer X over Y', 'Body of the first learning. Some rationale here.')]);
   const result = useVerb([], ctx);
   expect(result.exitCode).toBe(0);
-  expect(result.stdout).toMatch(/^griot-use: loaded 1 learnings from learnings\/rollup\.md\n/);
+  expect(result.stdout).toMatch(/^griot-use: loaded 1 learnings from learnings\/rollup\.json\n/);
   expect(result.stdout).toContain('## L-001: prefer X over Y');
   expect(result.stdout).toContain('Body of the first learning');
   expect(result.stdout).toContain('Applied: L-NNN');
@@ -94,17 +86,18 @@ test('loaded: one learning → status, content, citation contract', () => {
 });
 
 test('loaded: five learnings → status reports correct count', () => {
-  writeRollup(SAMPLE_FIVE_LEARNINGS);
+  const entries = [1, 2, 3, 4, 5].map((n) => learning(n, `title ${n}`));
+  writeRollupJson(entries);
   const result = useVerb([], ctx);
   expect(result.exitCode).toBe(0);
-  expect(result.stdout).toMatch(/^griot-use: loaded 5 learnings from learnings\/rollup\.md\n/);
+  expect(result.stdout).toMatch(/^griot-use: loaded 5 learnings from learnings\/rollup\.json\n/);
   for (let i = 1; i <= 5; i++) {
     expect(result.stdout).toContain(`L-00${i}`);
   }
 });
 
-test('empty: rollup with no L-NNN headings → empty message, no citation contract', () => {
-  writeRollup(EMPTY_ROLLUP);
+test('empty: rollup.json with no entries → empty message, no citation contract', () => {
+  writeRollupJson([]);
   const result = useVerb([], ctx);
   expect(result.exitCode).toBe(0);
   expect(result.stdout).toBe('griot-use: rollup empty — no validated learnings yet');
@@ -112,22 +105,55 @@ test('empty: rollup with no L-NNN headings → empty message, no citation contra
   expect(result.stdout).not.toContain('Tier separation');
 });
 
-test('missing: no rollup.md (learnings/ dir absent) → no-rollup-yet message, no citation contract', () => {
+test('missing: no rollup.json (learnings/ dir absent) → no-rollup-yet message, no citation contract', () => {
   const result = useVerb([], ctx);
   expect(result.exitCode).toBe(0);
   expect(result.stdout).toBe('griot-use: no rollup yet — run `/griot-compact` once captures exist');
   expect(result.stdout).not.toContain('Applied: L-NNN');
 });
 
-test('missing: learnings/ dir exists but rollup.md does not → same no-rollup-yet message', () => {
+test('missing: learnings/ dir exists but rollup.json does not → same no-rollup-yet message', () => {
   mkdirSync(join(workspace, 'learnings'), { recursive: true });
   const result = useVerb([], ctx);
   expect(result.exitCode).toBe(0);
   expect(result.stdout).toBe('griot-use: no rollup yet — run `/griot-compact` once captures exist');
 });
 
+test('format-detection: legacy rollup.md present but rollup.json missing → loud error', () => {
+  writeLegacyRollupMd('## L-001: stale\n\nBody.\n');
+  const result = useVerb([], ctx);
+  expect(result.exitCode).toBe(1);
+  expect(result.stderr).toMatch(/legacy learnings\/rollup\.md present but learnings\/rollup\.json missing/);
+  expect(result.stderr).toMatch(/migrate-rollup-md-to-json\.ts/);
+  expect(result.stderr).toMatch(/restart session/);
+});
+
+test('format-detection: both rollup.md and rollup.json present → reads rollup.json (no error)', () => {
+  writeLegacyRollupMd('## L-001: stale\n\nBody.\n');
+  writeRollupJson([learning(1, 'fresh title')]);
+  const result = useVerb([], ctx);
+  expect(result.exitCode).toBe(0);
+  expect(result.stdout).toContain('L-001: fresh title');
+});
+
+test('--as=llm: explicit flag accepted, identical output to no-flag', () => {
+  writeRollupJson([learning(1, 'title')]);
+  const noFlag = useVerb([], ctx);
+  const explicit = useVerb(['--as=llm'], ctx);
+  expect(explicit.exitCode).toBe(0);
+  expect(explicit.stdout).toBe(noFlag.stdout);
+});
+
+test('--as=unknown: rejected with valid-values hint', () => {
+  writeRollupJson([learning(1, 'title')]);
+  const result = useVerb(['--as=json'], ctx);
+  expect(result.exitCode).toBe(1);
+  expect(result.stderr).toMatch(/unknown --as value 'json'/);
+  expect(result.stderr).toMatch(/supported: llm/);
+});
+
 test('citation contract: includes the three load-bearing phrases verbatim', () => {
-  writeRollup(SAMPLE_ONE_LEARNING);
+  writeRollupJson([learning(1, 'title')]);
   const result = useVerb([], ctx);
   expect(result.exitCode).toBe(0);
   expect(result.stdout).toContain('Applied: L-NNN');
@@ -136,14 +162,27 @@ test('citation contract: includes the three load-bearing phrases verbatim', () =
 });
 
 test('antipatterns: status line reports antipattern count when present', () => {
-  writeRollup(buildRollupWith({ learnings: 2, antipatterns: 3 }));
+  writeRollupJson([
+    learning(1, 'title 1'),
+    learning(2, 'title 2'),
+    antipattern(1, 'ap 1'),
+    antipattern(2, 'ap 2'),
+    antipattern(3, 'ap 3'),
+  ]);
   const result = useVerb([], ctx);
   expect(result.exitCode).toBe(0);
-  expect(result.stdout).toMatch(/^griot-use: loaded 2 learnings \+ 3 antipatterns from learnings\/rollup\.md\n/);
+  expect(result.stdout).toMatch(
+    /^griot-use: loaded 2 learnings \+ 3 antipatterns from learnings\/rollup\.json\n/,
+  );
 });
 
 test('antipatterns: N=3 entries → all 3 emitted, no tail line', () => {
-  writeRollup(buildRollupWith({ learnings: 1, antipatterns: 3 }));
+  writeRollupJson([
+    learning(1, 'l'),
+    antipattern(1, 'a'),
+    antipattern(2, 'b'),
+    antipattern(3, 'c'),
+  ]);
   const result = useVerb([], ctx);
   expect(result.exitCode).toBe(0);
   for (let i = 1; i <= 3; i++) {
@@ -153,21 +192,23 @@ test('antipatterns: N=3 entries → all 3 emitted, no tail line', () => {
 });
 
 test('antipatterns: N=12 entries → first 10 emitted, tail line summarizes remainder', () => {
-  writeRollup(buildRollupWith({ learnings: 1, antipatterns: 12 }));
+  const entries = [learning(1, 'l')];
+  for (let i = 1; i <= 12; i++) entries.push(antipattern(i, `ap ${i}`));
+  writeRollupJson(entries);
   const result = useVerb([], ctx);
   expect(result.exitCode).toBe(0);
   for (let i = 1; i <= 10; i++) {
     const tag = `AP-${String(i).padStart(3, '0')}`;
     expect(result.stdout).toContain(tag);
   }
-  expect(result.stdout).not.toContain('AP-011:');
-  expect(result.stdout).not.toContain('AP-012:');
+  expect(result.stdout).not.toContain('AP-011');
+  expect(result.stdout).not.toContain('AP-012');
   expect(result.stdout).toMatch(/\+2 more antipatterns not shown — top-10 curated/);
   expect(result.stdout).toMatch(/loaded 1 learnings \+ 12 antipatterns from/);
 });
 
 test('antipatterns: only antipatterns (0 learnings) → status reports both counts, content emitted', () => {
-  writeRollup(buildRollupWith({ learnings: 0, antipatterns: 2 }));
+  writeRollupJson([antipattern(1, 'a'), antipattern(2, 'b')]);
   const result = useVerb([], ctx);
   expect(result.exitCode).toBe(0);
   expect(result.stdout).not.toContain('rollup empty');
@@ -177,33 +218,45 @@ test('antipatterns: only antipatterns (0 learnings) → status reports both coun
   expect(result.stdout).toContain('Applied:');
 });
 
-test('antipatterns: zero learnings + zero antipatterns → existing rollup-empty message', () => {
-  writeRollup('# Curated learnings\n\nNo entries.\n');
+test('antipatterns: existing single-learning path still emits unchanged status (no antipatterns)', () => {
+  writeRollupJson([learning(1, 'title')]);
   const result = useVerb([], ctx);
   expect(result.exitCode).toBe(0);
-  expect(result.stdout).toBe('griot-use: rollup empty — no validated learnings yet');
+  const statusLine = (result.stdout ?? '').split('\n')[0];
+  expect(statusLine).toBe('griot-use: loaded 1 learnings from learnings/rollup.json');
+  expect(statusLine).not.toContain('antipatterns');
 });
 
 test('citation contract: mentions Applied: AP-NNN shape when antipatterns are present', () => {
-  writeRollup(buildRollupWith({ learnings: 1, antipatterns: 1 }));
+  writeRollupJson([learning(1, 'l'), antipattern(1, 'a')]);
   const result = useVerb([], ctx);
   expect(result.exitCode).toBe(0);
   expect(result.stdout).toContain('Applied: L-NNN');
   expect(result.stdout).toContain('Applied: AP-NNN');
 });
 
-test('antipatterns: existing single-learning path still emits unchanged status (no antipatterns)', () => {
-  // Regression: status line for 0-antipattern rollups stays in the legacy
-  // "loaded N learnings from <path>" shape (no "+ 0 antipatterns" noise).
-  writeRollup(SAMPLE_ONE_LEARNING);
+test('rubric: learnings with rubric render the criteria as bulleted list', () => {
+  const entry: RollupEntry = {
+    ...learning(1, 'with rubric'),
+    rubric: ['criterion 1', 'criterion 2', 'criterion 3'],
+  };
+  writeRollupJson([entry]);
   const result = useVerb([], ctx);
   expect(result.exitCode).toBe(0);
-  const statusLine = (result.stdout ?? '').split('\n')[0];
-  expect(statusLine).toBe('griot-use: loaded 1 learnings from learnings/rollup.md');
-  expect(statusLine).not.toContain('antipatterns');
+  expect(result.stdout).toContain('### Rubric');
+  expect(result.stdout).toContain('- criterion 1');
+  expect(result.stdout).toContain('- criterion 2');
+  expect(result.stdout).toContain('- criterion 3');
 });
 
-test('tier-separation invariant: verb source contains exactly one learnings/ path and zero session-notes/nightly references', () => {
+test('rubric: learnings without rubric do not emit a Rubric section', () => {
+  writeRollupJson([learning(1, 'no rubric')]);
+  const result = useVerb([], ctx);
+  expect(result.exitCode).toBe(0);
+  expect(result.stdout).not.toContain('### Rubric');
+});
+
+test('tier-separation invariant: verb source contains only the canonical learnings/ path and zero session-notes/nightly references', () => {
   const source = readFileSync(USE_SOURCE, 'utf-8');
   // Strip the citation-contract literal text — it intentionally documents
   // session-notes/nightly as paths the LLM must NOT read; that is prose,
@@ -212,6 +265,9 @@ test('tier-separation invariant: verb source contains exactly one learnings/ pat
   const docBlockRe = /const CITATION_CONTRACT[\s\S]*?^`;$/m;
   const sourceWithoutDocs = source.replace(docBlockRe, 'const CITATION_CONTRACT = "<elided>";');
   const learningsMatches = sourceWithoutDocs.match(/learnings\//g) ?? [];
+  // One literal: the canonical rollup.json path. The legacy rollup.md
+  // path is derived at runtime via .replace(), so it doesn't appear as
+  // a separate `learnings/` literal.
   expect(learningsMatches.length).toBe(1);
   expect(sourceWithoutDocs).not.toContain('session-notes');
   expect(sourceWithoutDocs).not.toContain('nightly');

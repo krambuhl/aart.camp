@@ -30,7 +30,7 @@ is a Bash invocation of a `bin/griot` verb; each JSONL append is a
 Bash invocation of `bin/griot operator-checks log-intervention`.
 
 This skill is **idempotent**: if there are no unprocessed
-session-notes AND `learnings/rollup.md` is empty or missing, it
+session-notes AND `learnings/rollup.json` is empty or missing, it
 does nothing.
 
 ## Prerequisites
@@ -77,10 +77,21 @@ prompts and tier overrides at spawn time.
    - `test_subject.tier`
    - `rewrite.max_attempts`
 2. List `learnings/session-notes/`, excluding the `archived/` subdir.
-3. If there are no unprocessed notes AND `learnings/rollup.md` is
+3. If there are no unprocessed notes AND `learnings/rollup.json` is
    empty or missing, tell the user "nothing to compact" and stop.
 4. Otherwise echo the list of unprocessed notes to the user, then
    proceed.
+
+**Format-detection error path** (substrate-cli Phase 4 rollup
+whiteboard skeptic Finding 1): if `learnings/rollup.md` is present
+AND `learnings/rollup.json` is missing, this session predates the
+Phase 4 rollup cutover. Stop, log an intervention via
+`operator-checks.ts log-intervention` with category
+`format_predates_phase_4_rollup_cutover`, and emit the error
+"session predates Phase 4 rollup cutover; restart session to pick
+up new skill body and run `node .claude/scripts/migrate-rollup-md-to-json.ts`"
+to the user. Do NOT fall back to writing into `rollup.md` — silent
+fallback risks splitting writes across two formats.
 
 ### 2. Per-note pipeline
 
@@ -120,19 +131,18 @@ Branch on the classification value:
   nothing the frequency counter hasn't already validated. Skip
   Steps A–B entirely. Go directly to Step C with synthetic verdict
   `IMPROVED` and proceed with the `IMPROVED` outcome (assign next
-  `L-NNN`, append to `learnings/rollup.md`, archive).
+  `L-NNN`, push entry to `learnings/rollup.json`, archive).
 
 - **`generator-antipattern`** — run the full Step A + Step B panel
   exactly as today. The only divergence is in Step C's `IMPROVED`
-  outcome: promote to the **`## Project antipatterns`** section of
-  `learnings/rollup.md` rather than the general learnings section,
-  using an **`AP-NNN`** identifier scheme (compute the next ID as
-  `max(existing AP-NNN) + 1`, starting at `AP-001`). See Step C's
-  IMPROVED branch for the details. **The `## Project antipatterns`
-  section is authored in Phase 5 D2**; the SKILL routes to it as a
-  forward reference. If the section does not exist at compact time
-  and a `generator-antipattern` is promoted, append the section
-  header on first promotion.
+  outcome: promote to `learnings/rollup.json` as an entry with
+  `classification: "AP"`, using an **`AP-NNN`** identifier scheme
+  (compute the next ID as `max(existing AP-NNN) + 1`, starting at
+  `AP-001`). See Step C's IMPROVED branch for the details. Post-
+  Phase-4-rollup, antipattern entries live alongside learning entries
+  in the same JSON array, distinguished by their `classification`
+  field; the rendering layer (`bin/griot use --as=llm`) groups them
+  under a `## Project antipatterns` section in the prose output.
 
 - **`catalog-gap`** | **`evaluator-conflict`** | **`sanctioned-exception`**
   → **not-yet-supported in v1**. Skip Steps A–C entirely. Do NOT
@@ -389,78 +399,76 @@ Branch on the final verdict reached when the attempt loop exited.
 
 **Branch on classification** (read in Step pre-A):
 
-- **`generator-antipattern`** → promote to the `## Project
-  antipatterns` section using an `AP-NNN` identifier:
+**Promotion now writes to `learnings/rollup.json`** (post-Phase-4-rollup
+cutover): the rollup is a JSON array of entries. Promotion reads the
+array, computes the next ID, pushes a new entry object, and writes the
+array back. The legacy markdown-append path is removed.
 
-  1. Read `learnings/rollup.md` (if it exists) and find the
-     maximum existing `AP-NNN` ID across all `## AP-<NNN>:` entries
-     in the file. The new ID is one more, zero-padded to three
-     digits. If no `AP-NNN` entries exist yet, the first ID is
-     `AP-001`. The `AP-NNN` and `L-NNN` namespaces are independent —
-     do not conflate.
-  2. Ensure the `## Project antipatterns` section exists in
-     `learnings/rollup.md`. If absent, append the section header
-     (one blank line, then `## Project antipatterns`, then one
-     blank line) before the antipattern entry. **D2 of Phase 5 will
-     refine this section's authoring** — for D1, the minimal header
-     is sufficient to route promotions correctly.
-  3. Append a new entry under that section with the shape:
+- **`generator-antipattern`** → promote to the rollup as an `AP-NNN`
+  entry:
 
+  1. Read `learnings/rollup.json` via the Read tool (default to `[]`
+     if missing). Find the maximum existing `AP-NNN` ID across all
+     entries with `classification: "AP"`. The new ID is one more,
+     zero-padded to three digits. If no `AP-NNN` entries exist yet,
+     the first ID is `AP-001`. The `AP-NNN` and `L-NNN` namespaces
+     are independent — do not conflate.
+  2. Push a new entry to the array with the shape:
+
+     ```json
+     {
+       "id": "AP-<NNN>",
+       "title": "<short title derived from learning.md>",
+       "classification": "AP",
+       "promoted": "<today's date in YYYY-MM-DD>",
+       "origin": "<note's slug>",
+       "body": "<full contents of note's learning.md, verbatim>",
+       "rubric": null,
+       "evaluator": "<state.json `evaluator` field>",
+       "code": "<state.json `code` field>"
+     }
      ```
-     ### AP-<NNN>: <short title derived from learning.md>
 
-     Promoted: <today's date in YYYY-MM-DD>
-     Origin: <note's slug>
-     Classification: generator-antipattern
-     Evaluator: <state.json `evaluator` field>
-     Code: <state.json `code` field>
-
-     <full contents of note's learning.md, verbatim — post-Phase 4,
-     learning.md is pure prose with no frontmatter to strip>
-     ```
-
+  3. Write the updated array back to `learnings/rollup.json` via the
+     Write tool (`JSON.stringify(entries, null, 2)` with a trailing
+     newline — matches the migration script's output shape).
   4. Move the session-note folder to `archived/` (same as the
      learnings path).
   5. Mark this note's outcome as
      `"promoted as AP-NNN on attempt N (generator-antipattern)"`
      for the run summary.
 
-- **`recurring`** | **unclassified** → promote to the existing
-  general learnings flow with an `L-NNN` identifier:
+- **`recurring`** | **unclassified** → promote to the rollup as an
+  `L-NNN` entry:
 
-  1. Generate the next `learning_id`. Read `learnings/rollup.md`
-     (if it exists) and find the maximum existing `L-NNN` ID; the
-     new ID is one more, zero-padded to three digits. If
-     `rollup.md` does not exist, the first ID is `L-001`.
-  2. Append a new entry to `learnings/rollup.md` (creating the
-     file if needed, preserving any existing content). Entry
-     shape:
+  1. Read `learnings/rollup.json` via the Read tool (default to `[]`
+     if missing). Find the maximum existing `L-NNN` ID across all
+     entries with `classification: "L"`; the new ID is one more,
+     zero-padded to three digits. If no `L-NNN` entries exist yet,
+     the first ID is `L-001`.
+  2. Push a new entry to the array with the shape:
 
-     ```
-     ## L-<NNN>: <short title derived from learning.md>
-
-     Promoted: <today's date in YYYY-MM-DD>
-     Origin: <note's slug>
-
-     ### Learning
-
-     <full contents of note's learning.md, verbatim — post-Phase 4,
-     learning.md is pure prose with no frontmatter to strip>
-
-     ### Rubric
-
-     <full contents of expected_rubric, or "(not generated —
-     classification: recurring skipped the panel)" for the
-     recurring branch>
+     ```json
+     {
+       "id": "L-<NNN>",
+       "title": "<short title derived from learning.md>",
+       "classification": "L",
+       "promoted": "<today's date in YYYY-MM-DD>",
+       "origin": "<note's slug>",
+       "body": "<full contents of note's learning.md, verbatim — post-Phase 4, learning.md is pure prose>",
+       "rubric": [<expected_rubric criteria as an array of strings>, or null for `recurring` notes (panel skipped)]
+     }
      ```
 
      The "short title" is the first line of `learning.md` if it
      reads as a title, or a 3–5 word distillation of the
      learning's first sentence otherwise.
-  3. Move the session-note folder from
+  3. Write the updated array back to `learnings/rollup.json` via the
+     Write tool.
+  4. Move the session-note folder from
      `learnings/session-notes/<note>/` to
      `learnings/session-notes/archived/<note>/` via Bash.
-  4. Mark this note's outcome as
+  5. Mark this note's outcome as
      `"promoted as L-NNN on attempt N"` (or
      `"promoted as L-NNN (recurring, no panel)"` for the recurring
      branch) for the run summary.
@@ -525,7 +533,7 @@ fail. The check is intentionally lighter than the per-note
 panel — one treatment generation plus one binary pass-check
 per entry — to keep cost reasonable as the rollup grows.
 
-If `learnings/rollup.md` is empty or missing, skip §3 entirely
+If `learnings/rollup.json` is empty or missing, skip §3 entirely
 (set the regression counters to 0 and `current_passing_ids` to
 the empty set).
 
@@ -542,11 +550,12 @@ the first run, so no regression flags fire.
 
 #### Step R.2 — Parse rollup
 
-Read `learnings/rollup.md` and extract every entry. Each entry
-header looks like `## L-<NNN>: <title>`; below it, find the
-`Origin: <slug>` line, the `### Learning` section, and the
-`### Rubric` section. For each entry, capture `{id,
-origin_slug, rubric}`.
+Read `learnings/rollup.json` via the Read tool and parse the array.
+Each entry is already structured as
+`{id, title, classification, promoted, origin, body, rubric, ...}`.
+For each entry, capture `{id, origin_slug: entry.origin, rubric: entry.rubric}`.
+The pre-Phase-4-rollup markdown-parse step is gone — the rollup is now
+machine-format JSON.
 
 Initialize counters: `regressions_passing = 0`,
 `regressions_failing = 0`, `regressions_new = 0`. Initialize
@@ -569,8 +578,10 @@ grow large). For each entry:
    `general-purpose` subagent with `model` matching
    `test_subject.tier`. System-style framing: `"You are
    Claude. Apply the validated learnings below where
-   relevant: <full contents of rollup.md>"`. User prompt: the
-   archived `prompt.md`. Capture the output as
+   relevant: <stdout of `bin/griot use --as=llm`>"` (the CLI
+   renders `rollup.json` to LLM prose; pipe its output into the
+   framing). User prompt: the archived `prompt.md`. Capture the
+   output as
    `treatment_output`. If the spawn errors or returns no
    text, log a JSONL intervention via
    `operator-checks.ts log-intervention` with category
@@ -725,7 +736,7 @@ already in the user's chat; §5 just persists the record.
 - Do not skip the rubric integrity check on attempt > 1. The
   check is the only thing standing between the rewriter and
   rubric drift; bypassing it defeats the immutability guarantee.
-- Do not hand-promote a learning to `rollup.md`. Only `IMPROVED`
+- Do not hand-promote a learning to `rollup.json`. Only `IMPROVED`
   via the judge panel gets in. Round-1 unanimity OR round-2
   supermajority OR round-2 tiebreak — anything else does not
   promote.
@@ -742,7 +753,7 @@ already in the user's chat; §5 just persists the record.
   `UNCHANGED` or `REGRESSED` exits immediately;
   `UNCHANGED`/`REGRESSED` exits at `max_attempts` with
   `STUCK_LEARNING`.
-- Do not skip the regression suite when `rollup.md` has entries.
+- Do not skip the regression suite when `rollup.json` has entries.
   The pass-check is what detects model drift between runs; an
   empty rollup is the only valid skip condition.
 - Do not log a chronic regression failure (a rollup entry that

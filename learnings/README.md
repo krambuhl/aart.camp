@@ -2,19 +2,21 @@
 
 A self-validating learnings system for Claude Code. Captures corrections from
 real sessions, validates them with a multi-judge panel, and only promotes
-validated lessons into a curated `rollup.md` that's loaded manually via
-`/learnings-use`.
+validated lessons into a curated `rollup.json` that's loaded manually via
+`/griot-load`.
 
-This is a **personal pilot**. Runtime data is gitignored. Only the skill
-definitions, templates, and `config.yaml` are tracked. Rollout to a team is
-gated on measured improvement.
+This is a **personal pilot**. Per-run intermediate data and operator logs are
+gitignored; the rollup itself and the session-notes corpus are tracked so the
+substrate is reproducible across machines. Only the skill definitions,
+templates, and `config.yaml` are tracked. Rollout to a team is gated on
+measured improvement.
 
 ## Principles
 
 1. **Signal-over-volume.** A learning only exists if a reasonable Claude would
    have gotten it wrong by default. No journaling. No capturing established
    patterns.
-2. **Tier separation.** Only `rollup.md` is ever loaded at session time.
+2. **Tier separation.** Only `rollup.json` is ever loaded at session time.
    `session-notes/` and `nightly/` layers can contradict each other freely.
 3. **Rubric immutability.** Rewrites change the learning text only. Any attempt
    to modify a `rubric.md` is a hard violation.
@@ -25,32 +27,42 @@ gated on measured improvement.
 
 ## The skills
 
+The user-facing surface is consolidated under the `griot-*` skill family
+post-Phase-4-rollup. Captures and reports run via `bin/griot` CLI verbs
+rather than ambient skills.
+
 | Skill | When you run it | What it does |
 |---|---|---|
-| `/learnings-capture` | Right after Claude got something wrong and you corrected it | Writes a `session-notes/<ts>-<slug>/` folder with the prompt, wrong output, correction, transcript, and a candidate `learning.md`. Fast. No LLM panel. |
-| `/learnings-use` | Start of a session where you want the rollup active | Loads `rollup.md` and installs a citation contract: Claude appends `Applied: L-NNN` when it uses a learning. |
-| `/griot-compact` | Manually, when you feel like processing captures (nightly in spirit) | Runs the judge panel. Promotes `IMPROVED` entries to `rollup.md`. Rewrite-loops `UNCHANGED` / `REGRESSED`. Flags `DID_NOT_REPRODUCE`. Updates bench history, archives processed notes, and opens a PR. |
-| `/learnings-report` | Weekly-ish | Reads the instrumentation files and produces a one-pager on trend, cost, and judge calibration. |
+| `/griot-load` | Start of a session where you want the rollup active | Renders `rollup.json` to LLM prose and installs a citation contract: Claude appends `Applied: L-NNN` (or `AP-NNN`) when it uses a learning or antipattern. Thin wrapper around `bin/griot use --as=llm`. |
+| `/griot-compact` | Manually, when you feel like processing captures (nightly in spirit) | Runs the judge panel. Promotes `IMPROVED` entries to `rollup.json`. Rewrite-loops `UNCHANGED` / `REGRESSED`. Flags `DID_NOT_REPRODUCE`. Updates bench history, archives processed notes, and opens a PR. |
+
+For capture from a checkin or an evaluator finding, use the CLI directly:
+`bin/griot capture --from-checkin=<path>` or
+`bin/griot capture --evaluator-finding=<classification> ...`. There is no
+ambient `/learnings-capture` or `/learnings-report` skill — those wrappers
+were removed in substrate-cli Phase 1 and Phase 3 in favor of the CLI
+surface.
 
 ## Directory layout
 
 ```
 learnings/
-  session-notes/                   # gitignored — pending captures
+  session-notes/                   # tracked — pending captures
     <YYYY-MM-DDThh-mm-ss>-<slug>/
+      state.json                   # routing metadata (classification, evaluator, code, frequency-count, status, promoted_as) — Phase 4 D1 sidecar
       prompt.md                    # triggering user turn, distilled for replay
       wrong.md                     # what Claude said/did
       correction.md                # user's correction — ground truth
       full_transcript.md           # full session chunk (debugging aid)
-      learning.md                  # distilled lesson (rewritable)
+      learning.md                  # distilled lesson (rewritable), pure prose post-Phase-4
       rubric.md                    # 2-3 binary assertions (IMMUTABLE; rubric-author writes this during compaction)
     archived/                      # processed notes move here
   nightly/                         # gitignored — distillation notes, never session-loaded
     YYYY-MM-DD.md
   runs/                            # gitignored — mediator transcripts
     <learning-id>/<timestamp>.json
-  rollup.md                        # tracked as empty placeholder; live rollup is gitignored
-  citations.json                   # gitignored
+  rollup.json                      # tracked — canonical machine-format rollup (post-Phase-4-rollup-cutover); rendered to LLM prose at injection time by `bin/griot use --as=llm`
+  citations.json                   # gitignored — citation counts (Stop hook)
   regressions.jsonl                # gitignored
   bench-history.jsonl              # gitignored
   sessions.jsonl                   # gitignored
@@ -63,16 +75,17 @@ learnings/
   README.md                        # tracked
 ```
 
-`rollup.md` is gitignored. `/learnings-use` tolerates a missing file — if no
-compaction has run yet, it reports "no validated learnings yet" and moves on.
-On a fresh clone, run `/griot-compact` once to generate one.
+`rollup.json` is tracked. `/griot-load` (and `bin/griot use --as=llm`)
+tolerate a missing file — if no compaction has run yet, the verb reports
+"no rollup yet" and moves on. On a fresh clone with no compaction history,
+run `/griot-compact` once to generate the first entries.
 
 ## The self-validating loop
 
 ```
 session                    capture (fast)            compact (expensive, manual)
 ─────────                  ────────────────          ─────────────────────────────
-user correction  ─────▶    /learnings-capture  ─▶   for each new session-note:
+user correction  ─────▶    bin/griot capture   ─▶   for each new session-note:
                            writes:                    rubric-author writes rubric.md
                            - prompt.md                mediator runs 7-judge panel (control vs treatment)
                            - wrong.md                 verdict: IMPROVED/UNCHANGED/REGRESSED/DID_NOT_REPRODUCE
@@ -143,7 +156,7 @@ Every intervention is logged to `operator-log.jsonl`.
 4. `cost_per_promoted_learning` — is the tooling amortising?
 5. Top-5 most-cited learnings.
 6. Operator intervention frequency.
-7. Session latency delta (with/without `/learnings-use`).
+7. Session latency delta (with/without `/griot-load`).
 8. Per-judge calibration table.
 
 **Always-included caveat:** fewer corrections could mean the user gave up, not
@@ -187,9 +200,9 @@ gen model IDs are placeholders marked `TODO` — set them before the first real
 - **Phase 1 (now):** personal pilot. Data gitignored. Manual compaction.
 - **Phase 2:** once `corrections_per_session` trends down — keep data
   gitignored, add a non-Claude tiebreaker judge, add learning-retirement.
-- **Phase 3:** un-gitignore corpus, add a `/learnings-use` nudge to CLAUDE.md,
+- **Phase 3:** un-gitignore corpus, add a `/griot-load` nudge to CLAUDE.md,
   team adoption.
-- **Phase 4:** consider auto-invocation of `/learnings-use` and auto-capture on
+- **Phase 4:** consider auto-invocation of `/griot-load` and auto-capture on
   correction. Not before.
 
 Explicit non-goals until Phase 4: auto-capture on correction, auto-use of

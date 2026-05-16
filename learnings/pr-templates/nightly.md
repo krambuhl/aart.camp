@@ -8,7 +8,7 @@
 
 ## Files
 
-- `learnings/rollup.md` — {{ROLLUP_DELTA}}
+- `learnings/rollup.json` — {{ROLLUP_DELTA}}
 - `learnings/bench-history.jsonl` — +1 line
 - `learnings/regressions.jsonl` — {{REGRESSIONS_DELTA}}
 - `learnings/operator-log.jsonl` — {{OPERATOR_DELTA}}
