@@ -409,9 +409,9 @@ For each deliverable (picked per the ordering rule):
    included as the baseline. The spec (file-type → evaluator mapping,
    precedence list, tokens-vs-naming boundary) lives in
    `.claude/agents/PANEL-COMPOSITION.md`; the derivation logic is
-   `.claude/scripts/guild/derive-panel.ts`.
+   `bin/guild derive-panel`.
    - `agents`: comma-separated output of
-     `node .claude/scripts/guild/derive-panel.ts --files=<paths>`
+     `bin/guild derive-panel --files=<paths>`
      (see § Panel auto-derivation for `<paths>` composition).
    - `packet`: build a **dense packet** (see shape below). The substrate
      default is dense — verbose packets correlate with budget-exhaustion
@@ -490,7 +490,7 @@ For each deliverable (picked per the ordering rule):
      a. Append the finding to the project's `.guild-findings.jsonl`:
 
         ```bash
-        node .claude/scripts/guild/findings.ts append \
+        bin/guild findings append \
           --slug=<slug> \
           --evaluator=<finding.evaluator> \
           --code=<finding.code> \
@@ -502,21 +502,21 @@ For each deliverable (picked per the ordering rule):
 
         Caveat: `--evidence` may contain quote characters that break
         the shell. Pipe via stdin or use a heredoc if the evidence
-        string is at risk. The script trims and normalizes whitespace
+        string is at risk. The verb trims and normalizes whitespace
         internally, so any safe escape that preserves the semantic
         content is fine.
 
      b. Query the recurring threshold for that finding's signature:
 
         ```bash
-        node .claude/scripts/guild/findings.ts count \
+        bin/guild findings count \
           --slug=<slug> \
           --evaluator=<finding.evaluator> \
           --code=<finding.code> \
           --evidence=<finding.evidence>
         ```
 
-        The script writes a single integer to stdout.
+        The verb writes a single integer to stdout.
 
      c. **If the count is ≥ 3** (the recurring threshold for this
         SKILL — hardcoded; configurability is post-Phase-5), append
@@ -618,15 +618,15 @@ source of truth.
    generally should be excluded — they shipped via the substrate
    itself, not as the unit's artifact.
 2. **Derive the panel.** Run
-   `node .claude/scripts/guild/derive-panel.ts --files=<comma-
-   separated paths>`. The script prints a comma-separated list of
-   `subagent_type` names on stdout, precedence-ordered, with
-   `evaluator-contract-fit` always first.
-3. **Pass to `/guild-validate`.** Use the script's stdout as the
+   `bin/guild derive-panel --files=<comma-separated paths>`. The
+   verb prints a comma-separated list of `subagent_type` names on
+   stdout, precedence-ordered, with `evaluator-contract-fit` always
+   first.
+3. **Pass to `/guild-validate`.** Use the verb's stdout as the
    `agents=` argument verbatim. The skill body composes the dense
    packet as before; only the `agents` list changes.
 
-Edge cases the script handles, documented for reviewer awareness:
+Edge cases the verb handles, documented for reviewer awareness:
 
 - **Empty file list** (substrate-only unit, no artifact files yet) →
   `evaluator-contract-fit`. Same single-evaluator behavior as before
