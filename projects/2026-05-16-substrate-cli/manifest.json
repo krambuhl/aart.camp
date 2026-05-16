@@ -55,7 +55,7 @@
     {
       "number": 5,
       "name": "New agent families",
-      "status": "in-progress",
+      "status": "completed",
       "branch": "substrate-cli/phase-5",
       "pr": {
         "number": 107,
