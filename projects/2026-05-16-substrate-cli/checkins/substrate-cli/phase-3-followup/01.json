@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "number": "01",
+  "created": "2026-05-16T06:10:00.000Z",
+  "phase": {
+    "number": 3,
+    "name": "Skill surface cleanup (audit + grill-me)"
+  },
+  "branch": "substrate-cli/phase-3-followup",
+  "unit": "Phase 3 followup: top-level ev-loop-* + PR #101 manifest reconciliation",
+  "contract": {
+    "goal": "Close out Phase 3's outstanding loose ends. (1) Remove the `disable-model-invocation: true` flag from `ev-loop-confidence` and `ev-loop-interactive` — the Phase 3 audit set both flags ('composed via /ev-run, never ambient'), but the flag's actual semantics block /ev-run from composing the loops via the Skill tool, which surfaced when /ev-run substrate-cli attempted to dispatch Phase 4. (2) Reconcile the manifest's Phase 3 PR row, which still records #101 as `open` despite #101 having merged at 2026-05-16T05:48:18Z. (3) Capture the PLAN.md revision documenting both deliverables and pin a new Decision for the top-level ev-loop-* shape.",
+    "acceptance_criteria": [
+      "`.claude/skills/ev-loop-confidence/SKILL.md` and `.claude/skills/ev-loop-interactive/SKILL.md` no longer contain `disable-model-invocation: true`. Both retain `user-invocable: true`.",
+      "`/ev-run`'s frontmatter is unchanged (stays user-invocable + disable-model-invocation; users invoke /ev-run, /ev-run composes the loops via Skill).",
+      "`bin/loom project read substrate-cli --pretty` shows Phase 3's PR row with `state: \"merged\"`.",
+      "PLAN.md has a new `### Phase 3 followup: top-level ev-loop-* + PR #101 manifest reconciliation` subsection between Phase 3 and Phase 4, a new Dependencies bullet placing the followup before Phase 4, and a new Decisions pin codifying the top-level ev-loop-* shape against Phase 3's original audit intent.",
+      "`npm run lint` clean."
+    ],
+    "rules_applied": [
+      "L-002 halt-and-fork was applied at dispatch (Phase 3 closeout was treated as a separate fork with user choice, not absorbed silently into Phase 4).",
+      "L-013 grounding (the bug claim was confirmed via the actual Skill-tool error returned by /ev-run, not inferred from frontmatter reading).",
+      "Substrate-no-freestyle (feedback memory): PLAN edit goes through `bin/draft revise`; manifest edit goes through `bin/loom phase update`; no hand-edits to substrate state.",
+      "Frontmatter-only edits to SKILL.md files; no body prose touched.",
+      "L-004-shape session-boundary note: smoke verification of /ev-run → /ev-loop-* composition deferred to next session (SKILL frontmatter registry caching observed in-session, but composition path also needs harness reload to be definitively verifiable)."
+    ],
+    "disqualifiers": [
+      "Touch any SKILL.md body prose.",
+      "Edit /ev-run's frontmatter (it stays as-is; the user's intent was for ev-run to remain user-only).",
+      "Add a new manifest phase row (loom lacks `phase add`; the followup is documented in PLAN only)."
+    ],
+    "inputs": [
+      ".claude/skills/ev-loop-confidence/SKILL.md, .claude/skills/ev-loop-interactive/SKILL.md (frontmatter).",
+      "projects/2026-05-16-substrate-cli/PLAN.md (revision via bin/draft revise).",
+      "projects/2026-05-16-substrate-cli/manifest.json (phase 3 PR state via bin/loom phase update)."
+    ]
+  },
+  "execution": {
+    "actions": [
+      "Cut `substrate-cli/phase-3-followup` branch from main (now at c1cfbb7 post-#101 squash).",
+      "Composed revised PLAN.md in /tmp/PLAN-revised.md: added `### Phase 3 followup` subsection (two deliverables + branch + verification + 'One PR.'), added Dependencies bullet placing the followup before Phase 4, added Decisions pin codifying the top-level ev-loop-* shape against Phase 3's original audit intent. Preserved all prior `## Revision log` entries verbatim per the substrate finding from the 2026-05-16 entry.",
+      "Ran `bin/draft revise substrate-cli --revision-file=/tmp/PLAN-revised.md --rationale=... --no-commit`. PLAN.md replaced; new revision-log entry prepended by the CLI.",
+      "Edited `.claude/skills/ev-loop-interactive/SKILL.md` frontmatter: removed `disable-model-invocation: true`.",
+      "Edited `.claude/skills/ev-loop-confidence/SKILL.md` frontmatter: removed `disable-model-invocation: true`.",
+      "Ran `bin/loom phase update substrate-cli 3 --status=completed --pr=101 --url=https://github.com/krambuhl/aart.camp/pull/101 --pr-state=merged --pretty`. Manifest's Phase 3 PR row now reads `state: merged`. CLI also appended a `phase-completed` event for phase 3 — duplicate of the original (the verb fires the event whenever `next === completed`, regardless of prior); flagged in Notes for the #4 substrate-gaps sibling.",
+      "Verified in-session: both ev-loop-confidence and ev-loop-interactive now appear in the harness's available-skills list (Skill-registry pickup of frontmatter changes is in-session, unlike agent registry which is L-004 session-bound).",
+      "Ran `npm run lint`: clean."
+    ],
+    "files_touched": [
+      ".claude/skills/ev-loop-confidence/SKILL.md",
+      ".claude/skills/ev-loop-interactive/SKILL.md",
+      "projects/2026-05-16-substrate-cli/PLAN.md",
+      "projects/2026-05-16-substrate-cli/manifest.json",
+      "projects/2026-05-16-substrate-cli/events.jsonl"
+    ],
+    "corrections": [
+      "correction: Phase 3's audit intent ('composed via /ev-run, never ambient') was correct conceptually but mapped to the wrong frontmatter shape. `disable-model-invocation: true` is stricter than 'not ambient-routed' — it blocks ALL model-driven Skill invocation, including legitimate composition from another slash command. The correct shape for meaningful-synthesis-with-composition-needs is `disable-model-invocation: false` + `user-invocable: true` (which is what this followup applies). The substrate-internal-primitive shape (`disable-model-invocation: true`) stays correct for guild-spawn/validate/whiteboard and for /ev-run itself (no upstream composer)."
+    ]
+  },
+  "scope": [
+    "Two SKILL.md frontmatter edits (ev-loop-confidence + ev-loop-interactive).",
+    "One PLAN.md revision via bin/draft revise.",
+    "One manifest update via bin/loom phase update."
+  ],
+  "changes_since_previous": "First checkin on substrate-cli/phase-3-followup branch. Baseline: origin/main at c1cfbb7 (post-#101 squash merge).",
+  "verdict": {
+    "result": "approved",
+    "reasons": []
+  },
+  "notes_for_pr": [
+    "Phase 3 closeout, not a new phase. Manifest Phase 3 row stays `completed`; PLAN.md captures the followup as a subsection under Phase 3.",
+    "Bug surfaced when /ev-run tried to dispatch Phase 4 and the Skill tool refused with `cannot be used with Skill tool due to disable-model-invocation`. The Phase 3 audit's intent — 'composed via /ev-run, never ambient' — is good; the flag mapping was wrong.",
+    "New top-level shape: /ev-run, /ev-loop-confidence, /ev-loop-interactive are all user-invocable slash commands. /ev-run dispatches to the loops via Skill tool; user can also invoke a loop directly for a single-phase escape hatch. New Decision pin in PLAN.md.",
+    "Substrate finding (flagged for #4 substrate-gaps sibling project): `bin/loom phase update` emits a `phase-completed` event whenever `next === completed`, even when prior status was already completed and only PR fields changed. Idempotent state-only updates should not emit duplicate transition events. The verb should consult `prior` before emitting. Workaround for now: tolerate duplicate events in the append-only log.",
+    "Substrate observation (orthogonal): the Claude Code skill registry picks up SKILL.md frontmatter changes mid-session — both ev-loop-* skills appeared in the available-skills list after the edits without a restart. This differs from L-004's agent-registry behavior (session-bound cache). Worth a new learning candidate via /griot-capture if it stays consistent.",
+    "Verification: a true end-to-end smoke of /ev-run → /ev-loop-interactive composition is most cleanly done in a fresh session after this PR merges (the harness saw the original disable-model-invocation flag at session start). Lint clean; manifest reflects merged PR; PLAN documents the work."
+  ]
+}
