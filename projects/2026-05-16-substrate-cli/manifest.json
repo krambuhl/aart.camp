@@ -22,8 +22,13 @@
     {
       "number": 2,
       "name": "bin/guild CLI",
-      "status": "in-progress",
-      "branch": "substrate-cli/phase-2"
+      "status": "completed",
+      "branch": "substrate-cli/phase-2",
+      "pr": {
+        "number": 100,
+        "url": "https://github.com/krambuhl/aart.camp/pull/100",
+        "state": "open"
+      }
     },
     {
       "number": 3,
