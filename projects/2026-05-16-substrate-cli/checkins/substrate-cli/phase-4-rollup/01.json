@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "number": "01",
+  "created": "2026-05-16T10:05:00.000Z",
+  "phase": {
+    "number": 4,
+    "name": "griot internal restructure"
+  },
+  "branch": "substrate-cli/phase-4-rollup",
+  "unit": "D2 — rollup format change: rollup.md → rollup.json + bin/griot use --as=llm + /griot-compact promotion-writer + migration script",
+  "contract": {
+    "goal": "Replace prose-readable `learnings/rollup.md` with machine-format `learnings/rollup.json` (array of entries with structured fields + body-as-markdown-string for faithful round-trip per whiteboard skeptic Finding 2). Add `bin/griot use --as=llm` flag that renders rollup.json to the same LLM prose currently emitted by reading rollup.md directly. One-time migration script in `.claude/scripts/`. Update `/griot-compact` Step C IMPROVED (L-NNN + AP-NNN branches) to write rollup.json via JSON manipulation. Update `config.yaml` paths.rollup. Format-detection error path on `bin/griot use` and `/griot-compact` reader for mid-flight cutover safety per skeptic Finding 1. Repo-wide `rollup.md` grep sweep (D2 scope: code/skill bodies; D3 scope: README + ev-run SKILL).",
+    "acceptance_criteria": [
+      "`learnings/rollup.json` exists with the migrated 13-learning corpus (jq length → 13).",
+      "`learnings/rollup.md` removed (atomic cutover, no dual-read).",
+      "`bin/griot use --as=llm` (and bare `bin/griot use` defaulting to --as=llm) reads rollup.json and renders LLM prose; verified via smoke test that the output matches the prior rollup.md-reading shape (status line + 13 learnings with title/Promoted/Origin/Learning/Rubric sections + citation contract).",
+      "`bin/griot use --as=<unknown>` rejects with valid-values hint (`supported: llm`).",
+      "`/griot-compact` SKILL.md Step C IMPROVED L-NNN and AP-NNN branches describe JSON manipulation (Read rollup.json → parse → push new entry object → stringify → Write) instead of markdown append; matching schema fields per the rollup.json type.",
+      "`/griot-compact` reader detects legacy `rollup.md` presence post-cutover and errors loudly with `format_predates_phase_4_rollup_cutover` intervention + restart-session message.",
+      "`bin/griot use` mirrors the format-detection error: if `rollup.md` exists but `rollup.json` doesn't, returns exit 1 with the same restart-session message pointing at `node .claude/scripts/migrate-rollup-md-to-json.ts`.",
+      "`learnings/config.yaml` `paths.rollup` updated from `learnings/rollup.md` to `learnings/rollup.json`.",
+      "`.claude/scripts/migrate-rollup-md-to-json.ts` exists; ESM entry point via `import.meta.url` guard; runs idempotently (skip if rollup.json already exists); parses both L-NNN and AP-NNN entries; sibling vitest covers parser unit tests (single L / multi L / L+AP / empty input) + runMigration tests (happy path / idempotence / no-source / empty rollup).",
+      "Repo-wide `rollup.md` references in code/skill bodies in scope are updated (acceptable remaining references: format-detection error path strings in `/griot-compact` SKILL.md lines 86/93 and `bin/griot use` use.ts:133; migration script source/test fixtures referencing rollup.md as the SOURCE of migration; README and `/ev-run` SKILL — explicitly deferred to D3 per disqualifier).",
+      "`npm run lint` clean (2 pre-existing symlink warnings on vercel-react-best-practices, noted in prior checkins).",
+      "`npm test` clean (491/491 passing; was 478 pre-D2; +13 net = 8 new migration tests + 19 use.test tests minus 14 old use tests that were replaced)."
+    ],
+    "rules_applied": [
+      "L-001 Node 24 strips TS: migration script invoked via `node .claude/scripts/migrate-rollup-md-to-json.ts` natively; no tsx wrapper.",
+      "L-002 preserve substrate API shape: rollup.json schema includes all documented fields (`id`, `title`, `classification`, `promoted`, `origin`, `body`, `rubric`, plus optional `evaluator`/`code` for AP entries); D2 captures only L-classification entries from the existing corpus, but the AP-side of the schema is preserved for future /griot-compact AP-NNN promotions.",
+      "L-005 re-run git status fresh before evaluator: inspected `git status --short` against the migration output to confirm rollup.json appears + rollup.md is staged for deletion; lint and test results recorded from fresh runs.",
+      "L-006 parse markdown at runtime: migration script parses rollup.md regex-driven into structured JSON rather than maintaining a TS const that mirrors the format.",
+      "L-007 vitest harness: sibling .test.ts under .claude/scripts/ matches the project's existing convention; no node:test usage.",
+      "L-008 parser leniency: the migration script's section-extraction helper (`extractSubsection`) handles section-boundary detection without relying on lookahead-with-multiline-anchor (which was the bug fixed during initial test iteration).",
+      "L-009 dense evaluator packet: packet supplied condensed verification + AC→file:line mappings + trust-precomputed instruction; spot-check budget kept investigation efficient.",
+      "L-013 ground prose claims in execution: the migration script was actually run against the live corpus (`node .claude/scripts/migrate-rollup-md-to-json.ts` produced `migrated 13 entries`); the smoke-test claim about `bin/griot use` rendering matching output is grounded in actual stdout, including the `diff <(bin/griot use) <(bin/griot use --as=llm)` exit-0 verification.",
+      "Substrate-no-freestyle (feedback memory): no PLAN.md hand-edits in this unit; PLAN revisions deferred to phase close (D3 + Phase 4 rollup completion); manifest updated only via `bin/loom phase update`."
+    ],
+    "disqualifiers": [
+      "Create the `/griot-load` skill (D3 territory).",
+      "Edit `.claude/skills/ev-run/SKILL.md`'s rollup-loader step (D3 territory).",
+      "Sweep `learnings/README.md`'s skill table (D3 territory — bundled with the /learnings-use vs /griot-load naming resolution).",
+      "Revise PLAN.md mid-unit (deferred to phase close per substrate-no-freestyle).",
+      "Add `prs: PhasePR[]` array schema migration to `bin/loom` (whiteboard skeptic Finding 5 routes this to the #4 substrate-gaps sibling project; out-of-scope here).",
+      "Add `--as=human` or `--as=json` render modes (PLAN.md soft-pinned `--as=llm` as the only mode shipped; future render modes are explicitly deferred).",
+      "Promote the migration to a `bin/griot migrate` verb (PLAN.md pinned migration-scripts-in-`.claude/scripts/` Decision)."
+    ],
+    "inputs": [
+      "projects/2026-05-16-substrate-cli/whiteboards/4-griot-internal-restructure.md rounds 1 + 2 (skeptic Finding 1 format-detection-error-loudly; skeptic Finding 2 body-as-markdown-string; design-systems schema/naming; performance render-cost + hard-cutover; round 2 also closed the Stop-hook citation grep open question with the 'no hook exists' finding).",
+      ".claude/cli/verbs/griot/use.ts (prior rollup.md reader, lines 1-128 in the pre-D2 form).",
+      ".claude/cli/verbs/griot/use.test.ts (prior test suite).",
+      ".claude/skills/griot-compact/SKILL.md (Step pre-A routing block at lines 92-117; Step C IMPROVED L-NNN + AP-NNN branches; §3 R.2 regression suite).",
+      "learnings/rollup.md (source data for the one-time migration; 13 L-NNN entries; no AP-NNN entries in the existing corpus).",
+      "learnings/config.yaml paths.rollup line.",
+      "PLAN.md Decisions: rollup.json schema shape, atomic cutover, format-detection error path, migration in .claude/scripts/, /griot-load pure pass-through, Phase 4 split rationale."
+    ]
+  },
+  "execution": {
+    "actions": [
+      "Skipped the always-on whiteboard pre-step this dispatch per the router's explicit redirect — round 2 already ran in session-f and the existing whiteboard at projects/2026-05-16-substrate-cli/whiteboards/4-griot-internal-restructure.md is the input for D2's unit contract. The 3 round-2 findings (Finding 5 manifest schema collision; Finding 6 Stop hook absence; Finding 7 README sweep) are cited in disqualifiers + acceptance criteria where they shape D2's scope.",
+      "Authored `.claude/scripts/migrate-rollup-md-to-json.ts`: ESM entry point (`.claude/scripts/package.json` already has `type: 'module'`); exports `parseRollup`, `runMigration`, `RollupEntry`, `MigrationResult`; private `extractSubsection`, `splitOnHeading`, `parseFieldLine`, `parseRubric`, `parseLearningEntry`, `parseAntipatternEntry`, `extractAntipatternSection` helpers. Parses `^## L-\\d+:` for top-level learning entries and `### AP-\\d+:` under a `## Project antipatterns` section for antipattern entries. Idempotence via `existsSync(jsonPath)` check (skip if rollup.json already exists). main() entry point via `import.meta.url === \\`file://${process.argv[1]}\\`` guard.",
+      "Authored `.claude/scripts/migrate-rollup-md-to-json.test.ts`: 8 vitest tests (parseRollup single L / multi L / L+AP / empty input; runMigration happy path / idempotence / no-source / empty rollup). First run revealed a body-parsing bug — the regex `^### Learning\\s*$\\n+([\\s\\S]+?)(?=\\n### |\\n## |$)` with `m` flag matched end-of-line for the `$` alternation in the lookahead, truncating multi-paragraph bodies after the first paragraph. Refactored to an `extractSubsection` helper that uses an explicit section-boundary `search` instead of lookahead-with-multiline-anchor; tests pass.",
+      "Ran the migration script against the live corpus: `node .claude/scripts/migrate-rollup-md-to-json.ts` → `migrated 13 entries from /home/krambuhl/work/aart.camp/learnings/rollup.md → /home/krambuhl/work/aart.camp/learnings/rollup.json`. Verified via `jq 'length'` → 13. Verified L-001's rubric has 3 criteria via `jq '.[0].rubric | length'` → 3.",
+      "Rewrote `.claude/cli/verbs/griot/use.ts` to read rollup.json instead of rollup.md: added `RollupEntry` type matching the pinned schema; `renderLearning` + `renderAntipattern` + `renderRollup` template-literal helpers (no markdown AST library per whiteboard performance Round 1); `--as=llm` flag handling via `parseArgs` (rejects unknown values with `supported: llm` hint; defaults to `llm` when no flag); format-detection error path that fires if `rollup.md` exists but `rollup.json` doesn't. Status line updated to reference `learnings/rollup.json`. The CITATION_CONTRACT prose softened to reference 'the rollup' generically rather than the specific path (the path is in the status line; the contract is path-agnostic).",
+      "Rewrote `.claude/cli/verbs/griot/use.test.ts` for the new shape: 19 tests using `writeRollupJson` helper instead of `writeRollup` (rollup.md); updated path assertions from `learnings/rollup.md` to `learnings/rollup.json`; added new tests for `--as=llm` explicit invocation (equivalence to no-flag), `--as=<unknown>` rejection, format-detection error path with rollup.md present (errors loudly) vs both present (reads rollup.json), rubric rendering on entries with/without rubric, and the tier-separation invariant.",
+      "Updated `.claude/cli/griot.ts` verb description for `use`: now mentions `learnings/rollup.json` and `--as=llm` default rather than `learnings/rollup.md`.",
+      "Updated `.claude/skills/griot-compact/SKILL.md`: §1 pre-flight idempotence check references rollup.json; format-detection error path added (Step pre-A) with `format_predates_phase_4_rollup_cutover` intervention category and a 'restart session to pick up new skill body and run `node .claude/scripts/migrate-rollup-md-to-json.ts`' user message; Step C IMPROVED L-NNN and AP-NNN branches rewritten to describe JSON manipulation (Read rollup.json via the Read tool → parse → push new entry → stringify → Write); §3 R.2 regression-suite parser reads rollup.json instead of regex-scanning rollup.md; §3 R.3 treatment-generation system framing pipes `bin/griot use --as=llm` stdout into the system message rather than embedding rollup.md contents directly; Do-not bullets reference rollup.json.",
+      "Updated `learnings/config.yaml` `paths.rollup` from `learnings/rollup.md` to `learnings/rollup.json`.",
+      "Updated `learnings/pr-templates/nightly.md` line 11 `learnings/rollup.md` → `learnings/rollup.json` in the Files list.",
+      "Deleted `learnings/rollup.md` via `git rm` (atomic cutover; rollup.json is the canonical from here forward).",
+      "Repo-wide grep sweep: `grep -rn 'rollup\\.md'` in code/skill bodies confirmed only acceptable references remain (legacy-detection error path strings + migration script source/test fixtures + D3-scope items in README and ev-run SKILL).",
+      "Smoke test: `bin/griot use` against the migrated rollup.json → emitted `griot-use: loaded 13 learnings from learnings/rollup.json` + full content (13 entries rendering with title/Promoted/Origin/Learning/Rubric sections in order) + citation contract. Verified `diff <(bin/griot use) <(bin/griot use --as=llm)` exit 0 — explicit --as=llm matches no-flag default.",
+      "Verified `npm run lint` clean (2 pre-existing symlink warnings unrelated).",
+      "Verified `npm test` clean (491/491 passing across 37 test files; +13 net vs prior baseline).",
+      "Composed dense evaluator packet citing pre-computed verification + AC→file:line mappings + L-009 trust-precomputed instruction. Derived panel via `bin/guild derive-panel`: evaluator-contract-fit + evaluator-react-api + evaluator-naming. Invoked /guild-validate; panel returned approved unanimously after one parse-failure re-run on the aggregator (first try had react-api's verdict line with an em-dash suffix that the parser didn't recognize; cleaned up to plain `VERDICT: approved` on its own line). evaluator-contract-fit spot-checked SKILL.md:380-460 and confirmed both L + AP branches describe JSON Read→parse→push→stringify→Write. evaluator-react-api carved out (no React surface). evaluator-naming walked the full identifier surface (RollupEntry, RenderResult, render* trio, ROLLUP_PATH constants, classification short codes L/AP) and found no antipatterns."
+    ],
+    "files_touched": [
+      ".claude/cli/verbs/griot/use.ts",
+      ".claude/cli/verbs/griot/use.test.ts",
+      ".claude/cli/griot.ts",
+      ".claude/skills/griot-compact/SKILL.md",
+      ".claude/scripts/migrate-rollup-md-to-json.ts",
+      ".claude/scripts/migrate-rollup-md-to-json.test.ts",
+      "learnings/rollup.json",
+      "learnings/rollup.md",
+      "learnings/config.yaml",
+      "learnings/pr-templates/nightly.md",
+      "projects/2026-05-16-substrate-cli/manifest.json",
+      "projects/2026-05-16-substrate-cli/events.jsonl"
+    ],
+    "corrections": [
+      "correction: First test run of the migration script revealed a body-parsing bug: the regex `^### Learning\\s*$\\n+([\\s\\S]+?)(?=\\n### |\\n## |$)` with the `m` flag had a lookahead `(?=...|$)` where `$` matches end-of-line (not end-of-string) under the `m` flag. The non-greedy quantifier therefore matched the minimum needed for the lookahead, terminating at the first end-of-line and truncating multi-paragraph bodies to just the first paragraph. Refactored to an `extractSubsection` helper that finds the section heading, then uses `text.slice(start).search(/^(### |## )/m)` to locate the next heading boundary explicitly — no lookahead with multi-line anchor ambiguity. The fix landed before the evaluator panel ran. Future migration scripts in this substrate should prefer explicit section-boundary search over lookahead-with-multiline-flag patterns for similar parsing problems.",
+      "correction: Aggregator parse-failure on first run — `evaluator-react-api`'s output had `VERDICT: approved — no React surface in changeset; carved out` on a single line, and `bin/guild parse-and-aggregate` requires the VERDICT line to be a plain `VERDICT: approved` / `VERDICT: flagged` form (em-dash suffixes break the parser's regex). Re-aggregated with the verdict line clean and the carve-out explanation moved to a separate paragraph above; second run returned `verdict: approved` correctly. Substrate finding: the aggregator's VERDICT parsing regex should probably tolerate trailing prose on the same line (e.g., `VERDICT: approved [—] <comment>` or `VERDICT: approved\\s.*`). Worth folding into the #4 substrate-gaps sibling project as a parse-leniency improvement."
+    ]
+  },
+  "scope": [
+    "bin/griot use reads rollup.json (not rollup.md); accepts --as=llm flag (rejects unknowns); fires format-detection error if legacy rollup.md is present without rollup.json.",
+    "/griot-compact SKILL Step C IMPROVED writes rollup.json (Read→parse→push→stringify→Write); Step pre-A adds format-detection error path; §3 regression-suite parser reads rollup.json; system framing in R.3 pipes `bin/griot use --as=llm` rather than embedding rollup.md contents.",
+    "Migration script at .claude/scripts/migrate-rollup-md-to-json.ts with sibling vitest; one-time conversion of 13-learning corpus from rollup.md to rollup.json; idempotent re-run no-op.",
+    "config.yaml paths.rollup → learnings/rollup.json; .claude/cli/griot.ts verb description updated; learnings/pr-templates/nightly.md PR template Files list updated.",
+    "Atomic cutover: rollup.md deleted; 13 entries committed alongside the migration script in this PR."
+  ],
+  "changes_since_previous": "First checkin on substrate-cli/phase-4-rollup branch. Baseline: origin/main at 87d4fe4 (post-#104 squash merge) plus session-f's setup commit a20f8f9 (whiteboard round 2 + session 2026-05-16-f). One intra-session setup commit precedes this work commit.",
+  "verdict": {
+    "result": "approved",
+    "reasons": []
+  },
+  "notes_for_pr": [
+    "Phase 4 rollup D2 ships the rollup format change: rollup.md → rollup.json with bin/griot use --as=llm flag, migration script in .claude/scripts/, /griot-compact promotion-writer rewritten for JSON manipulation, config.yaml and PR-template path updates, format-detection error path. Round-2 whiteboard Findings 1 + 2 are explicitly cited in the contract and the implementation.",
+    "rollup.json contains the migrated 13-learning corpus from rollup.md. The schema preserves body as a markdown string (faithful round-trip) and lifts classification (`L` | `AP`), promoted date, and origin slug to typed fields. Antipattern-only fields (evaluator, code) are optional and unused in the current corpus but reserved for future AP-NNN promotions.",
+    "Migration script in .claude/scripts/ per the PLAN.md Decision (not promoted to `bin/griot migrate` — throwaway-shaped scripts live in throwaway-shaped homes; bin/griot CLI surface stays focused on persistent verbs). Sibling vitest covers parser unit tests + idempotence; the script can be safely re-run post-merge (no-op when rollup.json exists).",
+    "D3 (next unit on this branch): /griot-load skill body (pure pass-through wrapper per whiteboard skeptic Finding 4) + /ev-run SKILL loader-step update (call bin/griot use --as=llm directly via Bash) + README skill-table sweep (resolves whiteboard Finding 7 — the 'rename' collapses to removing stale /learnings-* rows; no /learnings-use SKILL body exists on disk to lose synthesis from).",
+    "Substrate finding (folds into #4 sibling project): `bin/guild parse-and-aggregate`'s VERDICT-line parser rejects em-dash trailing prose on the same line (e.g., `VERDICT: approved — comment`). The fix is regex leniency in the verb's parser. The current workaround is to keep the VERDICT line bare and move trailing prose to a separate paragraph.",
+    "Substrate finding (folds into #4 sibling project): the manifest's single-valued `pr` field can't represent a multi-PR phase bucket cleanly (whiteboard skeptic Finding 5). When Phase 4 rollup's PR opens, the manifest's phase 4 `pr` will need to be updated to track the new PR, overwriting #104's record. The schema migration to `prs: PhasePR[]` is queued for the substrate-gaps sibling project."
+  ]
+}

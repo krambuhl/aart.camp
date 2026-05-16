@@ -37,3 +37,5 @@
 {"at":"2026-05-16T07:30:13.374Z","event":"session-saved","detail":{"filename":"2026-05-16-e.json"}}
 {"at":"2026-05-16T07:36:06.810Z","event":"phase-started","detail":{"phase":4,"name":"griot internal restructure"}}
 {"at":"2026-05-16T07:48:31.750Z","event":"session-saved","detail":{"filename":"2026-05-16-f.json"}}
+{"at":"2026-05-16T08:07:48.050Z","event":"checkin-created","detail":{"number":"01","branch":"substrate-cli/phase-4-rollup"}}
+{"at":"2026-05-16T08:14:59.102Z","event":"checkin-created","detail":{"number":"02","branch":"substrate-cli/phase-4-rollup"}}

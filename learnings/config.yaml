@@ -79,7 +79,7 @@ paths:
   archived: learnings/session-notes/archived
   nightly: learnings/nightly
   runs: learnings/runs
-  rollup: learnings/rollup.md
+  rollup: learnings/rollup.json
   citations: learnings/citations.json
   regressions: learnings/regressions.jsonl
   bench_history: learnings/bench-history.jsonl

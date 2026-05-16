@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "number": "02",
+  "created": "2026-05-16T10:35:00.000Z",
+  "phase": {
+    "number": 4,
+    "name": "griot internal restructure"
+  },
+  "branch": "substrate-cli/phase-4-rollup",
+  "unit": "D3 — /griot-load skill + /ev-run loader update + README sweep (naming resolution)",
+  "contract": {
+    "goal": "Author the new `/griot-load` skill body as a pure pass-through wrapper around `bin/griot use --as=llm` (per pinned Decision: synthesis lives in the CLI, the skill is a name-stable handle; L-004 means the skill is untestable in the authoring session, so the body must be trivial). Update `/ev-run` SKILL.md §1.5 loader-step to invoke `bin/griot use --as=llm` (post-Phase-4-rollup CLI shape) and update the example status-line phrasing from `rollup.md` to `rollup.json`. Sweep `learnings/README.md`: remove stale rows for `/learnings-capture`, `/learnings-use`, `/learnings-report` (whiteboard Finding 7 verified empirically that these skill bodies do NOT exist on disk — only `/griot-compact` is real); add a row for `/griot-load`; consolidate the user-surface narrative under the `griot-*` family per design-systems Round 2 resolution; update prose references from `rollup.md` to `rollup.json` and from `/learnings-use` to `/griot-load`; add `state.json` to the session-notes directory layout (a D1 follow-up doc fix bundled here for cohesion).",
+    "acceptance_criteria": [
+      "`.claude/skills/griot-load/SKILL.md` exists with `user-invocable: true` + `disable-model-invocation: true` frontmatter (matches the pinned Decision for `/griot-load`'s rubric position; allowed-tools is `Bash` since the body's sole action is a Bash invocation).",
+      "`/griot-load` body is a pure pass-through wrapper: invokes `bin/griot use --as=llm`, returns stdout verbatim, contains no synthesis logic above what the CLI emits, and has a Do-not section that forbids synthesis-in-skill-body for future maintainers.",
+      "`.claude/skills/ev-run/SKILL.md` §1.5 loader step calls `bin/griot use --as=llm` (not bare `bin/griot use`) and reads `learnings/rollup.json` (path updated from `rollup.md`); the loader-step prose names that `/ev-run` calls the CLI directly via Bash rather than composing the `/griot-load` skill (loader-step is skill-composition-free).",
+      "`.claude/skills/ev-run/SKILL.md` §5 example status-line phrasing updated from `rollup.md` to `rollup.json`.",
+      "`learnings/README.md` skill table contains rows only for `/griot-load` and `/griot-compact` (the two skills that actually exist on disk); the stale `/learnings-capture`, `/learnings-use`, `/learnings-report` rows are removed.",
+      "`learnings/README.md` prose explicitly names that captures and reports go via `bin/griot capture` / `bin/griot report` CLI verbs and that the ambient `/learnings-*` wrappers were removed in substrate-cli P1 and P3 (single sentence after the skill table).",
+      "`learnings/README.md` directory layout block: `rollup.json` (tracked, canonical) replaces the `rollup.md` line; `state.json` sidecar is added to the session-note folder shape (a D1 doc-fix bundled here so the README reflects the substrate's current shape).",
+      "`learnings/README.md` prose references updated atomically: `/learnings-use` → `/griot-load`, `rollup.md` → `rollup.json` (in scope-appropriate places — the rollout-phases section refs and the post-directory-layout sentence are updated; the wrappers-removed reference is kept as historical context).",
+      "`npm run lint` clean. `npm test` clean (no test impact since D3's changes are markdown skill bodies + README; 491/491 unchanged from D2)."
+    ],
+    "rules_applied": [
+      "L-002 substrate API stability: the `/griot-load` frontmatter shape (`user-invocable: true` + `disable-model-invocation: true`) matches the pinned Decision verbatim; the skill body's pass-through contract (invoke `bin/griot use --as=llm`, return stdout) is the documented interface — no narrowing.",
+      "L-004 session-boundary respected: `/griot-load` is new in this session; the L-004 rule means it can't be invoked via the Skill tool until next session's registry reload. Phase 4 rollup PR's verification path is via `bin/griot use --as=llm` (the CLI, not the skill), which IS bash-testable in-session. Smoke-test of `/griot-load` itself is deferred to the next session's `/ev-run` loader-step (which calls the CLI directly anyway, so /griot-load's invocation path is via user-typed `/griot-load` — strictly opt-in).",
+      "L-005 re-run git status fresh before evaluator: `git status --short` was inspected before the evaluator panel; the artifact file list in the packet matches.",
+      "L-007 vitest harness: no new tests in D3 (markdown-only changes); the existing 491-test suite is the verification gate.",
+      "L-009 dense evaluator packet: packet supplied condensed verification + AC→file:line mappings + trust-precomputed instruction.",
+      "L-013 ground prose claims in execution: the `ls .claude/skills/` empirical observation (Finding 7's verification gate) was run in this session and confirmed only `griot-compact` and (post-this-unit) `griot-load` exist from the griot family; no `learnings-*` skill bodies on disk.",
+      "Substrate-no-freestyle (feedback memory): no PLAN.md hand-edits in D3 — the PLAN.md revision integrating round-2 findings + naming resolution Decision + Stop-hook absence resolution is deferred to Phase 4 rollup phase close."
+    ],
+    "disqualifiers": [
+      "Any `bin/griot` CLI surface edits (D2 territory; shipped in checkin 01).",
+      "PLAN.md hand-edits or bin/draft revise calls in D3 (deferred to phase close — the revision integrates Finding 5 + Finding 6 absence + Finding 7 resolution into Decisions + closes the relevant Open Questions in one revision pass at phase end).",
+      "Adding `prs: PhasePR[]` array schema migration or other manifest-schema changes (Finding 5 routes to the #4 substrate-gaps sibling project; out-of-scope here).",
+      "Smoke-testing `/griot-load` via the Skill tool in the authoring session (L-004 — the skill is untestable until the next session's registry reload; the underlying CLI was bash-tested in D2's smoke test).",
+      "Changing the CITATION_CONTRACT prose, the rollup.json schema, the migration script, or any rollup-format machinery (D2 territory; shipped)."
+    ],
+    "inputs": [
+      "projects/2026-05-16-substrate-cli/whiteboards/4-griot-internal-restructure.md rounds 1 + 2 (skeptic Finding 4 pure-pass-through; skeptic Finding 7 verification-then-rename collapsing to README sweep; design-systems Round 2 naming resolution under griot-* family; performance Round 2 confirms zero Stop-hook impact).",
+      ".claude/skills/ev-run/SKILL.md (current §1.5 loader-step prose at lines ~98-119; §5 example status line at line ~165-170).",
+      "learnings/README.md (current skill table at lines 28-33; directory layout block at lines 38-64; prose mentions of rollup.md and /learnings-use throughout).",
+      "PLAN.md Decisions: `/griot-load` is `disable-model-invocation: true` + `user-invocable: true`; `/griot-load` skill body is pure pass-through; Phase 4 split + bucket framing.",
+      "checkin 01 (this branch) — D2 shipped the CLI surface (`bin/griot use --as=llm`, rollup.json, format-detection error path) that D3's skill body and loader-step compose against."
+    ]
+  },
+  "execution": {
+    "actions": [
+      "Authored `.claude/skills/griot-load/SKILL.md`: frontmatter sets `user-invocable: true` + `disable-model-invocation: true` + `allowed-tools: Bash` (matching the pinned Decision rubric position). Body is structured as: brief framing paragraph naming the wrapper role; Invocation section that's a single `bin/griot use --as=llm` Bash invocation + the three CLI-emitted outcomes named (not re-rendered); format-detection error note pointing at the migration script + restart-session remedy; Do-not section explicitly forbidding synthesis-in-skill-body, automatic invocation (opt-in per Principle 4), and direct rollup.json reads from the skill body.",
+      "Updated `.claude/skills/ev-run/SKILL.md` §1.5 loader-step: `bin/griot use` → `bin/griot use --as=llm`; reads `learnings/rollup.json` (not rollup.md); added explicit note that the loader-step calls the CLI directly via Bash rather than composing the `/griot-load` skill (keeps the loader path skill-composition-free per the L-004 safety the contract called out). Added format-detection error-path handling: if the verb exits 1 with the rollup.md-as-legacy stderr message, surface verbatim and stop — remedy in the message.",
+      "Updated `.claude/skills/ev-run/SKILL.md` §5 example status-line: `Loaded N learnings from rollup.md (citation contract active).` → `Loaded N learnings from rollup.json (citation contract active).` Other two bullets (no rollup yet / rollup empty) unchanged.",
+      "Swept `learnings/README.md`. Opening prose: `rollup.md` → `rollup.json`; `/learnings-use` → `/griot-load`; corrected the 'Runtime data is gitignored' framing to 'Per-run intermediate data and operator logs are gitignored; the rollup itself and the session-notes corpus are tracked' (the old README claimed rollup.md was gitignored, but it isn't and post-Phase-4-rollup rollup.json is tracked too). Principles bullet 2 path reference updated.",
+      "Rewrote the skill table in `learnings/README.md`: now contains only `/griot-load` (Start of session, renders rollup.json, citation contract) and `/griot-compact` (manual judge panel + promotion + PR). The four stale rows (`/learnings-capture`, `/learnings-use`, `/learnings-report`, plus the now-redundant `/griot-compact` row in the old shape) are gone. Added a single sentence after the table explaining that capture goes via `bin/griot capture` CLI verb and that the wrappers were removed in substrate-cli P1 and P3.",
+      "Updated `learnings/README.md` directory-layout block: added `state.json` line to the session-note folder shape (Phase 4 D1 doc-fix bundled per design-systems Round 2 cohesion); changed `rollup.md  # tracked as empty placeholder; live rollup is gitignored` to `rollup.json  # tracked — canonical machine-format rollup (post-Phase-4-rollup-cutover); rendered to LLM prose at injection time by bin/griot use --as=llm`; updated the prose after the layout block from 'rollup.md is gitignored' to 'rollup.json is tracked'.",
+      "Swept remaining `/learnings-use` references in README rollout-phases section via Edit with `replace_all: true` — `Session latency delta (with/without /learnings-use)`, `Phase 3: un-gitignore corpus, add a /learnings-use nudge to CLAUDE.md`, `Phase 4: consider auto-invocation of /learnings-use and auto-capture on correction` all updated to `/griot-load`. The flow-diagram `user correction ─▶ /learnings-capture ─▶` was updated to `bin/griot capture` (the actual entry point post-P1).",
+      "Verified `npm run lint` clean (2 pre-existing symlink warnings unrelated, noted in prior checkins).",
+      "Verified `npm test` clean (491/491 passing — unchanged from D2 since D3 is markdown-only).",
+      "Verified empirically via `ls .claude/skills/`: only `griot-compact` and (now) `griot-load` exist from the griot family; no `learnings-*` skill directories. Confirms Finding 7's gate-then-resolve framing — the rename collapsed to a README sweep cleanly.",
+      "Composed dense evaluator packet citing pre-computed verification + AC→file:line mappings + L-009 trust-precomputed. Derived panel via `bin/guild derive-panel`: evaluator-contract-fit only (markdown-skill-body + README; the panel-composition rules don't fire react-api or naming evaluators for this file mix). Invoked /guild-validate; contract-fit returned approved on first run after spot-checking griot-load/SKILL.md end-to-end and ev-run/SKILL.md §1.5 — confirmed pure-pass-through wrapper + correct loader-step shape."
+    ],
+    "files_touched": [
+      ".claude/skills/griot-load/SKILL.md",
+      ".claude/skills/ev-run/SKILL.md",
+      "learnings/README.md",
+      "projects/2026-05-16-substrate-cli/manifest.json",
+      "projects/2026-05-16-substrate-cli/events.jsonl"
+    ],
+    "corrections": [
+      "correction: The README's pre-Phase-4-rollup framing claimed `rollup.md is gitignored` and that `Runtime data is gitignored. Only the skill definitions, templates, and config.yaml are tracked.` That was inconsistent with .gitignore's actual contents (which gitignores `learnings/nightly/`, `learnings/runs/`, and the various jsonl files, but NOT rollup.md or session-notes/). Updated the README's opening prose and directory-layout commentary to accurately describe what's tracked vs gitignored: per-run intermediate data + operator logs are gitignored; the rollup itself and the session-notes corpus are tracked (which is what the substrate has been doing in practice across all phases). This isn't a behavior change — it's the doc catching up to reality. The .gitignore stays unchanged."
+    ]
+  },
+  "scope": [
+    "New `/griot-load` skill body — pure pass-through wrapper around `bin/griot use --as=llm` per the pinned Decision; user-invocable; not Skill-composed from /ev-run's loader.",
+    "/ev-run SKILL.md §1.5 loader-step: invokes `bin/griot use --as=llm` directly via Bash; reads `learnings/rollup.json`; handles format-detection error path verbatim.",
+    "/ev-run SKILL.md §5 example status-line: `rollup.md` → `rollup.json`.",
+    "learnings/README.md sweep: skill table to /griot-load + /griot-compact only; prose updates `/learnings-use` → `/griot-load`, `rollup.md` → `rollup.json`; directory layout adds `state.json` sidecar (D1 doc-fix bundled) and tracks `rollup.json`; opening prose corrected from the inaccurate 'rollup.md is gitignored' claim."
+  ],
+  "changes_since_previous": "Second checkin on substrate-cli/phase-4-rollup branch. Baseline: checkin 01 (D2: rollup format change) earlier this session, plus the session-f setup commit a20f8f9 before that.",
+  "verdict": {
+    "result": "approved",
+    "reasons": []
+  },
+  "notes_for_pr": [
+    "Phase 4 rollup D3 ships the user-facing surface for the rollup format change: new `/griot-load` skill (pure pass-through wrapper per pinned Decision), `/ev-run` loader-step update to `bin/griot use --as=llm` + rollup.json, and a README sweep that consolidates the substrate's user-facing skill surface under the griot-* family.",
+    "Naming resolution settled per whiteboard Round 2 Finding 7's empirical-gate-then-resolve framing: `ls .claude/skills/` confirms only /griot-compact exists from the griot family; no /learnings-* skill bodies on disk. The 'rename' collapses to a README skill-table sweep (no synthesis prose to migrate from a nonexistent skill body). Design-systems' Round 2 resolution (consolidate under griot-*) lands cleanly.",
+    "L-004 boundary: /griot-load is new in this session — the registry won't pick it up until next session's restart. Phase 4 rollup PR's verification path is via `bin/griot use --as=llm` (the CLI, which is bash-testable in-session and was smoke-verified in D2). The first /griot-load invocation via the Skill tool naturally happens when a user types `/griot-load` in a fresh session post-merge.",
+    "Substrate finding folded into #4 sibling project (carryover from D2 + Round 2): the `bin/loom phase update` verb's single-valued `pr` field can't represent the multi-PR bucket Phase 4 introduces. At phase close, the loop runs `--status=completed` WITHOUT `--pr=<new>` (per Finding 5's remedy option 1) to preserve the #104 linkage; the `prs: PhasePR[]` schema migration is queued for substrate-gaps.",
+    "Substrate finding (D3 surfaced): README documented `rollup.md is gitignored` but .gitignore never had it — the README's tracked-vs-gitignored framing was drift. Corrected the opening prose and directory-layout commentary; no .gitignore change. Worth a one-time `grep README claims against actual .gitignore` audit pass in the substrate-gaps sibling project."
+  ]
+}
