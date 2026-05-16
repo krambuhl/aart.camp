@@ -2,16 +2,17 @@ import { test, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { resolveTroutProject, listTroutProjects } from './draft-project.ts';
+import { resolveProject, listProjects } from './draft-project.ts';
 
 let projectsRoot: string;
 
-function makeTroutProject(root: string, slug: string): void {
+function makeDraftOnlyProject(root: string, slug: string): void {
   const path = join(root, slug);
   mkdirSync(path, { recursive: true });
-  // Marker file: draft-readable projects carry PLAN.md. (Trout-
-  // managed projects also have MANIFEST.md; draft-only projects
-  // have just PLAN.md + INTERVIEW.md.)
+  // Marker file: draft-readable projects carry PLAN.md. Draft-only
+  // projects (this case) have just PLAN.md + INTERVIEW.md, no
+  // manifest.json. Loom + draft projects also qualify; see
+  // makeLoomDraftProject below.
   writeFileSync(join(path, 'PLAN.md'), '# Plan\n');
 }
 
@@ -36,9 +37,9 @@ function makeLoomDraftProject(root: string, slug: string): void {
 
 beforeEach(() => {
   projectsRoot = mkdtempSync(join(tmpdir(), 'draft-project-test-'));
-  // Active trout projects
-  makeTroutProject(projectsRoot, '2026-05-10-project-a');
-  makeTroutProject(projectsRoot, '2026-05-15-draft-cli');
+  // Active draft-only projects (PLAN.md without manifest.json)
+  makeDraftOnlyProject(projectsRoot, '2026-05-10-project-a');
+  makeDraftOnlyProject(projectsRoot, '2026-05-15-draft-cli');
   // Active loom-only project (no PLAN.md): does NOT resolve via
   // draft (PLAN.md is the marker draft cares about)
   makeLoomOnlyProject(projectsRoot, '2026-05-15-loom-cli');
@@ -47,8 +48,8 @@ beforeEach(() => {
   makeLoomDraftProject(projectsRoot, '2026-05-15-trout-sunset');
   // Active non-substrate dir (no PLAN.md, no manifest.json)
   mkdirSync(join(projectsRoot, '2026-05-20-bare'));
-  // Archived trout
-  makeTroutProject(join(projectsRoot, 'archive'), '2026-04-01-old-project');
+  // Archived draft-only project
+  makeDraftOnlyProject(join(projectsRoot, 'archive'), '2026-04-01-old-project');
   // Non-project noise
   writeFileSync(join(projectsRoot, 'CONVENTIONS.md'), '# noise\n');
 });
@@ -57,39 +58,39 @@ afterEach(() => {
   rmSync(projectsRoot, { recursive: true, force: true });
 });
 
-test('resolveTroutProject: full slug returns its path', () => {
-  const p = resolveTroutProject('2026-05-15-draft-cli', projectsRoot);
+test('resolveProject: full slug returns its path', () => {
+  const p = resolveProject('2026-05-15-draft-cli', projectsRoot);
   expect(p).toBe(join(projectsRoot, '2026-05-15-draft-cli'));
 });
 
-test('resolveTroutProject: date-less suffix returns unique match', () => {
-  const p = resolveTroutProject('draft-cli', projectsRoot);
+test('resolveProject: date-less suffix returns unique match', () => {
+  const p = resolveProject('draft-cli', projectsRoot);
   expect(p).toBe(join(projectsRoot, '2026-05-15-draft-cli'));
 });
 
-test('resolveTroutProject: archived slug falls back to archive/', () => {
-  const p = resolveTroutProject('old-project', projectsRoot);
+test('resolveProject: archived slug falls back to archive/', () => {
+  const p = resolveProject('old-project', projectsRoot);
   expect(p).toBe(join(projectsRoot, 'archive', '2026-04-01-old-project'));
 });
 
-test('resolveTroutProject: relative path resolves to absolute', () => {
+test('resolveProject: relative path resolves to absolute', () => {
   const rel = './2026-05-15-draft-cli';
-  const p = resolveTroutProject(join(projectsRoot, rel), projectsRoot);
+  const p = resolveProject(join(projectsRoot, rel), projectsRoot);
   expect(p).toBe(resolve(projectsRoot, '2026-05-15-draft-cli'));
 });
 
-test('resolveTroutProject: nonexistent slug throws project-not-found', () => {
-  expect(() => resolveTroutProject('does-not-exist', projectsRoot)).toThrow(
+test('resolveProject: nonexistent slug throws project-not-found', () => {
+  expect(() => resolveProject('does-not-exist', projectsRoot)).toThrow(
     /project-not-found/,
   );
 });
 
-test('resolveTroutProject: ambiguous suffix throws slug-ambiguous with candidates', () => {
-  // Two trout-marked projects sharing the suffix `-foo`
-  makeTroutProject(projectsRoot, '2026-05-20-foo');
-  makeTroutProject(projectsRoot, '2026-05-25-foo');
+test('resolveProject: ambiguous suffix throws slug-ambiguous with candidates', () => {
+  // Two draft-marked projects sharing the suffix `-foo`
+  makeDraftOnlyProject(projectsRoot, '2026-05-20-foo');
+  makeDraftOnlyProject(projectsRoot, '2026-05-25-foo');
   try {
-    resolveTroutProject('foo', projectsRoot);
+    resolveProject('foo', projectsRoot);
     throw new Error('expected throw');
   } catch (err: unknown) {
     const e = err as { code: string; candidates?: string[] };
@@ -99,38 +100,38 @@ test('resolveTroutProject: ambiguous suffix throws slug-ambiguous with candidate
   }
 });
 
-test('resolveTroutProject: loom-only project (no PLAN.md) does NOT resolve', () => {
+test('resolveProject: loom-only project (no PLAN.md) does NOT resolve', () => {
   // 2026-05-15-loom-cli has manifest.json but no PLAN.md.
   // Without PLAN.md, draft has nothing to read or revise, so the
   // project is invisible to draft regardless of loom's state.
-  expect(() => resolveTroutProject('loom-cli', projectsRoot)).toThrow(
+  expect(() => resolveProject('loom-cli', projectsRoot)).toThrow(
     /project-not-found/,
   );
 });
 
-test('resolveTroutProject: loom + draft project (both markers) DOES resolve', () => {
+test('resolveProject: loom + draft project (both markers) DOES resolve', () => {
   // 2026-05-15-trout-sunset has manifest.json AND PLAN.md. This is
   // the post-trout default state — draft and loom coexist on the
   // same project. Draft must see it.
-  const p = resolveTroutProject('trout-sunset', projectsRoot);
+  const p = resolveProject('trout-sunset', projectsRoot);
   expect(p).toBe(join(projectsRoot, '2026-05-15-trout-sunset'));
 });
 
-test('resolveTroutProject: bare directory without PLAN.md does NOT resolve', () => {
+test('resolveProject: bare directory without PLAN.md does NOT resolve', () => {
   // 2026-05-20-bare has no PLAN.md and no manifest.json.
-  expect(() => resolveTroutProject('bare', projectsRoot)).toThrow(
+  expect(() => resolveProject('bare', projectsRoot)).toThrow(
     /project-not-found/,
   );
 });
 
-test('listTroutProjects: enumerates active draft-readable projects (incl. loom+draft)', () => {
+test('listProjects: enumerates active draft-readable projects (incl. loom+draft)', () => {
   // Includes:
-  //   - draft-only / trout-managed projects (PLAN.md without manifest.json)
+  //   - draft-only projects (PLAN.md without manifest.json)
   //   - loom + draft projects (PLAN.md with manifest.json)
   // Excludes:
   //   - loom-only projects (manifest.json without PLAN.md)
   //   - bare dirs (neither marker)
-  const list = listTroutProjects(projectsRoot);
+  const list = listProjects(projectsRoot);
   expect(list.map((p) => p.slug).sort()).toEqual([
     '2026-05-10-project-a',
     '2026-05-15-draft-cli',
@@ -138,7 +139,7 @@ test('listTroutProjects: enumerates active draft-readable projects (incl. loom+d
   ]);
 });
 
-test('listTroutProjects: --archived enumerates the trout archive', () => {
-  const list = listTroutProjects(projectsRoot, { archived: true });
+test('listProjects: --archived enumerates the project archive', () => {
+  const list = listProjects(projectsRoot, { archived: true });
   expect(list.map((p) => p.slug)).toEqual(['2026-04-01-old-project']);
 });
