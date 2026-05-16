@@ -145,10 +145,10 @@ export function listProjects(
     } catch {
       continue;
     }
-    // Filter to loom-managed projects: only directories carrying the
-    // JSON manifest are listed. Trout projects (markdown MANIFEST.md)
-    // are intentionally invisible to loom per the coexistence policy
-    // in LOOM-CONVENTIONS.md.
+    // Filter to loom-managed projects: only directories carrying
+    // manifest.json are listed. Draft-only projects (PLAN.md without
+    // manifest.json) are invisible to loom by design — see
+    // LOOM-CONVENTIONS.md § Pairing with draft.
     if (!existsSync(join(fullPath, LOOM_MARKER))) continue;
     projects.push({ slug: entry, path: fullPath });
   }

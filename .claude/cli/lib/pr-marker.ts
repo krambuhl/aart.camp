@@ -3,9 +3,10 @@
 // Marker format embedded in PR bodies:
 //   <!-- loom-pr-checkins: NN[,NN,...] -->
 //
-// loom-prefixed to coexist with trout's `<!-- project-pr-checkins: -->`
-// marker without collision. The trout marker is invisible to loom and
-// vice-versa.
+// The `loom-pr-checkins` prefix was originally chosen to coexist with
+// trout's `<!-- project-pr-checkins: -->` marker without collision.
+// Trout retired in trout-sunset Phase 3, but the loom marker keeps its
+// prefix — it's stable and embedded in every merged PR body.
 
 export type MarkerState = 'fresh' | 'stale' | 'drift' | 'new';
 
