@@ -336,9 +336,22 @@ composes `/guild-whiteboard` and `/guild-validate` via the Skill tool
 
 **One PR.**
 
-### Phase 4: griot internal restructure
+### Phase 4: griot session-notes restructure
 
-Two restructures shipped together:
+The original Phase 4 framing bundled three coupled changes
+(session-notes shape, rollup format, /griot-compact body updates)
+into one PR. The Phase 4 whiteboard round 1 (skeptic Finding 3 at
+`projects/2026-05-16-substrate-cli/whiteboards/4-griot-internal-restructure.md`)
+pressure-tested that bundling and surfaced a clean split-line:
+session-notes shape (D1) and rollup format (D2) are independent at
+the coupling level, meeting only at the `/griot-compact` body, which
+can absorb edits from two separate PRs. CLAUDE.md PR conventions
+("one conceptual change per PR") favor the split, and splitting
+de-risks D2's schema decisions by letting D1 ship first. The session-
+notes half ships here as Phase 4 proper; the rollup half ships as
+Phase 4 rollup in the next branch.
+
+One deliverable in one PR:
 
 - **session-notes**: replace YAML-frontmatter-on-`learning.md` with a
   `state.json` sidecar. Each session-note folder gains
@@ -348,26 +361,97 @@ Two restructures shipped together:
   `/griot-compact` SKILL body's routing logic to read `state.json`.
   Include a migration script for in-flight unprocessed notes:
   detect YAML frontmatter, extract to `state.json`, strip from
-  `learning.md`. Migration runs once at PR-merge time.
-- **rollup**: replace `learnings/rollup.md` with `learnings/rollup.json`
-  (machine format: array of `{id, title, body, classification, ...}`
-  entries). Add `bin/griot use --as=llm` flag that renders JSON to
-  LLM-friendly prose. Add new `/griot-load` skill
-  (`disable-model-invocation: true`, `user-invocable: true`) that
-  wraps `bin/griot use --as=llm` as the addressable user surface.
-  Update `/ev-run`'s rollup-loading step to use `bin/griot use
-  --as=llm` directly (Bash, not Skill). Migrate existing
-  `rollup.md` to the new format (one-time conversion script).
-- `/griot-compact` SKILL body's IMPROVED-promotion logic writes to
-  `rollup.json` instead of `rollup.md`. Promotion renders the
-  same entry shape it does today; only the storage format changes.
+  `learning.md`. Migration runs once at PR-merge time. Migration
+  script lives in `.claude/scripts/` with sibling vitest (per
+  whiteboard performance recommendation — not promoted to
+  `bin/griot migrate` to avoid accreting one-off migration verbs).
+  Per whiteboard skeptic Finding 1: `bin/griot capture` and
+  `/griot-compact` reader detect old-format files (YAML frontmatter
+  on `learning.md`) and error loudly with a "restart session to pick
+  up new skill body" message rather than silently mis-parsing.
+  Archived session-notes scope: PLAN says "only live rollup migrates"
+  but session-notes archived migration is a real cohesion question
+  (whiteboard design-systems). Decision: migrate archived
+  session-notes too (option (a) — preserves one-shape-per-tree
+  cohesion at the small cost of touching archived data).
+
+**Branch:** `substrate-cli/phase-4`.
 
 **Verification:** `npm run lint` + `npm test` clean. End-to-end:
-write a session-note via `bin/griot capture`, process via
-`/griot-compact`, verify rollup.json gets the new entry, verify
-`/griot-load` (and `bin/griot use --as=llm`) emit the new entry as
-LLM prose. Migration verified by a separate test on a fixture of
-old-format session-notes + old-format rollup.
+write a session-note via `bin/griot capture`, verify `state.json`
+sidecar + pure-prose `learning.md`. Run `/griot-compact` over the
+new-shape note and verify routing reads `state.json` successfully.
+Migration: run migration script on a fixture of old-format
+session-notes; verify state.json appears, frontmatter is stripped
+from learning.md, prose body is preserved. Format-detection error
+path: invoke `bin/griot capture` against a fixture old-format note
+and verify the loud-error message.
+
+**One PR.**
+
+### Phase 4 rollup: rollup format change + /griot-load + /ev-run loader
+
+The rollup half of the original Phase 4 bundle, deferred per the
+Phase 4 whiteboard split (skeptic Finding 3). Depends on Phase 4
+(session-notes) having merged so `/griot-compact` already reads from
+`state.json` when its promotion logic switches its write target to
+`rollup.json`.
+
+Two deliverables in one PR:
+
+- **rollup format change**: replace `learnings/rollup.md` with
+  `learnings/rollup.json` (machine format: array of `{id, title,
+  classification, promoted, origin, body, rubric}` entries —
+  `body` stays a markdown string for faithful round-trip per
+  whiteboard skeptic Finding 2 + design-systems; `rubric` is a
+  typed array of strings; `classification` lifts to its own field
+  from the id prefix). Add `bin/griot use --as=llm` flag that
+  renders JSON to LLM-friendly prose at injection time (string-
+  concatenation template; no markdown-AST library per whiteboard
+  performance). Migrate existing `rollup.md` to the new format
+  (one-time conversion script in `.claude/scripts/` with sibling
+  vitest; not promoted to `bin/griot migrate`). Update `config.yaml`
+  `paths.rollup` from `learnings/rollup.md` to `learnings/rollup.json`
+  in the same commit. Repo-wide grep sweep for `rollup.md` / `paths.
+  rollup` / `learnings/rollup` references; update all atomically.
+  `/griot-compact` SKILL body's IMPROVED-promotion logic writes to
+  `rollup.json` instead of `rollup.md`. Per skeptic Finding 1:
+  `/griot-compact` reader/writer detects old-format `rollup.md`
+  presence and errors loudly with the restart-session message.
+- **/griot-load skill + /ev-run loader update**: new `/griot-load`
+  skill (`disable-model-invocation: true` + `user-invocable: true`)
+  as the addressable user surface for manual rollup loads. Per
+  whiteboard skeptic Finding 4 + performance: skill body is **pure
+  pass-through** (invoke `bin/griot use --as=llm rollup`, return
+  output) — L-004 means the skill is untestable in the authoring
+  session, so synthesis goes in the CLI where it CAN be bash-tested.
+  Update `/ev-run`'s rollup-loading step to call `bin/griot use
+  --as=llm` directly (Bash, not Skill). Resolve the
+  `/learnings-use` vs `/griot-load` naming question before this
+  ships — current vocabulary has `learnings-*` (capture, use,
+  report) and `griot-*` (compact); adding `/griot-load` without
+  resolving the family-coherence question grows parallel
+  vocabularies (whiteboard design-systems). Recommended resolution:
+  rename `/learnings-use` → `/griot-load` (consolidate under
+  `griot-*` orchestration tier) and update README skill table in
+  the same PR. Final naming negotiated in the D2 unit contract.
+
+**Branch:** `substrate-cli/phase-4-rollup`. No new manifest phase
+row is added (loom lacks `phase add`); Phase 4 in the manifest
+stays in-progress until this PR merges, then completes the
+"griot internal restructure" bucket.
+
+**Verification:** `npm run lint` + `npm test` clean. End-to-end:
+run `bin/griot use --as=llm rollup` and verify output matches the
+current `rollup.md` content faithfully (round-trip test against
+the migrated rollup.json). Verify `/griot-load` skill body is a
+trivial wrapper (single bash invocation, no synthesis logic). New
+session `/ev-run` invocation reads `rollup.json` via the loader
+step (smoke verifiable next session after L-004 boundary).
+Citation grep verification: confirm Stop hook is transcript-only
+(does not read rollup.md) OR update it to read rollup.json.
+Migration verified by separate test on a fixture old-format
+rollup.md.
 
 **One PR.**
 
@@ -453,8 +537,16 @@ mutable-state hotspots are documented in the sweep's checkin Notes.
   This is 4 parallel-eligible phases at the start — a strong
   demonstration of the substrate's parallel-work goal.
 - **Phase 4 depends on Phase 1** — needs `bin/griot capture` and
-  `bin/griot use` already in place to add the `--as=llm` rendering
-  + the new session-note shape.
+  `bin/griot use` already in place to add the new session-note
+  shape and the migration script.
+- **Phase 4 rollup depends on Phase 1 + Phase 4** — needs
+  `bin/griot use` already in place for the `--as=llm` flag, AND
+  needs Phase 4 (session-notes) merged so `/griot-compact` already
+  reads `state.json` when its promotion logic switches its write
+  target to `rollup.json`. The split-line is at the
+  `/griot-compact` body, which absorbs an edit from Phase 4
+  (routing-reader) and an edit from Phase 4 rollup (promotion-
+  writer); ordering ensures the two edits don't conflict.
 - **Phase 6 depends on Phases 1 + 2** — sweeps ev-loop bodies to
   point at `bin/griot` + `bin/guild` verbs that need to exist first.
   Independent of Phase 3's audit timing (the § work is orthogonal to
@@ -474,7 +566,8 @@ mutable-state hotspots are documented in the sweep's checkin Notes.
   registry-reload caveat applies; smoke-test from the next session.
 
 Recommended execution order: cut P1+P2+P3+P5 parallel branches → P4
-starts when P1 lands → P6 starts when P1+P2 land.
+starts when P1 lands → Phase 4 rollup starts when P4 lands → P6
+starts when P1+P2 land.
 
 `trout-sunset` is complete (#91, #92, #93, #95). The substrate
 prerequisites this project depended on are in place; no external
@@ -486,8 +579,8 @@ blocker remains.
 - `npm run build` clean.
 - `npm test` clean — substrate test count grows with each phase
   (new bin/griot tests in P1; bin/guild tests in P2; audit doesn't
-  add test count materially; migration tests in P4; agent smoke
-  tests in P5).
+  add test count materially; migration tests in P4 + Phase 4 rollup;
+  agent smoke tests in P5).
 - `bin/griot --help` lists all subcommands; same for `bin/guild`.
 - Every skill in `.claude/skills/` has its two-axis classification
   + justification documented in P3's audit checkin.
@@ -496,13 +589,15 @@ blocker remains.
 - Substrate-skill count after all phases: target ~12. Specifics
   emerge from the audit (which may surface more kills than just
   the obvious 2).
-- E2E migration verified in P4: existing unprocessed session-notes
-  + existing rollup.md migrate without data loss.
+- E2E migration verified in P4 + Phase 4 rollup: existing
+  unprocessed session-notes + existing rollup.md migrate without
+  data loss.
 - Parallel-safety: P6's audit produces zero remaining shared-
   mutable-state hotspots.
 - `/griot-load` skill is `disable-model-invocation: true` +
-  `user-invocable: true` and renders rollup.json to LLM prose
-  correctly.
+  `user-invocable: true` and is a pure pass-through wrapper around
+  `bin/griot use --as=llm rollup` (no synthesis logic — synthesis
+  lives in the CLI per whiteboard skeptic Finding 4).
 - § Substrate compositions reference exists at the agreed location;
   ev-loop bodies cite recipes by section name; no recipe prose is
   duplicated between the two ev-loop files.
@@ -511,17 +606,24 @@ blocker remains.
 
 - **Breaking `/griot-compact` read path during session-notes
   restructure (P4)**. `/griot-compact` reads YAML frontmatter today.
-  Migration must update the SKILL body + migrate any in-flight notes
+  Migration must update the SKILL body + migrate in-flight notes
   atomically with the same PR. Mitigation: phase-local test that
   `/griot-compact` processes a state.json note end-to-end; ship the
   SKILL body + migration script + format change in one commit so no
-  intermediate state exists.
+  intermediate state exists. Per whiteboard skeptic Finding 1, also
+  add a format-detection error path: if `/griot-compact` reader
+  sees old-format YAML frontmatter on `learning.md`, it errors
+  loudly ("session predates Phase 4 cutover; restart session to
+  pick up new skill body") rather than silently mis-parsing.
 - **Breaking active `/griot-use` injections during rollup
-  restructure (P4)**. `rollup.md` → `rollup.json` + render-via-CLI
-  changes the contract `/ev-run` depends on. Mitigation: ship the
-  CLI render step + the new `/griot-load` skill in the same PR as
-  the format change; one-time `rollup.md` → `rollup.json` conversion
-  also in the same PR.
+  restructure (Phase 4 rollup)**. `rollup.md` → `rollup.json` +
+  render-via-CLI changes the contract `/ev-run` depends on.
+  Mitigation: ship the CLI render step + the new `/griot-load`
+  skill in the same PR as the format change; one-time `rollup.md`
+  → `rollup.json` conversion also in the same PR. Same
+  format-detection-and-loud-error pattern as P4: if `/griot-compact`
+  promotion-writer sees `rollup.md` on disk after the cutover, it
+  errors with the restart-session message.
 - **L-004 surfacing during Phase 5 (newly authored agents not in
   same-session registry)**. The 4 new agent files won't be in the
   session that authored them; any panel that uses them must run in
@@ -546,11 +648,16 @@ blocker remains.
 
 - After this project lands, can `.claude/scripts/` be deleted
   entirely? Or do any scripts (Stop hooks, settings hooks) live
-  there permanently? Survey during P6.
+  there permanently? Survey during P6. Note that Phase 4 + Phase 4
+  rollup both add new `.claude/scripts/` migration scripts, so the
+  directory survives at least until those one-time migrations are
+  considered safe to delete (which is "never" in practice — the
+  scripts are documentation of what the migration did).
 - Does the Stop hook for citation-contract greps (looks for
   `Applied: L-NNN` / `Applied: AP-NNN`) need to know about the new
   rollup.json location, or does it operate purely on the
-  transcript text? Likely transcript-only, but verify in P4.
+  transcript text? Likely transcript-only, but verify in Phase 4
+  rollup before that PR lands.
 - Should the parallel-work invariant get a CONVENTIONS.md test
   (lint rule) that flags new CRUD verbs without append-only or
   branch-partitioned semantics? Decided in P6.
@@ -561,6 +668,10 @@ blocker remains.
   way to fix the placeholder URL on already-set rows (the verb is
   monotonic by default). Should this fold into the parallel-work
   hardening (P6) audit or punt to #4 substrate-gaps sibling project?
+- `/learnings-use` vs `/griot-load` naming resolution (raised by
+  whiteboard design-systems): rename `/learnings-use` →
+  `/griot-load` (consolidate under griot-*) or keep as peers with
+  documented difference? Decided in Phase 4 rollup's D2 contract.
 
 ## Decisions
 
@@ -576,9 +687,50 @@ them so future revisions preserve them.
   (not human-prose-readable); `bin/griot use --as=llm` renders to
   prose at injection. `/griot-load` is the user-facing skill that
   wraps the render step. The human-readability constraint that
-  forced `rollup.md`'s prose shape is gone.
+  forced `rollup.md`'s prose shape is gone. Whiteboard
+  design-systems nudged this with a "the schema doesn't preclude a
+  `--as=human` render later" caveat — accepted as a future-
+  optionality note: `--as=llm` is the only render mode shipped in
+  Phase 4 rollup; future render modes (e.g. `--as=human`) can be
+  added without re-shaping the schema.
 - **session-notes folder shape**: `state.json` sidecar +
   `learning.md` + 4 body MD files. No more YAML-frontmatter-on-MD.
+  Per whiteboard design-systems: the prose files remain the
+  *source of truth*; `state.json` is the *routing label* that
+  describes where this note sits in the griot pipeline. Resist
+  any future framing that treats `state.json` as the canonical
+  source.
+- **rollup.json schema shape** (pinned per Phase 4 rollup whiteboard
+  round 1 — skeptic Finding 2 + design-systems): array of objects
+  with structured-handle fields (`id`, `title`, `classification`,
+  `promoted`, `origin`, `rubric`) plus a `body` field that holds
+  the multi-paragraph learning prose as a markdown string. `body`
+  stays a markdown string for faithful round-trip — do NOT split
+  it into sub-fields (`summary`, `details`, `example`, etc.).
+  Further structuring of body content is out of scope for Phase 4
+  rollup and would require its own design pass. `rubric` is a
+  typed array of strings (optional; not all entries have rubric
+  criteria). `classification` lifts from the id prefix to its own
+  field so downstream consumers stop string-parsing the id.
+- **Migration scripts live in `.claude/scripts/`** (not promoted to
+  `bin/griot migrate` verbs). Per whiteboard performance: throwaway-
+  ness is structural; `bin/griot migrate` would invite future
+  one-off "migrate from N to N+1" verbs accreting permanently in
+  the CLI surface. `.claude/scripts/` is where one-time-but-
+  committed-and-tested migration scripts belong.
+- **Format-detection error path for cutover safety** (per Phase 4
+  whiteboard skeptic Finding 1): both Phase 4 (session-notes) and
+  Phase 4 rollup add a small format-detection-and-loud-error branch
+  to their reader/writer entry points. If `bin/griot capture` sees
+  old-format YAML frontmatter on `learning.md`, or if `/griot-
+  compact` sees `rollup.md` after the cutover, errors loudly with
+  "session predates Phase X cutover; restart session to pick up
+  new skill body." Cost: one branch per entry point. Benefit:
+  silent corruption becomes a clear error message when the user
+  forgets to `/clear` across a merge boundary. Dual-read tolerance
+  was considered and rejected (whiteboard skeptic + performance +
+  design-systems all agreed) — dual-read introduces permanent
+  code-path complexity for a one-time migration.
 - **Two-axis frontmatter rubric for skill classification**. Every
   skill in `.claude/skills/` lives on a 2x2 of `disable-model-
   invocation` × `user-invocable`. The "no useless ambient skills"
@@ -601,6 +753,28 @@ them so future revisions preserve them.
   `user-invocable: true`**. Pattern-matches the two-axis rubric.
   Composition from `/ev-run` and similar goes through
   `bin/griot use --as=llm` directly (Bash), not through the skill.
+- **`/griot-load` skill body is pure pass-through** (per Phase 4
+  rollup whiteboard skeptic Finding 4 + performance). The skill
+  invokes `bin/griot use --as=llm rollup` and returns the output,
+  with no additional synthesis logic in the SKILL.md body. L-004
+  means the authoring session can't invoke the skill, so any
+  synthesis logic in the skill body would ship untested.
+  Synthesis lives in the CLI verb (`bin/griot use --as=llm`),
+  where it can be bash-tested in the authoring session. The skill
+  exists as an addressable user surface; not as a place where
+  logic lives.
+- **Phase 4 split into Phase 4 (session-notes) + Phase 4 rollup**
+  (pinned per Phase 4 whiteboard round 1 — skeptic Finding 3 + the
+  CLAUDE.md "one conceptual change per PR" convention). The
+  original Phase 4 framing bundled three coupled changes into one
+  PR; whiteboard pressure-testing surfaced that D1 (session-notes)
+  and D2 (rollup) are independent at the coupling level, meeting
+  only at the `/griot-compact` body which can take edits from two
+  separate PRs. Splitting also de-risks D2's schema decisions by
+  letting D1 ship first. The Phase 4 manifest row remains a single
+  bucket for the entire "griot internal restructure" work; the row
+  stays in-progress across both PRs and completes when Phase 4
+  rollup merges.
 - **No family has more than ~4 substrate skills**. The four-family
   taxonomy with this constraint is the consistency target; if a
   family grows past 4, audit for CRUD-masquerading-as-orchestration.
@@ -655,7 +829,12 @@ them so future revisions preserve them.
 
 
 
+
+- 2026-05-16 — apply intended Phase 4 split (prior revision cea7c1e committed with the correct rationale but a stale revision-file from a prior session — the file at /tmp/loom-revision-substrate-cli.md predated this session; Write tool refused to overwrite without Read-first, bin/draft revise applied the stale file unchanged); this revision actually splits Phase 4 into Phase 4 (session-notes) + Phase 4 rollup, pins the new Decisions, and adds the Open question
+
 - 2026-05-16 — split Phase 4 into Phase 4 (session-notes only) + Phase 4 rollup (rollup format + /griot-load + /ev-run loader) per Phase 4 whiteboard skeptic Finding 3; pin rollup.json schema + format-detection error path + .claude/scripts/ migration home + /griot-load pure pass-through as new Decisions; add /learnings-use vs /griot-load resolution as Open question to settle in Phase 4 rollup's D2 contract
+
+- 2026-05-16 — add Phase 3 followup 2: extend ev-loop-* frontmatter fix to guild-* family (guild-spawn/guild-validate/guild-whiteboard had disable-model-invocation: true that blocks Skill composition from ev-loop); amend audit-rubric Decision to correct the source-of-the-trap rule; pin new Decision for guild-* canonical shape; add Phase 3 followup 2 → Phase 4 dependency
 
 - 2026-05-16 — add Phase 3 followup: flip ev-loop-* to top-level user-invocable (remove disable-model-invocation that blocks /ev-run Skill composition); reconcile PR #101 manifest drift; pin new Decision for top-level loops + add Phase 3 followup → Phase 4 dependency
 
