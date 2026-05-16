@@ -13,10 +13,11 @@ import {
   ARCHIVE_DIRNAME,
 } from '../lib/project.ts';
 import { readManifest, writeManifest } from '../lib/manifest.ts';
-import { readConfig, writeConfig } from '../lib/config.ts';
+import { readConfig } from '../lib/config.ts';
 import { appendEvent } from '../lib/events.ts';
 import { LoomError } from '../lib/errors.ts';
-import type { Manifest, ManifestPhase } from '../lib/types.ts';
+import { writeLoomSubstrate, type ManifestInit } from '../lib/adopt.ts';
+import type { Manifest } from '../lib/types.ts';
 
 // Shared CLI context. Tests inject `projectsRoot` directly and may
 // override `cwdOverride` to simulate `process.cwd()` for `status`,
@@ -137,13 +138,6 @@ function normalizeSlug(input: string): string {
   );
 }
 
-type ManifestInit = {
-  title: string;
-  started: string;
-  strategy: string;
-  phases: ManifestPhase[];
-};
-
 const SCAFFOLD_OPTIONS = {
   pretty: { type: 'boolean' as const },
   'plan-file': { type: 'string' as const },
@@ -214,28 +208,8 @@ export function projectScaffold(rest: string[], ctx: CliContext): DispatchResult
   }
   try {
     mkdirSync(projectDir, { recursive: true });
-    mkdirSync(join(projectDir, 'checkins'), { recursive: true });
-    mkdirSync(join(projectDir, 'sessions'), { recursive: true });
-
-    const manifest: Manifest = {
-      schema_version: 1,
-      title: manifestInit.title,
-      slug,
-      started: manifestInit.started,
-      status: 'active',
-      current_branch: null,
-      latest_checkin: null,
-      strategy: manifestInit.strategy,
-      phases: manifestInit.phases,
-    };
-    writeManifest(join(projectDir, 'manifest.json'), manifest);
-    writeConfig(join(projectDir, 'config.json'), config);
     copyFileSync(planFile, join(projectDir, 'PLAN.md'));
-    appendEvent(join(projectDir, 'events.jsonl'), {
-      at: new Date().toISOString(),
-      event: 'project-initialized',
-      detail: {},
-    });
+    writeLoomSubstrate({ projectDir, slug, config, manifestInit });
   } catch (err: unknown) {
     if (err instanceof LoomError) return errToResult(err);
     return errToResult(
@@ -331,27 +305,7 @@ export function projectAdopt(rest: string[], ctx: CliContext): DispatchResult {
     return errToResult(err);
   }
   try {
-    mkdirSync(join(projectDir, 'checkins'), { recursive: true });
-    mkdirSync(join(projectDir, 'sessions'), { recursive: true });
-
-    const manifest: Manifest = {
-      schema_version: 1,
-      title: manifestInit.title,
-      slug,
-      started: manifestInit.started,
-      status: 'active',
-      current_branch: null,
-      latest_checkin: null,
-      strategy: manifestInit.strategy,
-      phases: manifestInit.phases,
-    };
-    writeManifest(manifestPath, manifest);
-    writeConfig(join(projectDir, 'config.json'), config);
-    appendEvent(join(projectDir, 'events.jsonl'), {
-      at: new Date().toISOString(),
-      event: 'project-initialized',
-      detail: {},
-    });
+    writeLoomSubstrate({ projectDir, slug, config, manifestInit });
   } catch (err: unknown) {
     if (err instanceof LoomError) return errToResult(err);
     return errToResult(

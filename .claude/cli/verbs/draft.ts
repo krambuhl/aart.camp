@@ -11,6 +11,11 @@ import { LoomError } from '../lib/errors.ts';
 import { createSlug } from '../lib/project.ts';
 import { resolveTroutProject } from '../lib/draft-project.ts';
 import { type GitRunner, defaultGitRunner } from '../lib/draft-git.ts';
+import {
+  writeLoomSubstrate,
+  synthesizeManifestInit,
+  synthesizeConfig,
+} from '../lib/adopt.ts';
 
 // Shared context for every draft verb. Tests inject `projectsRoot`
 // (a temp dir), `today` (deterministic slug derivation), and
@@ -63,6 +68,7 @@ const PLAN_OPTIONS = {
   'plan-file': { type: 'string' as const },
   'interview-file': { type: 'string' as const },
   'no-commit': { type: 'boolean' as const },
+  'no-loom': { type: 'boolean' as const },
   pretty: { type: 'boolean' as const },
 };
 
@@ -80,6 +86,7 @@ export function planVerb(
   const planFile = values['plan-file'];
   const interviewFile = values['interview-file'];
   const noCommit = values['no-commit'] === true;
+  const noLoom = values['no-loom'] === true;
   const pretty = values.pretty === true;
 
   if (slugOrTopic === undefined) {
@@ -151,11 +158,41 @@ export function planVerb(
     );
   }
 
+  // Auto-adopt loom substrate (manifest.json, config.json, events.jsonl,
+  // checkins/, sessions/) by default. Skipped when --no-loom is passed
+  // or when manifest.json already exists (recovery case where draft plan
+  // is re-run and loom is already set up).
+  const filesToCommit = [planMdPath, interviewMdPath];
+  const manifestPath = join(targetDir, 'manifest.json');
+  const adoptLoom = !noLoom && !existsSync(manifestPath);
+  if (adoptLoom) {
+    try {
+      writeLoomSubstrate({
+        projectDir: targetDir,
+        slug,
+        config: synthesizeConfig(),
+        manifestInit: synthesizeManifestInit(slug, todayString(ctx)),
+      });
+      filesToCommit.push(
+        manifestPath,
+        join(targetDir, 'config.json'),
+        join(targetDir, 'events.jsonl'),
+      );
+    } catch (err: unknown) {
+      return errToResult(
+        new LoomError(
+          'loom-adopt-failed',
+          `auto-adopting loom failed: ${(err as Error).message}`,
+        ),
+      );
+    }
+  }
+
   if (!noCommit) {
     try {
       gitRunnerOf(ctx).addAndCommit(
         repoRootOf(ctx),
-        [planMdPath, interviewMdPath],
+        filesToCommit,
         `[draft plan] ${slug}`,
       );
     } catch (err) {
@@ -165,7 +202,7 @@ export function planVerb(
 
   return {
     stdout: emit(
-      { slug, path: targetDir, committed: !noCommit },
+      { slug, path: targetDir, committed: !noCommit, loom_adopted: adoptLoom },
       pretty,
     ),
     exitCode: 0,

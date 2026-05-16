@@ -75,7 +75,7 @@ test('DRAFT_VERBS registers all three verbs', () => {
 
 // ---------- Happy paths ----------
 
-test('planVerb: happy path writes both files and commits', () => {
+test('planVerb: happy path writes both draft files + auto-adopts loom + commits', () => {
   const result = planVerb(
     [
       'Adopt Biome',
@@ -91,8 +91,9 @@ test('planVerb: happy path writes both files and commits', () => {
   expect(payload.slug).toBe('2026-05-15-adopt-biome');
   expect(payload.path).toBe(join(projectsRoot, '2026-05-15-adopt-biome'));
   expect(payload.committed).toBe(true);
+  expect(payload.loom_adopted).toBe(true);
 
-  // Files copied
+  // Draft files copied
   expect(
     readFileSync(join(payload.path, 'PLAN.md'), 'utf8'),
   ).toContain('# PLAN');
@@ -100,12 +101,81 @@ test('planVerb: happy path writes both files and commits', () => {
     readFileSync(join(payload.path, 'INTERVIEW.md'), 'utf8'),
   ).toContain('# INTERVIEW');
 
-  // git addAndCommit called once with both files + a draft-plan message
+  // Loom files written by auto-adopt
+  expect(existsSync(join(payload.path, 'manifest.json'))).toBe(true);
+  expect(existsSync(join(payload.path, 'config.json'))).toBe(true);
+  expect(existsSync(join(payload.path, 'events.jsonl'))).toBe(true);
+  expect(existsSync(join(payload.path, 'checkins'))).toBe(true);
+  expect(existsSync(join(payload.path, 'sessions'))).toBe(true);
+
+  // Manifest carries title derived from slug
+  const m = JSON.parse(
+    readFileSync(join(payload.path, 'manifest.json'), 'utf8'),
+  );
+  expect(m.title).toBe('Adopt Biome');
+  expect(m.slug).toBe('2026-05-15-adopt-biome');
+  expect(m.status).toBe('active');
+
+  // git addAndCommit called once with all five files + a draft-plan message
   const addCalls = gitCalls.filter((c) => c.method === 'addAndCommit');
   expect(addCalls.length).toBe(1);
-  const [, , message] = addCalls[0]?.args ?? [];
+  const [, paths, message] = addCalls[0]?.args ?? [];
+  expect((paths as string[]).length).toBe(5);
   expect(message).toContain('draft plan');
   expect(message).toContain('2026-05-15-adopt-biome');
+});
+
+test('planVerb: --no-loom skips auto-adopt', () => {
+  const result = planVerb(
+    [
+      'Adopt Biome',
+      `--plan-file=${planFile}`,
+      `--interview-file=${interviewFile}`,
+      '--no-loom',
+    ],
+    baseCtx(),
+  );
+
+  expect(result.exitCode).toBe(0);
+  const payload = JSON.parse(result.stdout as string);
+  expect(payload.loom_adopted).toBe(false);
+
+  // Draft files written
+  expect(existsSync(join(payload.path, 'PLAN.md'))).toBe(true);
+  expect(existsSync(join(payload.path, 'INTERVIEW.md'))).toBe(true);
+  // Loom files NOT written
+  expect(existsSync(join(payload.path, 'manifest.json'))).toBe(false);
+  expect(existsSync(join(payload.path, 'config.json'))).toBe(false);
+  expect(existsSync(join(payload.path, 'events.jsonl'))).toBe(false);
+
+  // Commit only includes the two draft files
+  const addCalls = gitCalls.filter((c) => c.method === 'addAndCommit');
+  expect(addCalls.length).toBe(1);
+  const [, paths] = addCalls[0]?.args ?? [];
+  expect((paths as string[]).length).toBe(2);
+});
+
+test('planVerb: skips loom adopt when manifest.json already exists (recovery case)', () => {
+  // Pre-create the project with PLAN.md uncommitted + manifest.json
+  // already in place (simulating a prior successful loom adopt that
+  // the user is rerunning draft plan over).
+  const slug = '2026-05-15-existing';
+  const dir = join(projectsRoot, slug);
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, 'PLAN.md'), '# old plan\n');
+  writeFileSync(join(dir, 'manifest.json'), '{"existing":"manifest"}');
+
+  const result = planVerb(
+    [slug, `--plan-file=${planFile}`, `--interview-file=${interviewFile}`],
+    baseCtx(),
+  );
+  expect(result.exitCode).toBe(0);
+  const payload = JSON.parse(result.stdout as string);
+  expect(payload.loom_adopted).toBe(false);
+  // Existing manifest preserved (writeLoomSubstrate would have overwritten)
+  expect(readFileSync(join(dir, 'manifest.json'), 'utf8')).toBe(
+    '{"existing":"manifest"}',
+  );
 });
 
 test('planVerb: --no-commit writes files but skips git', () => {
