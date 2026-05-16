@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "type": "project",
+  "created": "2026-05-16T01:47:22Z",
+  "findings": [
+    {
+      "category": "kept-well",
+      "description": "Naming loom + draft as 'paired halves of one substrate' (not 'alternatives') unlocked the model. Once that framing landed, the coexistence gaps became obvious bugs to fix instead of deferred design questions.",
+      "evidence": "User correction mid-Phase-1 captured in INTERVIEW.md Q8; PLAN.md revised v2 → v3."
+    },
+    {
+      "category": "kept-well",
+      "description": "Inlining substrate workflows as a § Substrate compositions section in each ev-loop SKILL.md was the right home for the prose that used to live in /loom-pr, /loom-pr-respond, /loom-session, /draft-revise. Duplicated between loops but cheap and self-contained.",
+      "evidence": "PR #92 D3+D4: +702 SKILL.md lines, -641 from four deleted skills."
+    },
+    {
+      "category": "kept-well",
+      "description": "Drain happened on its own time during Phase 1/2 work. By the time Phase 2 merged, agent-guilds (#90) and draft-cli (#86) had already archived without trout-sunset needing to coordinate. Phase 3 was unblocked the moment Phase 2 merged — no waiting period.",
+      "evidence": "PRs #90 and #86 merged between Phase 1 and Phase 2."
+    },
+    {
+      "category": "kept-well",
+      "description": "Mid-flight Phase 2 scope expansion (autosave/autoload references migrated alongside the four-skill replacements) was healthy — better than punting them to Phase 3 and bloating the deletion PR.",
+      "evidence": "User confirmation this interview: 'painless on this one, it expanded in a healthy way'."
+    },
+    {
+      "category": "improvement",
+      "description": "Recursive bootstrapping bit us — trout-sunset itself adopted loom by manual file writes because bin/loom project adopt didn't exist yet (the very gap Phase 1 closed). Workable but ironic; the meta-project needed the thing it was building.",
+      "evidence": "Manual manifest.json/config.json/events.jsonl writes during project setup; captured in INTERVIEW.md Q7."
+    },
+    {
+      "category": "improvement",
+      "description": "Manifest-vs-PLAN drift: when PLAN.md revised v2 → v3 (adding a new Phase 1), manifest.json's phases array stayed at v2 shape. Drift was invisible until archive pre-flight surfaced it.",
+      "evidence": "trout-sunset's own manifest.json had 2 phases at archive time; PLAN.md v3 had 3."
+    },
+    {
+      "category": "improvement",
+      "description": "/loom-archive (this skill) interviewed via free-form prose. User prefers the grill-me multi-choice pace from /draft-plan across all interview-style skills.",
+      "evidence": "User feedback this interview Q1: 'i like the pace of thing... i would like all of these tools to use that pace'."
+    },
+    {
+      "category": "process-change",
+      "description": "Skill audits should default-delete when the only caller is a loop. /loom-pr, /loom-pr-respond, /loom-session, /draft-revise all earned their slots until the audit rule changed; deleting them sharpened the user-visible chooser.",
+      "evidence": "Feedback memory feedback_loops_use_cli_directly.md; PR #92 D2."
+    },
+    {
+      "category": "process-change",
+      "description": "PLAN revisions should also touch manifest phase metadata (or vice-versa: manifest should derive phase list from PLAN). The current shape lets the two drift silently, as trout-sunset demonstrated.",
+      "evidence": "Improvement finding above."
+    },
+    {
+      "category": "process-change",
+      "description": "Revisions should live in a separate additive projects/<slug>/revisions/ folder, not inline in PLAN.md's Revision log section. PLAN.md becomes 'current source of truth'; revisions/ is the additive log. bin/draft revise owns the file mechanism; ev-loops invoke it directly with PLAN.md as the focal artifact.",
+      "evidence": "User feedback this interview Q3; saved as feedback_revisions_folder_architecture.md."
+    },
+    {
+      "category": "follow-up",
+      "description": "Build the revisions/ folder substrate as a separate project: redesign bin/draft revise to write revisions/<NN>.md instead of appending to PLAN.md's Revision log; update LOOM-CONVENTIONS; update ev-loop SKILL.md § Revise PLAN.md to write a revision file + optionally edit PLAN.md current state. Existing archived projects keep their inline Revision logs.",
+      "evidence": "User-stated future direction; process-change finding above is the design seed."
+    },
+    {
+      "category": "follow-up",
+      "description": "Adopt draft-plan's grill-me multi-choice pace across all interview-style skills (/loom-archive most urgently; future interview surfaces by default). Substrate primitive: AskUserQuestion with 2-4 discrete options + recommendation labeled + walk-the-tree pacing.",
+      "evidence": "User feedback this interview Q1; saved as feedback_grill_me_pace_default.md."
+    },
+    {
+      "category": "follow-up",
+      "description": "Loose ends surfaced during trout-sunset that didn't warrant their own follow-ups but should land eventually: bin/loom pr reconcile verb (auto-flip open→merged drift in events when gh confirms PR merged); bin/loom phase update --url= flag (currently synthesizes a placeholder URL); residual makeTroutProject helper rename in .claude/cli/verbs/draft.test.ts (missed in Phase 3 D4).",
+      "evidence": "Open questions in trout-sunset PLAN.md; minor miss reported after PR #93 merged."
+    }
+  ]
+}

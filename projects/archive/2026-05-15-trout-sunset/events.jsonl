@@ -1,3 +1,7 @@
 {"at":"2026-05-15T23:16:15Z","event":"project-initialized","detail":{}}
 {"at":"2026-05-15T23:16:15Z","event":"note","detail":{"text":"Loom substrate adopted manually after bin/draft plan created the project dir; bin/loom project scaffold refuses on existing dirs. Follow-up: add a bin/loom project adopt-from-draft verb."}}
 {"at":"2026-05-15T23:26:58Z","event":"note","detail":{"text":"PLAN.md revised to v3 after user clarified loom+draft are paired (not alternatives). Promoted substrate coexistence gaps from open-questions to Phase 1 scope; added auto-loom-adopt to bin/draft plan; renumbered loop migration to Phase 2 and sunset to Phase 3."}}
+{"at":"2026-05-16T01:47:16.013Z","event":"phase-completed","detail":{"phase":1}}
+{"at":"2026-05-16T01:47:16.080Z","event":"phase-completed","detail":{"phase":2}}
+{"at":"2026-05-16T01:48:07.799Z","event":"retro-written","detail":{"type":"project"}}
+{"at":"2026-05-16T01:48:14.338Z","event":"archived","detail":{"destination":"/home/krambuhl/work/aart.camp/projects/archive/2026-05-15-trout-sunset"}}

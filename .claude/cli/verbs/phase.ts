@@ -119,6 +119,8 @@ const PHASE_STATUSES: ReadonlySet<PhaseStatus> = new Set([
   'completed',
 ]);
 
+const PR_STATES: ReadonlySet<string> = new Set(['open', 'merged', 'closed']);
+
 export function phaseUpdate(rest: string[], ctx: CliContext): DispatchResult {
   const { values, positionals } = parseArgs({
     args: rest,
@@ -127,6 +129,8 @@ export function phaseUpdate(rest: string[], ctx: CliContext): DispatchResult {
       status: { type: 'string' },
       branch: { type: 'string' },
       pr: { type: 'string' },
+      url: { type: 'string' },
+      'pr-state': { type: 'string' },
       reason: { type: 'string' },
     },
     allowPositionals: true,
@@ -172,6 +176,24 @@ export function phaseUpdate(rest: string[], ctx: CliContext): DispatchResult {
     }
     prNum = parsed;
   }
+  const prUrl = values.url;
+  const prStateArg = values['pr-state'];
+  if (prStateArg !== undefined && !PR_STATES.has(prStateArg)) {
+    return errToResult(
+      new LoomError(
+        'invalid-pr-state',
+        `--pr-state must be one of: open | merged | closed (got: ${prStateArg})`,
+      ),
+    );
+  }
+  if ((prUrl !== undefined || prStateArg !== undefined) && prNum === undefined) {
+    return errToResult(
+      new LoomError(
+        'missing-args',
+        '--url and --pr-state require --pr to identify the PR being updated',
+      ),
+    );
+  }
 
   try {
     const path = resolveProject(slug, ctx.projectsRoot);
@@ -191,10 +213,15 @@ export function phaseUpdate(rest: string[], ctx: CliContext): DispatchResult {
     if (values.branch !== undefined) updated.branch = values.branch;
     if (status === 'blocked') updated.blocked_reason = values.reason;
     if (prNum !== undefined) {
+      // URL defaults to a placeholder when --url isn't passed; the
+      // placeholder is recognizable so callers know to set the real
+      // value. Once a URL is set, --url is required to change it
+      // (the verb is monotonic by default).
+      const placeholderUrl = `https://github.com/example/example/pull/${prNum}`;
       updated.pr = {
         number: prNum,
-        url: `https://github.com/example/example/pull/${prNum}`,
-        state: 'open',
+        url: prUrl ?? phase.pr?.url ?? placeholderUrl,
+        state: (prStateArg ?? phase.pr?.state ?? 'open') as 'open' | 'merged' | 'closed',
       };
     }
     manifest.phases = manifest.phases.map((p) =>
