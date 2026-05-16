@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "date": "2026-05-16",
+  "letter": "i",
+  "phases_touched": [
+    5
+  ],
+  "checkins_written": [
+    "01",
+    "02"
+  ],
+  "pr_activity": [
+    "#107 opened (substrate-cli/phase-5 → main; Phase 5 New agent families bucket; 2 checkins)"
+  ],
+  "what_happened": [
+    "/ev-run dispatched on `substrate-cli 106 merged`. Synced local main forward to 58c0cc8 (the actual #106 merge). Cut substrate-cli/phase-5. Surfaced 3 substrate-state drifts: missing pr-opened/pr-merged events for #106; local main 1 commit behind origin/main; worker_bindings empty under strategy=interactive.",
+    "/guild-whiteboard Round 1 with all 6 callable engineers on Phase 5 design questions. Strong signals: tier-names-vs-tool-names (3 voices for rename, 1 for keep); keep `whiteboard-substrate-engineer` name despite project-internal vocabulary; L-004 follow-up-unit shape with PLAN breadcrumb (no agent-body notes); mirror whiteboard-a11y/evaluator-a11y design/review-phase split; a11y wrinkle on evaluator-test-integration vs evaluator-a11y axe overlap. User picked tier names + two paired units.",
+    "Unit 1: authored evaluator-test-integration + evaluator-test-unit; updated PANEL-COMPOSITION.md (3 new mapping rows; 2 row updates; precedence 7 → 9; cross-references); updated derive-panel.ts FALLBACK constants; updated + extended derive-panel.test.ts (5 new test cases). Surfaced + corrected: PLAN's claim that no `test:e2e` script existed (it does, runs storybook+playwright). Surfaced + corrected: `tests/e2e/**/*.spec.ts` glob doesn't match direct children due to `**/*` translation; simplified to bare `tests/e2e/**`. Panel = contract-fit + naming (test-unit dropped per L-004); both VERDICT: approved on first iteration. Committed as c7a8952.",
+    "Unit 2: authored whiteboard-testing-strategy + whiteboard-substrate-engineer per the existing whiteboard-* template. testing-strategy mirrors a11y design/review-phase split; substrate-engineer's body intro explicitly defines 'substrate' and notes the absence of an evaluator-substrate-engineer counterpart. Panel = contract-fit only (per the existing .claude/agents/*.md rule); VERDICT: approved on first iteration. Committed as d36a443.",
+    "Opened PR #107 'New agent families' (substrate-cli/phase-5 → main). Multi-checkin shape; body includes Motivation + Summary + Units table + Verification + Notes per § Compose PR. Set phase 5 manifest row to {status: in-progress, branch: substrate-cli/phase-5, pr: 107}."
+  ],
+  "open_threads": [
+    "Phase 5 PR #107 is open; awaits review/merge. Once merged, Phase 5 follow-up unit (next session): smoke-test each of the 4 new agents via /guild-validate (evaluator-test-integration spawn against a tests/e2e fixture; evaluator-test-unit spawn against a substrate test) and /guild-whiteboard (testing-strategy + substrate-engineer rounds against representative briefs). Per L-004 the new agents will be in the registry only as of the next Claude Code process. Smoke-test results either reinforce confidence or surface rubric refinements for a small follow-up PR.",
+    "Phase 6 (§ extraction + extension + integration sweep) becomes actionable after Phase 5 merges. Deps satisfied (P1 + P2 merged); current PLAN lists it as parallelizable with P5 but session-h's recommendation was sequential to keep blast radius small. Cut substrate-cli/phase-6 off main once #107 merges, dispatch via /ev-run substrate-cli — router will pick P6 by lowest-numbered policy.",
+    "After Phase 5 + Phase 6 ship, the project is feature-complete and ready for /loom-archive. Phase 6 also covers a CONVENTIONS.md sweep documenting the four-family taxonomy + parallel-work invariant codification.",
+    "Substrate gap #1 (folds into #4 substrate-gaps sibling project): derive-panel's globToRegex requires intermediate slash for `**/*` patterns. Workaround used: bare `tests/e2e/**`. A future glob-leniency improvement (treating `**/*` as zero-or-more segments) would prevent this class of mistake. Not blocking.",
+    "Substrate gap #2 (folds into #4): /ev-run router's panel-derivation step doesn't distinguish session-cached vs newly-authored evaluators. This session manually dropped evaluator-test-unit per the L-004 note in the loop body. A `bin/guild derive-panel --exclude-session-cached=<list>` flag (or similar) would mechanize the dropping. Low priority.",
+    "Substrate gap #3 (folds into #4): bin/loom phase update --pr=<N> constructs the PR URL from a config that defaults to `example/example/pull/N` rather than reading the actual gh PR URL or accepting a --url argument. Manifest entry for #107 has the placeholder URL. Real URL was returned by `bin/loom pr open` but not threaded into the phase update path. Cosmetic but worth noting.",
+    "Substrate gap #4 (folds into #4): /ev-run router could/should consult the manifest's `strategy` field as a fallback when `worker_bindings.default` is unset. Current behavior: empty worker_bindings → router defaults to ev-loop-confidence. This session's router invocation manually picked ev-loop-interactive based on strategy=interactive + prior phases + Phase 5 shape. Worth codifying.",
+    "Roster growth concern (per skeptic Round 1): 9 → 13 agents with this PR. At some point the orchestrator's heuristic for which whiteboard engineers to invoke per brief becomes load-bearing (today it's `all 6 by default`). Phase-7-or-8 problem; flag for future."
+  ],
+  "notes": [
+    "Whiteboard Round 1 was unusually productive — 5 of 6 engineers contributed substantive sections (only sketch-ideation cleanly carved out). The substrate-engineer rubric for Phase 5's E-question got converging sketches from design-systems + skeptic + performance which combined into a 6+1-bullet rubric in the new file. The whiteboard format is paying for itself on substrate-self-design work.",
+    "L-004 boundary held cleanly. Both units split agent-creation from agent-use; both deferred smoke tests to next session. The unit-evaluation panel manually dropped evaluator-test-unit per the loop body's L-004 note. The new whiteboarders weren't called via /guild-whiteboard this session. The full smoke-test deferral is now the Phase 5 follow-up unit's responsibility.",
+    "The brief I composed for the whiteboard Round 1 had a stale claim (`no test:e2e script in this repo`) that the actual package.json contradicts (test:e2e exists, runs storybook+playwright). Caught during Unit 1 authoring; corrected in evaluator-test-integration's body. The brief's other claims held. PLAN.md Phase 5 prose contains the same stale phrasing; implicitly corrected by the shipped evaluator's body, but a PLAN.md revision could clean this up in a future unit.",
+    "Phase 5 was the first phase to author 4 agent files in one PR. The two-paired-unit shape (2 evaluators in Unit 1, 2 whiteboarders in Unit 2) worked well — each unit hit the ~3-files-or-~200-lines threshold cleanly and shipped with a clean evaluator panel verdict.",
+    "Session length: this session ran the whole router → whiteboard → 2 units → PR pipeline in one stretch. Heavy but coherent. Budget held; no compaction triggered."
+  ]
+}
