@@ -11,7 +11,8 @@
     {
       "number": 1,
       "name": "Phase 1",
-      "status": "not-started"
+      "status": "in-progress",
+      "branch": "substrate-cli/phase-1"
     }
   ]
 }

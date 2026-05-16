@@ -1,1 +1,3 @@
 {"at":"2026-05-16T01:26:24.743Z","event":"project-initialized","detail":{}}
+{"at":"2026-05-16T02:50:33.641Z","event":"phase-started","detail":{"phase":1,"name":"Phase 1"}}
+{"at":"2026-05-16T03:02:18.372Z","event":"checkin-created","detail":{"number":"01","branch":"substrate-cli/phase-1"}}

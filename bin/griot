@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# griot — entry shim for the griot learnings CLI.
+# Resolves the repo's .claude/cli/griot.ts relative to this shim, then
+# execs node with the original args. Run from anywhere; bin/griot does
+# not depend on the caller's cwd.
+
+set -euo pipefail
+
+SHIM_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SHIM_DIR/.." && pwd)"
+ENTRY="$REPO_ROOT/.claude/cli/griot.ts"
+
+if [[ ! -f "$ENTRY" ]]; then
+  echo "griot-shim-error: entry not found at $ENTRY" >&2
+  exit 2
+fi
+
+exec node "$ENTRY" "$@"
