@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { realpathSync } from 'node:fs';
+import { readFileSync, realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import {
@@ -19,6 +19,10 @@ export type { DispatchResult, GriotCliContext };
 // reaffirmed for griot in projects/2026-05-16-substrate-cli/PLAN.md.
 export const VERBS: Record<string, string> = {
   use: 'Print learnings/rollup.md with citation contract for session injection',
+  'operator-checks':
+    'Helper checks (verify-rubric | log-intervention) for griot scripts; reads JSON from stdin',
+  'mediate-panel':
+    'Aggregate judge-panel verdicts into a consensus result; reads JSON from stdin',
 };
 
 // ---------- Pure helpers (exported for direct unit tests) ----------
@@ -110,7 +114,13 @@ function main(argv: string[]): never {
     strict: false,
   });
 
-  const ctx: GriotCliContext = { cwd: process.cwd() };
+  // Eagerly read stdin when the process is not running in a TTY. Verbs
+  // that consume stdin (mediate-panel, operator-checks) read ctx.stdin;
+  // verbs that don't (use) ignore it. The TTY check prevents the
+  // dispatcher from blocking on an interactive terminal when the verb
+  // doesn't need stdin at all.
+  const stdin = process.stdin.isTTY ? '' : readFileSync(0, 'utf8');
+  const ctx: GriotCliContext = { cwd: process.cwd(), stdin };
   const invocation = parseInvocation(argv);
   const result = dispatch(invocation, ctx);
   if (result.stdout !== undefined) process.stdout.write(`${result.stdout}\n`);

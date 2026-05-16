@@ -156,3 +156,41 @@ test('node entry: GRIOT_ENTRY is the dispatcher loaded by the bin shim', () => {
   expect(result.status).toBe(0);
   expect(result.stdout).toContain('griot — learnings-substrate CLI');
 });
+
+test('bin/griot operator-checks: pipes stdin through to the verb', () => {
+  const input = JSON.stringify({
+    rubric_path: '/tmp/__griot_test_does_not_exist__.md',
+    expected: 'whatever',
+  });
+  const result = spawnSync(BIN_GRIOT, ['operator-checks', 'verify-rubric'], {
+    input,
+    encoding: 'utf-8',
+  });
+  expect(result.status).toBe(1);
+  expect(result.stderr).toMatch(/rubric file does not exist/);
+});
+
+test('bin/griot mediate-panel: pipes stdin through to the verb', () => {
+  const input = JSON.stringify({
+    round_num: 1,
+    verdicts: [
+      {
+        judge_id: 'opus-A',
+        tier: 'opus',
+        raw_output: '```verdict\n{"verdict": "IMPROVED", "reasoning": "r"}\n```',
+      },
+    ],
+    config: {
+      consensus: { round_1_blind: 1, round_2_debate: 1 },
+      tiebreak: { rule: 'top_tier_consensus', top_tier: 'opus' },
+    },
+  });
+  const result = spawnSync(BIN_GRIOT, ['mediate-panel'], {
+    input,
+    encoding: 'utf-8',
+  });
+  expect(result.status).toBe(0);
+  const out = JSON.parse(result.stdout);
+  expect(out.consensus_verdict).toBe('IMPROVED');
+  expect(out.threshold_met).toBe(true);
+});
