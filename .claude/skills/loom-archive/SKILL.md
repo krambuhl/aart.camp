@@ -8,7 +8,6 @@ description: >-
   composing the archive PR is a separate concern.
 argument-hint: "<project-slug-or-path>"
 user-invocable: true
-disable-model-invocation: true
 allowed-tools: Read, Write, Bash(bin/loom *), AskUserQuestion
 ---
 

@@ -99,8 +99,8 @@ The four quadrants and what they mean:
 
 | `user-invocable` | `disable-model-invocation` | Shape | Example |
 |---|---|---|---|
-| `true` | `true` | User-only, non-ambient | `/ev-run`, `/draft-plan`, `/loom-archive` |
-| `true` | unset / `false` | User-invocable, model-composable | `/ev-loop-confidence`, `/ev-loop-interactive` |
+| `true` | `true` | User-only, non-ambient | `/ev-run`, `/draft-plan` |
+| `true` | unset / `false` | User-invocable, model-composable | `/ev-loop-confidence`, `/ev-loop-interactive`, `/loom-archive` |
 | `false` | (any) | Internal primitive | `/guild-spawn`, `/guild-validate`, `/guild-whiteboard` |
 
 The `(true, unset)` quadrant exists for **skills that are composed by

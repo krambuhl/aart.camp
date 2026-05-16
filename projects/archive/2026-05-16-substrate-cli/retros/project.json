@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "type": "project",
+  "created": "2026-05-16T21:51:00.000Z",
+  "findings": [
+    {
+      "category": "kept-well",
+      "description": "Pre-unit whiteboard step continued to produce strong design convergence on substrate-self-design work — most notably Phase 6's three-category parallel-work taxonomy correcting PLAN.md's two-category slogan (PLAN said `append-only OR branch-partitioned`; the panel independently surfaced `single-writer-serialized` as the honest third category, with concrete file:line evidence from performance's audit).",
+      "evidence": "projects/2026-05-16-substrate-cli/whiteboards/6-extraction-extension.md Round 1; checkin 03 Notes for PR"
+    },
+    {
+      "category": "kept-well",
+      "description": "L-004 split-unit boundary held cleanly across every phase that authored new agents — Phase 3 audit, Phase 4 evaluators, Phase 5 evaluators + whiteboarders, Phase 6 manual panel drops — no smoke-tests fired against session-cached agents. The boundary is now operable substrate, not just an aspirational rule.",
+      "evidence": "Phase 3 followup checkins; Phase 5 checkin 01 'evaluator-test-unit dropped per L-004'; Phase 6 Sweep 4 dropped evaluator-test-unit from panel"
+    },
+    {
+      "category": "kept-well",
+      "description": "Tests caught design/doc mismatches at first-run — Phase 5 derive-panel.test.ts caught the `tests/e2e/**/*.spec.ts` glob bug; Phase 6 parallel-work-invariant.test.ts caught the title-case-vs-lowercase Category-3 header inconsistency between Sweep 3's CONVENTIONS.md authoring and Sweep 4's registry. Tests as design-contract enforcement, not just behavior verification.",
+      "evidence": "Phase 5 checkin 01 corrections (glob fix); Phase 6 checkin 04 corrections (lowercase normalization)"
+    },
+    {
+      "category": "improvement",
+      "description": "`bin/guild parse-and-aggregate`'s VERDICT-line regex is brittle — Phase 4-rollup hit an em-dash-suffix failure (`VERDICT: approved — ...`); Phase 6 Sweep 3 hit a line-collapse failure (verdict line not at line-start). Same regex, two different recurrence modes, two different sessions. Parser-leniency improvement (accept VERDICT with trailing prose, or anywhere on its own line) would prevent the class entirely.",
+      "evidence": "Phase 4-rollup checkin 01 corrections; Phase 6 checkin 03 corrections"
+    },
+    {
+      "category": "improvement",
+      "description": "Substrate plumbing is weaker than the tool layer — `bin/draft revise` blindly applied a stale `/tmp/loom-revision.md` file with no hash check or content assertion (the Write tool refuses without Read-first); `bin/loom phase update --pr=<N>` constructs a placeholder URL `example/example/pull/N` rather than threading the real URL through. Both are silent-failure modes the tool layer would have caught.",
+      "evidence": "Phase 4 checkin 01 corrections (stale revise file); session-i + session-j open threads (placeholder URL for PRs #107, #109)"
+    },
+    {
+      "category": "improvement",
+      "description": "Brief-composition staleness recurred — Phase 5's brief claimed `test:e2e` didn't exist (it did); Phase 6's brief claimed 7 recipes (actual count: 8 with confidence's `Retro write`). Both caught mid-authoring. PLAN.md prose and memory drift against repo state when assembling whiteboard briefs. A pre-brief sanity-check step (grep / file-exists assertions) would prevent the class.",
+      "evidence": "Phase 5 checkin 01 corrections (test:e2e claim); Phase 6 checkin 01 corrections (8 recipes vs 7)"
+    },
+    {
+      "category": "process-change",
+      "description": "Four-family CLI taxonomy is codified in CONVENTIONS.md. Future substrate work lands a verb in `bin/loom`, `bin/draft`, `bin/griot`, or `bin/guild` — or proposes a fifth family deliberately. Cross-family verbs are an antipattern unless explicitly justified.",
+      "evidence": "projects/CONVENTIONS.md § Four-family taxonomy (Phase 6 Sweep 3)"
+    },
+    {
+      "category": "process-change",
+      "description": "The parallel-work invariant is now executable via the inline registry in `.claude/cli/parallel-work-invariant.test.ts`. Adding a new mutating verb requires a registry entry; adding a category-3 (single-writer-serialized) verb additionally requires updating CONVENTIONS.md's declared-exceptions register. The test tripwire fails loudly otherwise.",
+      "evidence": "projects/CONVENTIONS.md § Parallel-work invariant; .claude/cli/parallel-work-invariant.test.ts (Phase 6 Sweep 4)"
+    },
+    {
+      "category": "process-change",
+      "description": "Skill-vs-CLI default flips toward CLI for new substrate work. Future substrate proposals default to 'add a CLI verb' unless the work needs LLM-shaped capability (Agent tool, AskUserQuestion, prose synthesis). The two-axis frontmatter rubric (`user-invocable` × `disable-model-invocation`) gates the classification — and any skill `/ev-run` composes via Skill tool must sit at `(true, unset)`, not `(true, true)` (the `/loom-archive` reclassification at archive time made this rule load-bearing).",
+      "evidence": "projects/CONVENTIONS.md § Skills as interfaces vs workers + § Two-axis frontmatter rubric; .claude/skills/loom-archive/SKILL.md dmi flip (this session)"
+    },
+    {
+      "category": "follow-up",
+      "description": "Smoke-test session-cached substrate work in a fresh session — the 4 agents from session i (`evaluator-test-integration`, `evaluator-test-unit`, `whiteboard-substrate-engineer`, `whiteboard-testing-strategy`) each need one real invocation, and `/ev-run` → `/loom-archive` composition needs verification now that the dmi flag is flipped. All are session-boundary-dependent.",
+      "evidence": "session-i + session-j handoff open_threads; this session's `/loom-archive` direct-invocation workaround"
+    },
+    {
+      "category": "follow-up",
+      "description": "Substrate-gaps sibling project should gather the six accumulated gaps from this project: (a) parse-and-aggregate VERDICT-line regex strictness (recurring), (b) `bin/loom pr discover` gh-flag regression returning marker_state=new+pr=null despite live PR, (c) `bin/loom phase update --pr=<N>` placeholder URL not threading the real URL, (d) `bin/draft revise` no stale-file protection, (e) `bin/guild derive-panel` globToRegex `**/*` limitation requiring intermediate-slash, (f) `/ev-run` router defaulting to ev-loop-confidence when worker_bindings is empty rather than consulting manifest's `strategy` field.",
+      "evidence": "session-i + session-j handoff open_threads; PLAN.md § Dependencies #4 substrate-gaps sibling project"
+    },
+    {
+      "category": "follow-up",
+      "description": "Small substrate-doc follow-up PR: rename `§ Triage PR comments + draft responses` → `§ Respond to PR feedback` (design-systems whiteboard recommendation deferred from Sweep 1 to keep the lift byte-equivalent) and propagate to ev-loop body citations; add the skeptic's `projects/*.md` duplicate-`## Foo`-header tripwire scan (guards the bare-§ citation form against silent ambiguation if another `projects/*.md` ever defined a colliding recipe name).",
+      "evidence": "Phase 6 whiteboard Round 1 (design-systems + skeptic); Phase 6 checkin 01 + checkin 04 Notes for PR (deferred work)"
+    },
+    {
+      "category": "follow-up",
+      "description": "Cross-project / multi-repo griot federation and eval-side `/griot-use` catalog self-extension — both deferred from project scope per PLAN's `## Deferred` section. Sibling project candidates if the federation use-case actually emerges; until then, the rollup-format work this project shipped is sufficient.",
+      "evidence": "projects/2026-05-16-substrate-cli/PLAN.md § Deferred"
+    }
+  ]
+}
