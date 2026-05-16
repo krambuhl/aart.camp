@@ -2,10 +2,18 @@
 
 ## Context
 
-The aart.camp substrate is mid-transition. The `trout-sunset` project
-(in flight) is migrating project state and plan authoring into peer
-CLIs under `bin/`: `bin/loom` and `bin/draft`. The pattern that's
-emerging:
+The aart.camp substrate is mid-consolidation. The `trout-sunset` project
+shipped #91 → #95 over the past day, migrating project state and plan
+authoring into peer CLIs under `bin/`: `bin/loom` and `bin/draft`. Trout's
+entire substrate (5 skills + 16 scripts) is deleted; ev-loop SKILL.md
+files now dispatch substrate operations directly to those CLIs, with
+substantial named-recipe **"Substrate compositions"** sections cataloging
+operations (§ State refresh, § Phase update, § Checkin write, § Compose
+PR, § Triage PR comments, § Save session, § Revise PLAN.md, § Retro
+write). Process steps cite these by name rather than inlining recipes
+at each call site.
+
+The pattern that emerged across trout-sunset:
 
 - **CLI:JSON** — structured state goes in JSON, edited by the family
   CLI. Append-only logs (events.jsonl, findings.jsonl) win over
@@ -15,20 +23,22 @@ emerging:
 - **JSON references MD** when an artifact needs both kinds of state —
   the JSON holds structured fields plus paths to markdown bodies.
 
-`trout-sunset` covers two of the four substrate families. **This
-project applies the same shape to the remaining two — `griot`
+`trout-sunset` covered two of the four substrate families (loom + draft).
+**This project applies the same shape to the remaining two — `griot`
 (learnings) and `guild` (agent panels) — and finishes the consistency
-pass.** It also kills the ambient wrapper skills that the new CLI
-verbs make obsolete, restructures griot's internal artifacts to match
-the JSON/MD split, ships new evaluator + whiteboard agent families
-for testing concerns (playwright, vitest, testing-strategy,
-substrate-engineering), and codifies the parallel-work invariant
-across the substrate.
+pass.** It also kills the ambient wrapper skills that the new CLI verbs
+make obsolete, restructures griot's internal artifacts to match the
+JSON/MD split, ships new evaluator + whiteboard agent families for
+testing concerns (playwright, vitest, testing-strategy, substrate-
+engineering), and codifies the parallel-work invariant across the
+substrate.
 
 The substrate's surviving-skill count target is **~12** across the
 four families (`loom`, `draft`, `griot`, `guild`) plus 2 `ev-loop-*`
-loops. Today's count is ~17. The cleanup removes ~5 skills that were
-CRUD-shaped wrappers around scripts.
+loops. Today's count is ~13 substrate-core (15 total in .claude/skills/
+including global meta like `frontend-design` and `vercel-react-best-
+practices`). The cleanup removes ~2 wrapper skills (`/griot-capture`,
+`/griot-report`) plus folds CRUD-shaped logic into peer CLIs.
 
 ## Scope
 
@@ -59,22 +69,26 @@ CRUD-shaped wrappers around scripts.
   Now that the project has playwright + vitest as real tools and
   substrate-design is its own recurring concern, the families
   earn dedicated panel/design voices.
-- ev-loop-* body updates: `ev-loop-interactive` and
-  `ev-loop-confidence` reference substrate verbs by name; references
-  to `.claude/scripts/<family>/*.ts` migrate to `bin/<family> <verb>`.
+- ev-loop-* body updates: extend the established "Substrate compositions"
+  § pattern with new named recipes for griot + guild operations
+  (e.g. § Load rollup, § Capture finding, § Append finding,
+  § Derive panel). Replace any remaining `.claude/scripts/<griot,guild>/*`
+  references in ev-loop bodies with named § citations.
 - Parallel-work hardening pass: audit all CRUD verbs for append-only
   or branch-partitioned writes; codify the invariant in
   CONVENTIONS.md ("no shared mutable hotspots"); add explicit tests
   for any verb that touches shared state.
-- CONVENTIONS.md sweep: re-articulate the CRUD-vs-orchestration
-  framing against `bin/<family>` (currently lives in the
-  Phase-1.5-of-agent-guilds shape, which referenced `.claude/scripts/`).
+- CONVENTIONS.md sweep: re-articulate the "skills as interfaces vs
+  workers" framing against `bin/<family>` and the four-family
+  taxonomy. trout-sunset touched some of this prose; this project
+  finishes the sweep for griot + guild conventions.
 
 **Out:**
 
 - ev-loop-* skill body updates pointing at `bin/loom` / `bin/draft` —
-  those are `trout-sunset`'s job. This project only updates references
-  to `bin/griot` and `bin/guild`.
+  those landed in `trout-sunset` Phase 2 (#92). This project only
+  extends the same pattern for `bin/griot` and `bin/guild`
+  operations.
 - Cross-project / multi-repo griot sharing (federation). Deferred to
   a future project.
 - `/griot-compact` judge panel redesign. The four-judge mechanism
@@ -213,12 +227,16 @@ contract; reference the agent-guilds project's 3 prior observations.
 
 Three sweeps:
 
-- **ev-loop-* body updates**: scan `ev-loop-interactive` and
-  `ev-loop-confidence` SKILL bodies for references to substrate
-  verbs by path (`.claude/scripts/<family>/<verb>.ts`). Replace with
-  `bin/<family> <verb>`. ev-loop's references to `bin/loom` and
-  `bin/draft` are trout-sunset's job; this sweep only touches the
-  griot + guild path references.
+- **ev-loop-* body extension**: extend the established "Substrate
+  compositions" § pattern (introduced by trout-sunset Phase 2 in #92)
+  with named recipes for griot + guild operations. Likely additions:
+  § Load rollup (`bin/griot use --as=llm`), § Capture finding
+  (`bin/griot capture --evaluator-finding=...`), § Append finding
+  (`bin/guild findings append ...`), § Derive panel
+  (`bin/guild derive-panel ...`). Replace any remaining inline
+  references to `.claude/scripts/<griot,guild>/*` in ev-loop bodies
+  with § citations. Both ev-loop bodies updated; recipes duplicated
+  intentionally (each loop is self-contained).
 - **CONVENTIONS.md sweep**: re-articulate the "skills as interfaces
   vs workers" framing against `bin/<family>`. Add a new section
   documenting the four-family taxonomy (loom, draft, griot, guild)
@@ -232,9 +250,11 @@ Three sweeps:
   remaining shared-mutable-state hotspots as advisory findings.
 
 **Verification:** lint + build + test clean. ev-loop-* bodies have
-zero `.claude/scripts/<family>` references that should be CLI. The
-new CONVENTIONS.md sections render correctly. Any remaining shared-
-mutable-state hotspots are documented in the sweep's checkin Notes.
+zero `.claude/scripts/<family>` references that should be CLI;
+griot + guild operations fit into the established § Substrate
+compositions structure. The new CONVENTIONS.md sections render
+correctly. Any remaining shared-mutable-state hotspots are
+documented in the sweep's checkin Notes.
 
 **One PR.**
 
@@ -249,14 +269,13 @@ mutable-state hotspots are documented in the sweep's checkin Notes.
   substrate. Can ship in parallel with P1/P2/P3.
 - **Phase 5 depends on Phases 1 + 2** — sweeps ev-loop bodies to
   point at `bin/griot` + `bin/guild` verbs that need to exist first.
-- **This entire project depends on `trout-sunset` closing first.**
-  `bin/loom` + `bin/draft` need to be the production substrate before
-  griot+guild join them; otherwise ev-loop references mix old + new
-  conventions and the sweep gets messy.
 
-Recommended execution order: `trout-sunset` closes → cut P1+P2+P4
-parallel branches → P3 starts when P1 lands → P5 starts when P1+P2
-land.
+Recommended execution order: cut P1+P2+P4 parallel branches → P3
+starts when P1 lands → P5 starts when P1+P2 land.
+
+`trout-sunset` is complete (#91, #92, #93, #95). The substrate
+prerequisites this project depended on are in place; no external
+blocker remains.
 
 ## Verification
 
@@ -266,9 +285,9 @@ land.
   (new bin/griot tests in P1; bin/guild tests in P2; migration
   tests in P3; agent smoke tests in P4).
 - `bin/griot --help` lists all subcommands; same for `bin/guild`.
-- Substrate-skill count after P1 + P5 lands: target ~12 (loom 4,
-  draft 2, griot 1, guild 3, ev-loop 2, /griot-load 1, optional
-  meta-skills survive separately).
+- Substrate-skill count after P1 + P5 lands: target ~12 (loom 1,
+  draft 1, griot 2 — /griot-compact + /griot-load, guild 3, ev-loop
+  2, a11y-review-file 1, ev-run 1, plus optional meta-skills).
 - E2E migration verified in P3: existing unprocessed session-notes
   + existing rollup.md migrate without data loss.
 - Parallel-safety: P5's audit produces zero remaining shared-
@@ -299,11 +318,6 @@ land.
   of L-004; treat it as load-bearing substrate behavior, not edge
   case. Mitigation: explicit note in P4 contract; document the
   restart-required step in the unit's Notes-for-the-PR.
-- **`trout-sunset` not closing cleanly before this project starts**.
-  If trout-sunset Phase 2/3 remains open when P1+P2 begin, ev-loop
-  references in P1/P2 may target the wrong substrate names.
-  Mitigation: hard dependency on trout-sunset close; don't start
-  P1/P2 until verified.
 - **Skill registry cache after wrapper-skill kills (P1)**. Killing
   `/griot-capture` and `/griot-report` mid-session may not propagate
   cleanly; subsequent agent spawns might still try to invoke them.
@@ -358,3 +372,14 @@ them so future revisions preserve them.
   CLI verb, not a skill. If the body is "spawn N agents, parse
   outputs, branch on results," it stays a skill. This is the
   audit test for the surviving registry.
+- **Extend the "Substrate compositions" § pattern from trout-sunset
+  Phase 2**. Substrate operations referenced from ev-loop bodies
+  cite named § recipes (§ Save session, § Compose PR, etc.) rather
+  than inlining or composing wrapper skills. This project extends
+  the catalog with griot + guild recipes; recipes are duplicated
+  between ev-loop-confidence and ev-loop-interactive intentionally
+  (self-contained per loop).
+
+## Revision log
+
+- 2026-05-16 — post-trout-sunset close: drop the hard-dependency on trout-sunset (#91-#95 all merged), extend the Substrate compositions § pattern that #92 established for P5 ev-loop body updates, add one new Decision pinning the § extension pattern
