@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "title": "Trout Sunset",
+  "slug": "2026-05-15-trout-sunset",
+  "started": "2026-05-15T23:16:15Z",
+  "status": "active",
+  "current_branch": null,
+  "latest_checkin": null,
+  "strategy": "interactive",
+  "phases": [
+    {
+      "number": 1,
+      "name": "Migrate ev-loops to direct CLI invocation",
+      "status": "not-started"
+    },
+    {
+      "number": 2,
+      "name": "Sunset trout substrate",
+      "status": "not-started"
+    }
+  ]
+}

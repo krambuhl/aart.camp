@@ -34,15 +34,75 @@ nor file shapes.
 
 Loom is angular to two adjacent substrates:
 
-- **Planning** — wherever a `PLAN.md` came from (a human, a future
-  planning CLI, an LLM skill), loom does not care. `loom project
-  scaffold` takes `PLAN.md` as input. No verb in loom produces or
-  iterates on a plan.
+- **Planning (draft)** — `bin/draft plan` writes `PLAN.md` and
+  `INTERVIEW.md` into a project dir; `bin/draft revise` updates
+  `PLAN.md` and appends to its Revision log. Loom does not write or
+  revise `PLAN.md` itself — `bin/loom project scaffold` and
+  `bin/loom project adopt` both treat it as an input. The two CLIs are
+  **paired**: every loom-managed project also has draft files (PLAN.md
+  + INTERVIEW.md), and every draft-created project gets the loom
+  substrate by default (see "Pairing with draft" below). The historical
+  framing of draft as "wherever a PLAN.md came from" is preserved
+  technically — loom doesn't care who wrote PLAN.md — but in practice
+  it's always draft.
 
 - **Learnings** — retros live under `loom retro` for now, but they
   are tenants. When a griot CLI eventually exists, retros migrate
   there. The flat `retros/` layout and the `type` field on every
   retro JSON are designed to make that lift-out easy.
+
+## Pairing with draft
+
+Loom and draft are **paired halves of one substrate**, not alternatives.
+Every project gets both:
+
+- **draft** owns planning artifacts: `PLAN.md`, `INTERVIEW.md`, the
+  Revision log inside PLAN.md.
+- **loom** owns execution artifacts: `manifest.json`, `events.jsonl`,
+  `config.json`, `checkins/`, `sessions/`, `retros/`.
+
+Each CLI sees only its own files; together they make a complete
+project.
+
+### Lifecycle
+
+The default project-birth flow is `bin/draft plan` (or the `/draft-plan`
+skill which wraps it). It creates the project dir, writes PLAN.md and
+INTERVIEW.md, and **auto-adopts loom**: writes `manifest.json`,
+`config.json`, `events.jsonl`, `checkins/`, and `sessions/` in the same
+commit. The project is loom + draft from minute zero.
+
+Two paths into the auto-adopt:
+
+1. Default: `bin/draft plan <slug-or-topic> --plan-file=… --interview-file=…`
+   produces a loom + draft project. Manifest defaults are synthesized
+   from the slug (title via title-cased slug suffix, single placeholder
+   `Phase 1`, `interactive` strategy, today's date as `started`).
+   Config defaults are minimal (`base_branch: main`, empty arrays).
+   The user edits `manifest.json` / `config.json` afterwards to
+   specialize.
+2. Explicit two-step: `bin/draft plan … --no-loom` writes only the
+   draft files. Then `bin/loom project adopt <slug> --config-file=… --manifest-init-file=…`
+   writes the loom substrate. Use this when the loom files need
+   non-default content at scaffold time.
+
+The `--no-loom` escape hatch exists for the unusual draft-only case
+(planning sketches that won't grow execution state). Most callers
+shouldn't use it.
+
+### Resolvers see across both
+
+Each CLI's resolver looks for its own marker file:
+
+- `bin/loom`'s resolver requires `manifest.json` (loom marker).
+- `bin/draft`'s resolver requires `PLAN.md` (draft marker), regardless
+  of whether `manifest.json` is also present.
+
+In a loom + draft project (the default), both resolvers succeed.
+A loom-only project (manifest.json without PLAN.md) is invisible to
+draft; a draft-only project (PLAN.md without manifest.json) is
+invisible to loom. Both partial states are unusual and usually
+transient — most projects are loom + draft.
 
 ## Directory layout
 
@@ -241,7 +301,8 @@ the event log directly.
 
 | Verb | Signature | Purpose |
 |------|-----------|---------|
-| `scaffold` | `<slug> --plan-file=<path> --config-file=<path>` | Create project directory, write manifest.json/config.json/events.jsonl, copy PLAN.md, emit `project-initialized` |
+| `scaffold` | `<slug> --plan-file=<path> --config-file=<path> --manifest-init-file=<path>` | Create project directory, write manifest.json/config.json/events.jsonl, copy PLAN.md, emit `project-initialized`. Refuses if dir exists. |
+| `adopt` | `<slug> --config-file=<path> --manifest-init-file=<path>` | Wire loom into an existing project dir (must already have PLAN.md). Writes manifest.json/config.json/events.jsonl/checkins/sessions; does not touch PLAN.md or INTERVIEW.md. Emits `project-initialized`. Refuses if `manifest.json` already exists (already-adopted) or `PLAN.md` is missing (plan-not-found). |
 | `read` | `<slug> [--pretty]` | Return full manifest JSON |
 | `list` | `[--archived] [--pretty]` | Enumerate active (or archived) projects |
 | `status` | `[--pretty]` | Terse current-project summary from cwd |

@@ -3,19 +3,22 @@ import { isAbsolute, join, resolve } from 'node:path';
 import { LoomError } from './errors.ts';
 import { ARCHIVE_DIRNAME } from './project.ts';
 
-// Draft's filter is two-sided. A directory counts as a
-// draft-readable project iff it contains `PLAN.md` (the file draft
-// reads/revises) AND does NOT contain `manifest.json` (the loom-
-// managed marker). Trout-managed projects carry `MANIFEST.md` in
-// addition to `PLAN.md`; they qualify. Draft-only projects (from
-// `bin/draft plan` before any further substrate scaffolding) carry
-// just `PLAN.md` + `INTERVIEW.md`; they also qualify.
+// Draft's filter is one-sided: a directory counts as a draft-readable
+// project iff it contains `PLAN.md` (the file draft reads and revises).
+// Loom-managed projects (which also carry `manifest.json`) qualify,
+// because PLAN.md is plain markdown that draft owns regardless of
+// whether loom owns the rest of the substrate. Trout-managed projects
+// (which carry `MANIFEST.md` alongside `PLAN.md`) qualify for the same
+// reason. The substrate model treats loom + draft as paired halves of
+// one project: draft owns planning, loom owns execution, and resolvers
+// must see across both.
 //
-// Originally this filter required `MANIFEST.md`, but that excluded
-// draft's own output from its own resolver. Broadened in D5 to the
-// PLAN-bearing definition that matches draft's actual scope.
+// Earlier iterations excluded loom-managed projects to preserve a
+// "draft only sees what it owns end-to-end" boundary. That boundary
+// turned out to be wrong — it blocked `bin/draft revise` on the
+// (intended-to-be-common) loom+draft project, which is the post-trout
+// default. Exclusion removed in trout-sunset Phase 1 D2.
 const PLAN_MARKER = 'PLAN.md';
-const LOOM_MARKER = 'manifest.json';
 
 // Slug-grammar regexes are duplicated locally rather than imported
 // because they are not exported from `./project.ts`. The substrate
@@ -38,13 +41,14 @@ export type ListProjectsOptions = {
 // directory.
 //
 // Behaviour parallels loom's `resolveProject` exactly, with one
-// substantive difference: only directories that carry `PLAN.md`
-// (and not `manifest.json`) qualify. This includes trout-managed
-// projects (which carry both `PLAN.md` and `MANIFEST.md`) AND
-// draft-only projects (which carry `PLAN.md` + `INTERVIEW.md`
-// without the trout MANIFEST). Loom projects are invisible by
-// design — the coexistence boundary is enforced at the listing
-// layer.
+// substantive difference: directories that carry `PLAN.md` qualify
+// regardless of whether they also carry `manifest.json`. This
+// includes:
+//   - Trout-managed projects (PLAN.md + MANIFEST.md)
+//   - Draft-only projects (PLAN.md + INTERVIEW.md, no manifest.json)
+//   - Loom + draft projects (PLAN.md + manifest.json + ...)
+// The third case is the post-trout default and is the reason this
+// resolver no longer excludes loom-managed dirs.
 //
 // Accepts:
 //   - full slug:        2026-05-15-draft-cli
@@ -142,11 +146,10 @@ export function listTroutProjects(
     } catch {
       continue;
     }
-    // Draft filter: project must have PLAN.md AND must NOT have
-    // manifest.json. Both conditions enforce the draft-readable
-    // boundary (and exclude loom-managed projects).
+    // Draft filter: project must have PLAN.md. Loom-managed projects
+    // (which also carry manifest.json) qualify — see the file header
+    // for why the loom-marker exclusion was removed.
     if (!existsSync(join(fullPath, PLAN_MARKER))) continue;
-    if (existsSync(join(fullPath, LOOM_MARKER))) continue;
     projects.push({ slug: entry, path: fullPath });
   }
   return projects;

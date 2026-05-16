@@ -18,7 +18,7 @@ export type { CliContext, DispatchResult };
 // ---------- Namespace registry ----------
 
 export const NAMESPACES: Record<string, string> = {
-  project: 'Manage projects: scaffold, read, list, status, archive',
+  project: 'Manage projects: scaffold, adopt, read, list, status, archive',
   phase: 'Read and update phase state',
   events: 'Read the project event log',
   checkin: 'Write and read unit-of-work checkins',

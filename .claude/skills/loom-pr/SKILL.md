@@ -177,6 +177,12 @@ pr: paused, awaiting title input (checkins span phases <list>)
 - **Concise over exhaustive.** Section caps are hard; total body
   caps at 500-600 words. Acceptance criteria + execution
   + verdict are NOT pasted; they live in the linked checkin file.
+- **No manual wrapping in body prose.** GitHub renders single
+  newlines inside a paragraph as line breaks. Write each paragraph
+  as one long line; separate paragraphs with a blank line. Lists,
+  tables, headings, code blocks, and the marker comment follow
+  normal markdown. Wall-to-wall flowing prose is the target — not
+  a stack of jagged `<br>`s.
 - **No emojis.**
 
 ## Failure modes
