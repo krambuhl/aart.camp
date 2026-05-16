@@ -44,7 +44,8 @@
     {
       "number": 4,
       "name": "griot internal restructure",
-      "status": "not-started"
+      "status": "in-progress",
+      "branch": "substrate-cli/phase-4"
     },
     {
       "number": 5,

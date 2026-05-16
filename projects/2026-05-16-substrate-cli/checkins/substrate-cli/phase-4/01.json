@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "number": "01",
+  "created": "2026-05-16T07:35:00.000Z",
+  "phase": {
+    "number": 4,
+    "name": "griot session-notes restructure"
+  },
+  "branch": "substrate-cli/phase-4",
+  "unit": "D1 — griot session-notes: state.json sidecar + pure-prose learning.md",
+  "contract": {
+    "goal": "Replace YAML-frontmatter-on-`learning.md` (today only present on `--evaluator-finding` captures) with a `state.json` sidecar in every session-note folder. `learning.md` becomes pure prose across all capture paths. `bin/griot capture` writes both shapes; `/griot-compact` Step pre-A reads `state.json` for routing instead of parsing frontmatter. One-time migration script in `.claude/scripts/` converts all existing folders (live + archived) to the new shape; format-detection error path in `/griot-compact` reader fails loudly if a mid-flight session encounters mixed state.",
+    "acceptance_criteria": [
+      "`bin/griot capture --evaluator-finding=recurring --evaluator-name=foo --code=bar --evidence=... --frequency-count=3` writes a folder with `state.json` (containing the full schema: classification, evaluator, code, frequency-count, file-line, status: captured, promoted_as: null) and a pure-prose `learning.md` (no YAML frontmatter).",
+      "`bin/griot capture --from-checkin=<path>` writes a folder with `state.json` (containing classification: 'unclassified', all other fields null, status: captured) and a pure-prose `learning.md`.",
+      "`/griot-compact` SKILL.md Step pre-A reads `state.json` via the Read tool for classification routing (not YAML frontmatter from learning.md); Step C IMPROVED reads evaluator/code from state.json for AP-NNN entry composition.",
+      "`/griot-compact` errors loudly with the 'session predates Phase 4 cutover; restart session to pick up new skill body' message if it encounters a session-note folder without `state.json` (whether learning.md has frontmatter or not).",
+      "`.claude/scripts/migrate-session-notes.ts` exists, runs idempotently (re-running on already-migrated folders is a no-op), and converts old-format folders (frontmatter-bearing learning.md OR no state.json + no frontmatter) into new shape (state.json + pure-prose learning.md). Sibling `.test.ts` covers: folder with frontmatter, folder without frontmatter, archived status mapping, already-migrated folder, full-tree walk (live + archived), missing-learning-md skip.",
+      "All session-notes under `learnings/session-notes/` (including `archived/`) migrated as part of this PR — `grep -l '^---$' learnings/session-notes/**/learning.md` returns nothing after migration runs.",
+      "`npm run lint` clean.",
+      "`npm test` clean (existing tests pass + new tests pass).",
+      "Phase 4 manifest row stays `in-progress` (Phase 4 rollup must merge before the bucket completes; this PR alone does not complete the 'griot internal restructure' bucket per the new Phase 4 split Decision)."
+    ],
+    "rules_applied": [
+      "L-001 (Node 24 strips TS): migration script invoked directly via `node .claude/scripts/migrate-session-notes.ts`; no tsx wrapper; the script is itself a `.ts` file run natively.",
+      "L-002 (preserve substrate API shape): state.json schema includes all 6+1 documented fields (classification, evaluator, code, frequency-count, file-line, status, promoted_as) even though D1 populates only initial values for status (`captured` / `archived`) and never updates status/promoted_as after the fact. The /griot-compact write-path for status/promoted_as updates lands in Phase 4 rollup; the interface shape is stable from D1.",
+      "L-005 (re-run git status fresh): inspected `git status --short` against the migration output to confirm 24 new state.json files match the 24 migrated folders the script reported.",
+      "L-006 (parse markdown at runtime): the migration script parses YAML frontmatter from learning.md at runtime via a small regex-based parser rather than introducing a YAML dependency or maintaining a separate TS shape that mirrors the frontmatter fields.",
+      "L-007 (vitest harness): sibling .test.ts file under .claude/scripts/ matches the project's existing test convention; no node:test usage.",
+      "L-009 (pre-computed verification): evaluator packet supplied condensed verification (lint+test results + migration run output + grep negative result) and explicit AC→file:line mappings; spot-check budget instruction kept investigation efficient.",
+      "L-013 (ground prose claims in execution): the migration script's output was captured verbatim and cited in the evaluator packet; the idempotence claim is grounded in the actual second-run output (`already migrated: 24`), not inferred from source.",
+      "Substrate-no-freestyle (feedback memory): PLAN.md split applied via bin/draft revise (twice — the first revision picked up a stale /tmp file from a prior session and applied an unchanged PLAN with the new revision-log entry only; the second revision applied the intended structural changes); manifest update via bin/loom phase update; no hand-edits to substrate state."
+    ],
+    "disqualifiers": [
+      "Any changes to `learnings/rollup.md` or rollup-format-related code (Phase 4 rollup territory).",
+      "Any changes to `/ev-run`'s rollup-loading step (Phase 4 rollup territory).",
+      "Creating a new `/griot-load` skill (Phase 4 rollup territory).",
+      "Adding `bin/griot use --as=llm` flag (Phase 4 rollup territory).",
+      "Adding a /griot-compact write-path that updates state.json's status/promoted_as fields (deferred to Phase 4 rollup, when /griot-compact's promotion logic also gets the rollup.json writer).",
+      "Promoting the migration to a `bin/griot migrate` verb (the Decision pins migration scripts in `.claude/scripts/` to avoid accreting one-off migration verbs in the permanent CLI surface).",
+      "Removing /griot-compact's antipattern AP-NNN promotion routing or operator-log / regressions / bench-history mechanisms."
+    ],
+    "inputs": [
+      "projects/2026-05-16-substrate-cli/whiteboards/4-griot-internal-restructure.md round 1 (design-systems 'semantic spine: name the state, not the storage'; performance 'On the migration script: throwaway, but committed'; skeptic Finding 1 format-detection-and-refuse-loudly).",
+      ".claude/cli/verbs/griot/capture.ts (frontmatter writer at original lines 224-256; from-checkin writer at original lines 484-487).",
+      ".claude/skills/griot-compact/SKILL.md (Step pre-A routing block at original lines 92-134; Step C IMPROVED branches at original lines 372-450).",
+      "learnings/session-notes/ (corpus: 2 live folders + 22 archived; all pre-Phase-4 from-checkin captures with no frontmatter, as verified by the migration script's '24 migrated bare' output).",
+      "projects/2026-05-16-substrate-cli/PLAN.md (post-revision 75e04b0) Phase 4 section, the format-detection Decision pin, the migration-scripts-in-.claude/scripts Decision pin, the state.json sidecar Decision pin."
+    ]
+  },
+  "execution": {
+    "actions": [
+      "Whiteboard pre-step: /guild-whiteboard with all 6 registered whiteboard-* engineers ran successfully — first verified composition of /guild-whiteboard from inside /ev-loop-interactive via Skill (smoke test for #103's frontmatter fix; passed). Outputs landed at projects/2026-05-16-substrate-cli/whiteboards/4-griot-internal-restructure.md. a11y / react-architect / sketch-ideation cleanly carved out; design-systems / performance / skeptic produced substantive contributions cited in the contract Inputs.",
+      "Made the call to split original Phase 4 into Phase 4 (session-notes only) + Phase 4 rollup (rollup format + /griot-load + /ev-run loader update) based on whiteboard skeptic Finding 3 + CLAUDE.md PR conventions ('one conceptual change per PR'). Applied via bin/draft revise; first revision (cea7c1e) applied a stale /tmp file from a prior session (Write tool refused to overwrite without Read-first, but bin/draft revise applied the existing content unchanged); recovered by Reading the stale file then Writing the correct revision content; second revision (75e04b0) applied the intended structural changes (Phase 4 renamed/scoped to session-notes-only, Phase 4 rollup section added, Dependencies updated, new Decisions pinned).",
+      "Modified `.claude/cli/verbs/griot/capture.ts`: added `StateJson` type, `buildStateJsonForCheckin` (classification: unclassified for --from-checkin path), `buildStateJsonForEvaluatorFinding` (full fields for --evaluator-finding path). Removed YAML frontmatter from `buildEvaluatorFindingLearningMd`; updated provenance footer to reference state.json. Both capture paths now write state.json alongside the existing 5 MD files. Existing `Classification` type and `EvaluatorFindingArgs` type are reused; the new builders mirror the existing buildPromptMd/buildWrongMd family with a `For<Path>` discriminator suffix.",
+      "Modified `.claude/cli/verbs/griot/capture.test.ts`: updated 2 existing evaluator-finding tests to expect state.json + pure-prose learning.md (no frontmatter); updated single-correction-happy-path test from 5 files to 6 files (state.json + 5 MD); updated --file-line test to verify state.json field + Source line in learning body; added 2 new tests for from-checkin state.json shape (full schema, unclassified) and pure-prose learning.md (does not start with `---`).",
+      "Modified `.claude/skills/griot-compact/SKILL.md` Step pre-A (lines 92-117): replaced 'Read first 30 lines of learning.md / parse YAML frontmatter' with 'Read state.json via the Read tool / parse JSON / read .classification'. Added format-detection error path: if state.json missing AND learning.md has frontmatter (mid-flight session-across-cutover) OR state.json missing AND no frontmatter (pre-migration folder), stop processing the note and emit the 'session predates Phase 4 cutover; restart session to pick up new skill body and run .claude/scripts/migrate-session-notes.ts' error; log an intervention with category `format_predates_phase_4_cutover`.",
+      "Modified `.claude/skills/griot-compact/SKILL.md` Step C IMPROVED branches (lines 372-450): the AP-NNN entry composition's Evaluator/Code lines now reference `state.json` fields explicitly; the verbatim-learning-md instruction was updated to note that post-Phase-4 learning.md is pure prose (no frontmatter to strip).",
+      "Created `.claude/scripts/migrate-session-notes.ts`: ESM entry point (.claude/scripts/package.json has type: 'module'); exports `migrateFolder`, `runMigration`, `MigrationAction`, `MigrationResult` for the test; private `parseFrontmatter`, `stripFrontmatter`, `parseFrequencyCount`, `makeState`, `findSessionNoteFolders` helpers. Idempotence via state.json existence check (skip if present). Walks live folders + archived/ subfolders; sets status='captured' for live + 'archived' for archived/. Handles three cases: already-migrated (state.json present → skip), frontmatter-bearing learning.md (parse frontmatter → write state.json → strip from learning.md), bare learning.md (write state.json with classification: unclassified). main() entry point via `import.meta.url === \\`file://${process.argv[1]}\\``.",
+      "Created `.claude/scripts/migrate-session-notes.test.ts`: 6 tests via vitest (matches the .claude/scripts conventions in user feedback memory): live-folder-with-frontmatter migration, archived-folder-with-frontmatter status='archived', bare-folder-classification-unclassified, idempotence (state.json content unchanged on re-run), runMigration walks live + archived with mixed shapes (re-run is fully idempotent), folder-without-learning.md gracefully skipped.",
+      "Ran the migration script against the actual repository corpus: `node .claude/scripts/migrate-session-notes.ts` reported 'processed 24 folders / migrated bare: 24 / migrated from frontmatter: 0' — the existing corpus is entirely --from-checkin captures (the --evaluator-finding capture path existed in code but no notes had been captured through it). Re-run immediately after: 'already migrated: 24', confirming idempotence. 24 new state.json files appeared in the tree, distributed across the 2 live + 22 archived session-note folders.",
+      "Verified `npm run lint` clean (2 pre-existing symlink warnings on vercel-react-best-practices, noted in prior checkins as unrelated).",
+      "Verified `npm test` clean (478/478 passing across 36 test files; +8 net vs prior baseline of 470/470 — 3 new capture tests + 6 new migration tests minus 1 refactored).",
+      "Composed dense evaluator packet citing pre-computed verification + AC→file:line mappings + the L-009 'trust pre-computed' instruction. Derived panel via `bin/guild derive-panel`: evaluator-contract-fit + evaluator-react-api + evaluator-naming. Invoked /guild-validate; panel returned approved unanimously. evaluator-contract-fit spot-checked SKILL.md:92-117 and confirmed AC 4 + AC 5 land cleanly. evaluator-react-api carved out (no React surface). evaluator-naming walked the full identifier surface and found no antipatterns."
+    ],
+    "files_touched": [
+      ".claude/cli/verbs/griot/capture.ts",
+      ".claude/cli/verbs/griot/capture.test.ts",
+      ".claude/skills/griot-compact/SKILL.md",
+      ".claude/scripts/migrate-session-notes.ts",
+      ".claude/scripts/migrate-session-notes.test.ts",
+      "learnings/session-notes/2026-05-04T03-07-19-substrate-api-stability/state.json",
+      "learnings/session-notes/2026-05-08T16-04-25-latent-config-no-import-shallow-typecheck/state.json",
+      "learnings/session-notes/archived/2026-04-30T20-30-03-stack-default-alignment-text/state.json",
+      "learnings/session-notes/archived/2026-04-30T20-30-50-responsive-gap-hierarchy/state.json",
+      "learnings/session-notes/archived/2026-05-04T03-08-00-agent-registry-session-cache/state.json",
+      "learnings/session-notes/archived/2026-05-06T04-19-40-pre-eval-fresh-git-status/state.json",
+      "learnings/session-notes/archived/2026-05-06T10-22-36-node-24-strips-types/state.json",
+      "learnings/session-notes/archived/2026-05-06T10-23-57-parse-conventions-at-runtime/state.json",
+      "learnings/session-notes/archived/2026-05-06T22-55-01-rebase-scope-expansion/state.json",
+      "learnings/session-notes/archived/2026-05-07T15-30-25-notes-header-leniency/state.json",
+      "learnings/session-notes/archived/2026-05-08T14-09-51-regex-no-z-anchor/state.json",
+      "learnings/session-notes/archived/2026-05-08T14-09-52-evaluator-trust-precomputed/state.json",
+      "learnings/session-notes/archived/2026-05-08T14-09-52-stage-paths-allow-untracked-code/state.json",
+      "learnings/session-notes/archived/2026-05-08T14-10-07-split-craft-and-programmatic-modes/state.json",
+      "learnings/session-notes/archived/2026-05-08T14-10-09-text-based-selection-not-index/state.json",
+      "learnings/session-notes/archived/2026-05-08T14-29-06-agent-guilds-node-test-recurrence/state.json",
+      "learnings/session-notes/archived/2026-05-08T14-29-27-mid-flight-scope-fork-pattern/state.json",
+      "learnings/session-notes/archived/2026-05-08T15-57-28-line-target-llm-content/state.json",
+      "learnings/session-notes/archived/2026-05-08T16-02-34-dogfood-catches-prose-bugs/state.json",
+      "learnings/session-notes/archived/2026-05-08T16-04-24-postcss-array-to-object-consolidation/state.json",
+      "learnings/session-notes/archived/2026-05-08T16-04-27-carry-forward-restore-at-branch-boundary/state.json",
+      "learnings/session-notes/archived/2026-05-08T16-05-59-tool-deviation-from-plan-as-feature/state.json",
+      "learnings/session-notes/archived/2026-05-08T16-06-37-settings-local-json-gitignore-convention/state.json",
+      "learnings/session-notes/archived/2026-05-08T16-06-40-evaluator-image-content-inspection/state.json",
+      "projects/2026-05-16-substrate-cli/PLAN.md",
+      "projects/2026-05-16-substrate-cli/manifest.json",
+      "projects/2026-05-16-substrate-cli/events.jsonl"
+    ],
+    "corrections": [
+      "correction: D1's draft contract included an AC ('bin/griot capture errors loudly if it would write into an existing folder with old-format files') that turned out to be unreachable as framed — capture creates new timestamp-slug folders and errors on collision, but never reads existing folders. The format-detection responsibility properly lives in the readers (/griot-compact Step pre-A — AC 4/5) and the migration script's bare-vs-frontmatter detection. AC 3 was withdrawn during execution and the rationale was logged in the evaluator packet under 'AC 3 withdrawal' rather than left to surface as silent contract drift. Future unit contracts proposing writer-side format-detection should first check whether the writer reads existing state; if not, route the detection to readers instead.",
+      "correction: First bin/draft revise call (cea7c1e) applied a stale /tmp/loom-revision-substrate-cli.md file from a prior session unchanged — the Write tool refused to overwrite without Read-first, but bin/draft revise blindly applied whatever was at the path. The CLI commit message claimed structural changes that didn't actually happen; only the revision log entry was appended. Recovery: Read the stale file (unlocking Write), Wrote the intended revision content, ran bin/draft revise a second time (75e04b0). Substrate finding: bin/draft revise has no protection against stale revision-file contents — neither a hash check nor a 'must contain this section' assertion. Worth raising as a sibling finding to session-d's open thread #4 (bin/loom and bin/draft substrate gaps)."
+    ]
+  },
+  "scope": [
+    "bin/griot capture writes state.json sidecar + pure-prose learning.md in both --from-checkin and --evaluator-finding paths (the latter no longer writes YAML frontmatter).",
+    "/griot-compact SKILL Step pre-A routes via state.json; Step C IMPROVED reads evaluator/code from state.json; format-detection error path added.",
+    ".claude/scripts/migrate-session-notes.ts + sibling vitest, idempotent, migrates live + archived/ folders.",
+    "PLAN.md revised to split original Phase 4 into Phase 4 (session-notes) + Phase 4 rollup; 4 new Decisions pinned (rollup.json schema, migration-scripts location, format-detection error path, Phase 4 split rationale, /griot-load pure-pass-through); 1 new Open question (/learnings-use vs /griot-load naming).",
+    "24 session-note folders gain state.json sidecars; no learning.md files needed frontmatter stripping (the existing corpus was entirely --from-checkin captures)."
+  ],
+  "changes_since_previous": "First checkin on substrate-cli/phase-4 branch. Baseline: origin/main at 23e54da (post-#103 squash merge). Two intra-session bin/draft revise commits (cea7c1e + 75e04b0) preceded this work commit; cea7c1e is the stale-file misfire and 75e04b0 is the intended Phase 4 split.",
+  "verdict": {
+    "result": "approved",
+    "reasons": []
+  },
+  "notes_for_pr": [
+    "Phase 4 of substrate-cli (session-notes restructure, D1 of the split). The original Phase 4 framing bundled session-notes + rollup format changes into one PR; the Phase 4 whiteboard (round 1) surfaced a clean split-line per skeptic Finding 3 — session-notes (D1) and rollup format (D2) are independent at the coupling level, meeting only at the /griot-compact body which absorbs edits from both. This PR ships D1 only; Phase 4 rollup (D2 + D3) ships on a follow-on branch. Phase 4 manifest row stays in-progress until both halves merge.",
+    "Single-deliverable PR: state.json sidecar replaces YAML frontmatter on learning.md. capture.ts writes state.json in both --from-checkin and --evaluator-finding paths; /griot-compact reads state.json for classification routing. Migration script in .claude/scripts/ (per the Decision pinning migration home — NOT promoted to bin/griot migrate). 24 session-note folders migrated as part of the PR.",
+    "Format-detection error path added to /griot-compact (whiteboard skeptic Finding 1): if a session predates the cutover (state.json missing OR mixed state), the skill errors loudly with 'restart session to pick up new skill body and run .claude/scripts/migrate-session-notes.ts' rather than silently mis-parsing. The dual-read alternative was considered and rejected (permanent code-path cost for a one-time migration).",
+    "Smoke verification: /guild-whiteboard composed successfully from /ev-loop-interactive (first observation of the post-#103 frontmatter fix doing its job end-to-end). The trap that halted Phase 4 in session-d is closed.",
+    "Substrate finding: bin/draft revise applied a stale /tmp file (from a prior session) without sanity-checking its content. The Write tool's read-first guard caught the file existed; bin/draft revise didn't. Worth folding into the #4 substrate-gaps sibling project — perhaps a 'revise rejects if revision-file content differs from current PLAN.md by less than N lines' or a 'revision-file must include a marker line referencing the slug'.",
+    "Substrate observation: the existing learnings/session-notes/ corpus has zero folders with YAML frontmatter — every existing capture is a --from-checkin call. The --evaluator-finding code path existed in capture.ts but was never exercised on this repo. The frontmatter-bearing migration branch is preserved for any in-flight captures that might land before this PR merges (defensive correctness; vitest test coverage stays).",
+    "Whiteboard Round-1 surfaced an open naming question that Phase 4 rollup will close: /learnings-use vs /griot-load. The Phase 4 rollup D2 contract will resolve whether to rename /learnings-use → /griot-load (consolidate under griot-* orchestration tier) or keep as peers with a documented difference."
+  ]
+}

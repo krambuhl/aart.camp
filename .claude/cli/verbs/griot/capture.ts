@@ -212,6 +212,42 @@ _Draft auto-generated from \`${checkinPath}\` § Notes for the PR. The compactio
 `;
 }
 
+type StateJson = {
+  classification: Classification | 'unclassified';
+  evaluator: string | null;
+  code: string | null;
+  'frequency-count': number | null;
+  'file-line': string | null;
+  status: 'captured' | 'archived' | 'escalated';
+  promoted_as: string | null;
+};
+
+function buildStateJsonForCheckin(): string {
+  const state: StateJson = {
+    classification: 'unclassified',
+    evaluator: null,
+    code: null,
+    'frequency-count': null,
+    'file-line': null,
+    status: 'captured',
+    promoted_as: null,
+  };
+  return `${JSON.stringify(state, null, 2)}\n`;
+}
+
+function buildStateJsonForEvaluatorFinding(args: EvaluatorFindingArgs): string {
+  const state: StateJson = {
+    classification: args.classification,
+    evaluator: args.evaluatorName,
+    code: args.code,
+    'frequency-count': args.frequencyCount ?? null,
+    'file-line': args.fileLine ?? null,
+    status: 'captured',
+    promoted_as: null,
+  };
+  return `${JSON.stringify(state, null, 2)}\n`;
+}
+
 type EvaluatorFindingArgs = {
   classification: Classification;
   evaluatorName: string;
@@ -222,20 +258,6 @@ type EvaluatorFindingArgs = {
 };
 
 function buildEvaluatorFindingLearningMd(args: EvaluatorFindingArgs): string {
-  const frontmatter: string[] = [
-    '---',
-    `classification: ${args.classification}`,
-    `evaluator: ${args.evaluatorName}`,
-    `code: ${args.code}`,
-  ];
-  if (args.frequencyCount !== undefined) {
-    frontmatter.push(`frequency-count: ${args.frequencyCount}`);
-  }
-  if (args.fileLine !== undefined) {
-    frontmatter.push(`file-line: ${args.fileLine}`);
-  }
-  frontmatter.push('---', '');
-
   const heading = '# Learning draft';
   const bodyKind =
     args.classification === 'recurring'
@@ -250,9 +272,9 @@ function buildEvaluatorFindingLearningMd(args: EvaluatorFindingArgs): string {
           args.fileLine !== undefined ? `\n\nSource: \`${args.fileLine}\`` : ''
         }\n\nThis is a recurring shape in generator output for this project; future generator invocations in this domain should avoid it.`;
 
-  const provenance = `\n\n_Draft auto-generated from an evaluator finding via \`capture --evaluator-finding=${args.classification}\`. The compaction pipeline (\`/griot-compact\`) will route classification-aware promotion._`;
+  const provenance = `\n\n_Draft auto-generated from an evaluator finding via \`capture --evaluator-finding=${args.classification}\`. Routing metadata lives in \`state.json\`; the compaction pipeline (\`/griot-compact\`) reads it to route classification-aware promotion._`;
 
-  return `${[frontmatter.join('\n'), heading, '', bodyKind, provenance].join('\n')}\n`;
+  return `${[heading, '', bodyKind, provenance].join('\n')}\n`;
 }
 
 function buildEvaluatorFindingPromptMd(args: EvaluatorFindingArgs): string {
@@ -380,6 +402,7 @@ function captureFromEvaluatorFinding(
   };
 
   mkdirSync(folderPath, { recursive: true });
+  writeFileSync(join(folderPath, 'state.json'), buildStateJsonForEvaluatorFinding(args));
   writeFileSync(join(folderPath, 'prompt.md'), buildEvaluatorFindingPromptMd(args));
   writeFileSync(join(folderPath, 'wrong.md'), buildEvaluatorFindingWrongMd(args));
   writeFileSync(
@@ -471,6 +494,7 @@ export function captureVerb(rest: string[], ctx: GriotCliContext): DispatchResul
   }
 
   mkdirSync(folderPath, { recursive: true });
+  writeFileSync(join(folderPath, 'state.json'), buildStateJsonForCheckin());
   writeFileSync(
     join(folderPath, 'prompt.md'),
     buildPromptMd(checkin.unit, checkin.contract),
