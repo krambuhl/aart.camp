@@ -11,8 +11,13 @@
     {
       "number": 1,
       "name": "Phase 1",
-      "status": "in-progress",
-      "branch": "substrate-cli/phase-1"
+      "status": "completed",
+      "branch": "substrate-cli/phase-1",
+      "pr": {
+        "number": 99,
+        "url": "https://github.com/krambuhl/aart.camp/pull/99",
+        "state": "open"
+      }
     }
   ]
 }
