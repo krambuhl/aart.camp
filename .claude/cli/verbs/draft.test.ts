@@ -48,10 +48,10 @@ afterEach(() => {
   rmSync(projectsRoot, { recursive: true, force: true });
 });
 
-function makeTroutProject(slug: string): string {
-  // Marker for draft-readable projects: PLAN.md present. Trout-
-  // managed projects also carry MANIFEST.md; draft-only ones have
-  // just PLAN.md + INTERVIEW.md. Either qualifies under the
+function makeDraftReadableProject(slug: string): string {
+  // Marker for draft-readable projects: PLAN.md present. Draft-only
+  // projects have just PLAN.md + INTERVIEW.md; loom + draft projects
+  // carry PLAN.md alongside manifest.json. Both qualify under the
   // resolver's PLAN-bearing filter.
   const path = join(projectsRoot, slug);
   mkdirSync(path, { recursive: true });
@@ -240,8 +240,9 @@ test('planVerb: derives slug from a topic via createSlug(topic, today)', () => {
 // ---------- Directory exists but no PLAN.md ----------
 
 test('planVerb: dir-exists-no-PLAN succeeds and writes files', () => {
-  // Directory exists but has no MANIFEST.md (so it's not a trout
-  // project) and no PLAN.md
+  // Directory exists but has no PLAN.md (so it doesn't qualify as
+  // a draft-readable project yet — draft plan creates the PLAN.md
+  // here)
   const targetDir = join(projectsRoot, '2026-05-15-adopt-biome');
   mkdirSync(targetDir, { recursive: true });
   const result = planVerb(
@@ -331,7 +332,7 @@ test('planVerb: missing --interview-file throws missing-args', () => {
 // ---------- reviseVerb ----------
 
 function seedTroutProjectWithPlan(slug: string, planContent: string): string {
-  const path = makeTroutProject(slug);
+  const path = makeDraftReadableProject(slug);
   writeFileSync(join(path, 'PLAN.md'), planContent);
   return path;
 }

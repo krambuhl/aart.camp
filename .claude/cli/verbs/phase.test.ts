@@ -164,3 +164,75 @@ test('phaseUpdate: nonexistent phase returns phase-not-found', () => {
   expect(result.exitCode).toBe(1);
   expect(JSON.parse(result.stderr as string).error).toBe('phase-not-found');
 });
+
+test('phaseUpdate: --url sets the real PR url instead of the placeholder', () => {
+  const result = phaseUpdate(
+    [
+      'test-loom',
+      '2',
+      '--status=in-progress',
+      '--pr=42',
+      '--url=https://github.com/krambuhl/aart.camp/pull/42',
+    ],
+    { projectsRoot },
+  );
+  expect(result.exitCode).toBe(0);
+  const phase = JSON.parse(result.stdout as string);
+  expect(phase.pr.url).toBe('https://github.com/krambuhl/aart.camp/pull/42');
+});
+
+test('phaseUpdate: --pr without --url falls back to placeholder url', () => {
+  const result = phaseUpdate(
+    ['test-loom', '2', '--status=in-progress', '--pr=42'],
+    { projectsRoot },
+  );
+  expect(result.exitCode).toBe(0);
+  const phase = JSON.parse(result.stdout as string);
+  expect(phase.pr.url).toContain('example/example/pull/42');
+});
+
+test('phaseUpdate: --pr-state=merged records PR as merged', () => {
+  const result = phaseUpdate(
+    [
+      'test-loom',
+      '2',
+      '--status=completed',
+      '--pr=42',
+      '--url=https://github.com/k/r/pull/42',
+      '--pr-state=merged',
+    ],
+    { projectsRoot },
+  );
+  expect(result.exitCode).toBe(0);
+  const phase = JSON.parse(result.stdout as string);
+  expect(phase.pr.state).toBe('merged');
+});
+
+test('phaseUpdate: --pr-state with invalid value rejects', () => {
+  const result = phaseUpdate(
+    [
+      'test-loom',
+      '2',
+      '--status=in-progress',
+      '--pr=42',
+      '--pr-state=draft',
+    ],
+    { projectsRoot },
+  );
+  expect(result.exitCode).toBe(1);
+  expect(JSON.parse(result.stderr as string).error).toBe('invalid-pr-state');
+});
+
+test('phaseUpdate: --url without --pr rejects (need a PR to attach the url to)', () => {
+  const result = phaseUpdate(
+    [
+      'test-loom',
+      '2',
+      '--status=in-progress',
+      '--url=https://github.com/k/r/pull/42',
+    ],
+    { projectsRoot },
+  );
+  expect(result.exitCode).toBe(1);
+  expect(JSON.parse(result.stderr as string).error).toBe('missing-args');
+});

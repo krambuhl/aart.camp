@@ -3,7 +3,7 @@
   "title": "Trout Sunset",
   "slug": "2026-05-15-trout-sunset",
   "started": "2026-05-15T23:16:15Z",
-  "status": "active",
+  "status": "archived",
   "current_branch": null,
   "latest_checkin": null,
   "strategy": "interactive",
@@ -11,12 +11,22 @@
     {
       "number": 1,
       "name": "Migrate ev-loops to direct CLI invocation",
-      "status": "not-started"
+      "status": "completed",
+      "pr": {
+        "number": 92,
+        "url": "https://github.com/krambuhl/aart.camp/pull/92",
+        "state": "merged"
+      }
     },
     {
       "number": 2,
       "name": "Sunset trout substrate",
-      "status": "not-started"
+      "status": "completed",
+      "pr": {
+        "number": 93,
+        "url": "https://github.com/krambuhl/aart.camp/pull/93",
+        "state": "merged"
+      }
     }
   ]
 }
