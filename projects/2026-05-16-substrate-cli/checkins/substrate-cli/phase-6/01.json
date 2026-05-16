@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "number": "01",
+  "created": "2026-05-16T18:42:00.000Z",
+  "phase": {
+    "number": 6,
+    "name": "§ extraction + extension + integration sweep"
+  },
+  "branch": "substrate-cli/phase-6",
+  "unit": "Sweep 1 — Substrate compositions extraction (ev-loop bodies → projects/SUBSTRATE-COMPOSITIONS.md)",
+  "contract": {
+    "goal": "Extract the duplicated ~250-line `## Substrate compositions` recipe block from both ev-loop SKILL.md bodies into a new shared catalog at `projects/SUBSTRATE-COMPOSITIONS.md`. Each ev-loop body's section becomes a short stub naming the catalog file and the citation form (preamble approach per Q3=D from Phase 6 whiteboard Round 1). Recipe prose is preserved verbatim from the prior bodies (no rewrites, no renames). This is Sweep 1 of 4 in Phase 6 — pure mechanical extraction; no § extension (Sweep 2), no framing doc (Sweep 3), no invariant test (Sweep 4).",
+    "acceptance_criteria": [
+      "`projects/SUBSTRATE-COMPOSITIONS.md` exists with 8 flat top-level `## <Recipe>` sections matching the union of recipes from both prior ev-loop bodies: State refresh, Phase update, Checkin write, Compose PR, Triage PR comments + draft responses, Save session, Revise PLAN.md, Retro write.",
+      "Catalog file opens with a `# Substrate compositions` header, a one-paragraph scope statement naming the four CLI families, and a `## How citations work` section documenting the bare `§ Foo` citation form and its preamble-based namespace pinning.",
+      "Each ev-loop body's `## Substrate compositions` section is reduced to a stub paragraph (no inline recipe prose; no H3 subsection headers for recipes); the stub names `projects/SUBSTRATE-COMPOSITIONS.md` as the recipe target file and `projects/LOOM-CONVENTIONS.md` as the format reference.",
+      "Every `§ <Recipe>` citation that already existed in either ev-loop body still resolves: there exists a `## <Recipe>` header in `projects/SUBSTRATE-COMPOSITIONS.md` matching each citation by exact name.",
+      "Recipe prose in the catalog is byte-equivalent to the prior ev-loop bodies' prose (modulo the H3 → H2 heading promotion and the intro paragraph rewrite which now scopes to the cross-family catalog rather than each ev-loop body individually).",
+      "`npm run lint` clean (2 pre-existing symlink warnings preserved; no new findings).",
+      "`npm run build` succeeds (58 sketch pages prerendered).",
+      "`npm test` passes (496/496, unchanged from baseline)."
+    ],
+    "rules_applied": [
+      "L-004 split agent-creation from agent-use: whiteboard Round 1 ran with 6 currently-registered engineers (a11y, design-systems, performance, react-architect, skeptic, sketch-ideation). Two whiteboarders authored in session i (whiteboard-substrate-engineer, whiteboard-testing-strategy) exist on disk but are session-cached (not callable until next Claude Code process); manually dropped from the engineer list this session.",
+      "L-005 re-run git status fresh before evaluator: `git status --porcelain` ran immediately before the evaluator packet was composed; the file list reflects fresh state at evaluator-spawn time.",
+      "L-006 parse markdown vocabularies at runtime: this unit is documentation-only; no script-side vocabulary changes. CONVENTIONS.md (future Sweep 3 target) and SUBSTRATE-COMPOSITIONS.md (this unit) are project-markdown sources that future scripts will parse at runtime per the established pattern.",
+      "L-009 dense evaluator packet: packet supplied pre-computed verification + AC→file:line mappings + trust-precomputed instruction + suggested-spot-check; evaluator returned approved on a single iteration after one spot-check read.",
+      "L-013 ground prose claims in execution: every verification claim (lint, build, test counts, grep results, line counts) is grounded in the command's actual output captured in this session; no inferred-from-source claims.",
+      "Substrate-no-freestyle: no PLAN.md hand-edits; manifest changes only via `bin/loom phase update`; whiteboard artifact written via `bin/guild whiteboard append`."
+    ],
+    "disqualifiers": [
+      "Renaming any recipe in this unit (e.g. \"Triage PR comments + draft responses\" → \"PR triage\" was discussed in whiteboard but deferred to a follow-up sweep so this lift stays byte-equivalent).",
+      "Adding griot or guild recipes (§ Load rollup, § Capture finding, § Append finding, § Derive panel) — those are Sweep 2.",
+      "Creating `projects/CONVENTIONS.md` or any framing-doc content — that is Sweep 3.",
+      "Adding a parallel-work invariant test or three-category taxonomy doc — Sweep 4.",
+      "Behavior changes to either ev-loop body's process steps; only the `## Substrate compositions` block is touched in each body.",
+      "Opening the PR for Phase 6 this unit — PR opens at phase close or as a checkpoint after the remaining sweeps land; per PLAN, Phase 6 ships as one PR."
+    ],
+    "inputs": [
+      "projects/2026-05-16-substrate-cli/whiteboards/6-extraction-extension.md (Round 1; 6 attributed engineer sections; converged on Q1=A new file, Q3=D preamble + bare citations, Q4=flat 8-recipe namespace, Q5-Q6=three-category taxonomy for Sweep 4).",
+      "Prior `.claude/skills/ev-loop-confidence/SKILL.md` and `.claude/skills/ev-loop-interactive/SKILL.md` (the recipe prose source of truth pre-extraction).",
+      "projects/LOOM-CONVENTIONS.md (sibling reference; deliberately untouched in this sweep — its historical-note line about retired `projects/CONVENTIONS.md` will be revisited in Sweep 3 if that filename gets reused).",
+      "projects/2026-05-16-substrate-cli/PLAN.md Phase 6 prose (deliverable list, ordering, one-PR constraint)."
+    ]
+  },
+  "execution": {
+    "actions": [
+      "Pre-flight (/ev-run dispatch): fetched origin, fast-forwarded local main to 3918484 (PR #108 phase-5-close merge), cut substrate-cli/phase-6 off main. Updated Phase 6 manifest row to {status: in-progress, branch: substrate-cli/phase-6} via `bin/loom phase update`.",
+      "Ran always-on whiteboard pre-step via /guild-whiteboard with all 6 currently-registered engineers. Round 1 artifact at projects/2026-05-16-substrate-cli/whiteboards/6-extraction-extension.md. Session-i's whiteboard-substrate-engineer and whiteboard-testing-strategy exist on disk but are not runtime-callable this session per L-004 — manually omitted from engineer list. Strong convergence: Q1=A (new SUBSTRATE-COMPOSITIONS.md file, 4 of 5 substantive voices); Q3=D (preamble + bare citations, with Sweep-4 tripwire test addressing skeptic's silent-failure concern); Q4=flat 11-recipe namespace; Q5/Q6 produced concrete three-category taxonomy (append-only / partitioned / single-writer-serialized) and identified bin/guild whiteboard append as the real read-modify-write hotspot (performance's audit, with file:line evidence).",
+      "Authored projects/SUBSTRATE-COMPOSITIONS.md (300 lines): `# Substrate compositions` header + scope paragraph (names the four CLI families and frames recipes as cross-family compositions) + `## How citations work` section (documents bare `§ Foo` form and preamble-based namespace pinning) + 8 flat `## <Recipe>` sections lifted verbatim from the ev-loop bodies (State refresh, Phase update, Checkin write, Compose PR, Triage PR comments + draft responses, Save session, Revise PLAN.md, Retro write). Recipe prose byte-equivalent to the prior bodies modulo H3 → H2 heading promotion. Retro write is confidence-only (interactive has no retros).",
+      "Edited .claude/skills/ev-loop-confidence/SKILL.md: replaced the 281-line `## Substrate compositions` block (lines 39-319) with an 8-line stub paragraph. Stub names `bin/loom`, `bin/draft`, `bin/griot`, `bin/guild` as dispatch targets; declares the preamble (`All § <Recipe> references in this body resolve in projects/SUBSTRATE-COMPOSITIONS.md`); points to LOOM-CONVENTIONS.md as the format reference. Body shrunk from 779 to 515 lines.",
+      "Edited .claude/skills/ev-loop-interactive/SKILL.md: same shape — replaced the 267-line `## Substrate compositions` block (lines 37-303) with a 7-line stub paragraph. Body shrunk from 729 to 472 lines.",
+      "Verified citation resolution: grep for `§ ` across both ev-loop bodies vs `^## ` headers in the new catalog. Every recipe-shaped citation (`§ Compose PR`, `§ State refresh`, `§ Phase update`, `§ Checkin write`, `§ Save session`, `§ Revise PLAN.md`, `§ Triage PR comments + draft responses`, `§ Retro write`) has a matching catalog header. The remaining `§ Substrate compositions` self-references and `§ Panel auto-derivation` references point to in-body sections, not catalog targets.",
+      "Pre-evaluation fresh git status: M .claude/skills/ev-loop-confidence/SKILL.md, M .claude/skills/ev-loop-interactive/SKILL.md, M projects/2026-05-16-substrate-cli/events.jsonl, M projects/2026-05-16-substrate-cli/manifest.json, ?? projects/2026-05-16-substrate-cli/whiteboards/6-extraction-extension.md (auto-written by guild-whiteboard append), ?? projects/SUBSTRATE-COMPOSITIONS.md.",
+      "Derived panel via bin/guild derive-panel: evaluator-contract-fit only (substrate-only .md artifact pattern; no domain evaluators apply).",
+      "Composed dense evaluator packet (How-to-evaluate + Contract paraphrase + Artifact with pre-computed verification + AC→file:line mappings + Original ask + Suggested spot-check). Invoked /guild-validate with single-evaluator panel. evaluator-contract-fit returned VERDICT: approved on a single iteration after one spot-check read of the catalog's first three recipes. bin/guild parse-and-aggregate confirmed: verdict=approved, blocking=[], advisory=[], conflicts=[].",
+      "Skipped step 4.5 (findings append) per the loop spec: substrate-only unit with zero findings of any kind — nothing to append to .guild-findings.jsonl, nothing to threshold-check."
+    ],
+    "files_touched": [
+      "projects/SUBSTRATE-COMPOSITIONS.md",
+      ".claude/skills/ev-loop-confidence/SKILL.md",
+      ".claude/skills/ev-loop-interactive/SKILL.md",
+      "projects/2026-05-16-substrate-cli/whiteboards/6-extraction-extension.md",
+      "projects/2026-05-16-substrate-cli/manifest.json",
+      "projects/2026-05-16-substrate-cli/events.jsonl"
+    ],
+    "corrections": [
+      "correction: Initial brief to whiteboard panel claimed 7 recipes in the duplicated `## Substrate compositions` block. Actual count is 8: confidence body has `### Retro write` as an 8th recipe (interactive does not, since interactive units don't write retros). Discovered during artifact authoring; catalog now includes all 8. The brief's other counts (~250 lines per body, byte-identical prose) held."
+    ]
+  },
+  "scope": [
+    "New cross-family recipe catalog at projects/SUBSTRATE-COMPOSITIONS.md with 8 flat top-level recipe sections + intro framing + citation-form documentation.",
+    "Two ev-loop SKILL.md bodies reduced by ~260 lines each: the `## Substrate compositions` recipe block becomes a short stub paragraph naming the catalog and the citation preamble.",
+    "No behavior changes; no recipe renames; no griot/guild recipe additions; no CONVENTIONS.md or framing-doc work; no parallel-work invariant test. All those are subsequent Phase 6 sweeps."
+  ],
+  "changes_since_previous": "First checkin on substrate-cli/phase-6 branch. Baseline: origin/main at 3918484 (post-#108 merge, Phase 5 close).",
+  "verdict": {
+    "result": "approved",
+    "reasons": []
+  },
+  "notes_for_pr": [
+    "Phase 6 Sweep 1 of 4: the duplicated `## Substrate compositions` recipe block (~250 lines, byte-identical between the two ev-loop bodies modulo a few tier-vs-unit edits and confidence's extra `### Retro write`) is now a single catalog at projects/SUBSTRATE-COMPOSITIONS.md. ev-loop bodies cite recipes by name (`§ Compose PR`, `§ Save session`, etc.) and open with a preamble pinning the bare `§` namespace to the new catalog.",
+    "Bikeshed decision from whiteboard Round 1 (4 of 5 substantive voices): new file `projects/SUBSTRATE-COMPOSITIONS.md` (option A) chosen over an appendix in `LOOM-CONVENTIONS.md` (option B). The naming-vs-scope mismatch of folding cross-family recipes into a file named LOOM was the converging concern (a11y, design-systems, react-architect, skeptic). Performance + sketch-ideation deferred on this question.",
+    "Citation form: bare `§ Foo` (Q3=D from whiteboard). Each ev-loop body's stub paragraph functions as the preamble pinning the namespace to projects/SUBSTRATE-COMPOSITIONS.md. Skeptic's silent-failure concern (a duplicate `## Foo` header in another `projects/*.md` would silently ambiguate the citation) is addressed in Sweep 4 by a tripwire test scanning `projects/*.md` for collision; this sweep doesn't ship that test but reserves the role.",
+    "Recipe count is 8 (not the 7 the original brief claimed). confidence body has an 8th recipe `### Retro write` that interactive doesn't — corrected mid-authoring. The catalog includes all 8 so confidence's existing `§ Retro write` citation still resolves; interactive's stub does not reference it because interactive never wrote retros.",
+    "Three follow-up calls deferred to subsequent sweeps: (a) rename `§ Triage PR comments + draft responses` → `§ Respond to PR feedback` per design-systems' verb-shape consistency argument (deferred so this sweep stays byte-equivalent); (b) update LOOM-CONVENTIONS.md's `## Historical note` to acknowledge that `projects/CONVENTIONS.md` is being reintroduced in Phase 6 with a different scope (Sweep 3 will create CONVENTIONS.md and should pair the historical-note edit); (c) substrate-engineer + testing-strategy whiteboarders from session i are session-cached this session and were manually dropped from the engineer list (L-004 boundary).",
+    "signal: phase-boundary: Sweep 1 is the first unit of Phase 6 (single scope-shift signal; no PLAN revise offered — the boundary alone is not concurrence).",
+    "Substrate observation (folds into #4 substrate-gaps sibling project): performance's whiteboard audit identified `bin/guild whiteboard append` (whiteboard.ts:188-204) as a real read-modify-write hotspot — concurrent appends to the same whiteboard would race. The mitigation is contractual (orchestrator-serialized; engineers never write directly), and Sweep 3's three-category taxonomy will name this as a declared exception. Not blocking this PR."
+  ]
+}
