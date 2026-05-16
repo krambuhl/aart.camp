@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "number": "03",
+  "created": "2026-05-16T18:56:30.000Z",
+  "phase": {
+    "number": 6,
+    "name": "§ extraction + extension + integration sweep"
+  },
+  "branch": "substrate-cli/phase-6",
+  "unit": "Sweep 3 — CONVENTIONS.md framing doc + LOOM-CONVENTIONS historical-note update",
+  "contract": {
+    "goal": "Create projects/CONVENTIONS.md as the cross-family framing doc — skills as interfaces vs workers, four-family taxonomy (loom/draft/griot/guild), surviving-skill count constraint, two-axis frontmatter rubric (user-invocable × disable-model-invocation), parallel-work invariant as a three-category taxonomy (append-only / partitioned / single-writer-serialized) per whiteboard Round 1 convergence, and a declared-exceptions register. Update projects/LOOM-CONVENTIONS.md's `## Historical note` to acknowledge the reintroduction with a different scope (sibling-not-replacement framing). No invariant test in this sweep (Sweep 4).",
+    "acceptance_criteria": [
+      "projects/CONVENTIONS.md exists with the section sequence: intro/scope → Skills as interfaces vs workers → Four-family taxonomy → Surviving-skill count → Two-axis frontmatter rubric → Parallel-work invariant (with 3 sub-categories + Declared exceptions) → How this catalog is used.",
+      "Skills-as-interfaces section names `bin/<family>` CLIs as workers and `SKILL.md` bodies as interfaces, with a capability table comparing the two and the two named antipatterns (pure-CRUD skill / prose-emitting CLI).",
+      "Four-family taxonomy section names exactly four families (loom, draft, griot, guild) with one-sentence responsibility statements each.",
+      "Surviving-skill count section enumerates the current ~12 substrate-core skills grouped by quadrant (user-invocable orchestrators / loop bodies / internal primitives) and states the ~12 target.",
+      "Two-axis frontmatter rubric names both axes by their frontmatter keys, describes the four quadrants with an example skill in each, and gives the author-disambiguation question.",
+      "Parallel-work invariant commits to three categories with at least one concrete substrate verb per category. Declared-exceptions sub-section names exactly three exceptions (PLAN.md, manifest.json, whiteboard markdown) with one-paragraph reasons each plus a new-exception admission policy.",
+      "How-this-catalog-is-used closing section disambiguates the citation form: bare `§ Foo` → SUBSTRATE-COMPOSITIONS.md; CONVENTIONS.md references are always fully qualified.",
+      "projects/LOOM-CONVENTIONS.md `## Historical note` updated to acknowledge the reintroduction of CONVENTIONS.md with a different scope, naming the sibling-not-replacement relationship.",
+      "`npm run lint` clean (2 pre-existing symlink warnings preserved).",
+      "`npm run build` succeeds (58 sketch pages prerendered).",
+      "`npm test` passes (496/496, unchanged from baseline)."
+    ],
+    "rules_applied": [
+      "L-005 fresh git status before evaluator: re-ran `git status --porcelain` immediately before the evaluator packet.",
+      "L-009 dense evaluator packet: pre-computed verification + AC→line mappings + trust-precomputed instruction + suggested spot-check; evaluator returned approved on a single iteration with one spot-check read (lines 119-208 of the new CONVENTIONS.md).",
+      "L-013 ground prose claims in execution: every claim about skill count, frontmatter axes, and verb categories is grounded in this session's grep/inspection output, not inferred from memory.",
+      "Substrate-no-freestyle: no PLAN.md hand-edits; LOOM-CONVENTIONS.md edit was a targeted single-block replace of the historical note, not a structural rewrite."
+    ],
+    "disqualifiers": [
+      "Adding the parallel-work invariant TEST to any `bin/<family>` test file — Sweep 4 territory.",
+      "Modifying any SUBSTRATE-COMPOSITIONS.md recipe (Sweeps 1+2 shipped those).",
+      "Editing ev-loop bodies further (Sweep 3 is convention prose, not loop-body work).",
+      "Adding skill-frontmatter audits or moving existing skills (Phase 3 did that audit).",
+      "Implementing the tripwire-test idea or any other Sweep-4 infrastructure."
+    ],
+    "inputs": [
+      "projects/2026-05-16-substrate-cli/whiteboards/6-extraction-extension.md Round 1 (performance + design-systems + skeptic convergence on three-category taxonomy; performance identified the whiteboard-append read-modify-write hotspot at file:line).",
+      "Skill registry frontmatter inventory (12 skills today; classification verified via grep over `.claude/skills/*/SKILL.md` frontmatter).",
+      "projects/LOOM-CONVENTIONS.md (sibling reference; historical note at lines 442-449 pre-sweep).",
+      "projects/archive/2026-05-02-agent-guilds/PLAN.md (original 'Skills as interfaces vs workers' framing prose)."
+    ]
+  },
+  "execution": {
+    "actions": [
+      "Authored projects/CONVENTIONS.md (217 lines): scope statement + sibling-reference framing (links to LOOM-CONVENTIONS.md and SUBSTRATE-COMPOSITIONS.md); Skills-as-interfaces-vs-workers section (capability table + two named antipatterns); Four-family taxonomy table (loom / draft / griot / guild + responsibilities); Surviving-skill count enumeration (8 user-invocable orchestrators + 2 loop bodies + 3 internal primitives = 13 against a ~12 target); Two-axis frontmatter rubric (quadrant table + disambiguation question + (false, *) quadrant note); Parallel-work invariant as three categories (append-only with `findings append` + `events log` + operator-checks examples; partitioned with checkin/session/capture/pr-respond examples; single-writer-serialized with PLAN.md / manifest / whiteboard examples) + Declared-exceptions register (3 exceptions with one-paragraph reasons + new-exception admission policy); How-this-catalog-is-used citation-form disambiguation.",
+      "Edited projects/LOOM-CONVENTIONS.md `## Historical note` (lines 442-458): expanded the trout-sunset retirement note to explicitly acknowledge the Phase 6 reintroduction with a different scope, names the sibling-not-replacement relationship, and retains the archived-projects clause.",
+      "Pre-evaluation fresh git status: M projects/LOOM-CONVENTIONS.md, ?? projects/CONVENTIONS.md (plus events.jsonl + manifest.json carrying autowrites from the post-Sweep-2 PR-open step that lands with this commit).",
+      "Derived panel via bin/guild derive-panel: evaluator-contract-fit only (substrate-only .md artifacts).",
+      "Composed dense evaluator packet with line-precise AC→file:line mappings and suggested a spot-check on the Parallel-work invariant section (the most-substantive content). Invoked evaluator-contract-fit which read lines 119-208 of CONVENTIONS.md and confirmed AC6 + AC8 + structural consistency for the rest. VERDICT: approved on first iteration.",
+      "Aggregator quirk: first parse-and-aggregate call returned a `parse-failure` because the heredoc-encoded evaluator-output string collapsed the trailing `\\n\\nVERDICT: approved` into mid-paragraph text. Second call with explicit `\\n\\n` before `VERDICT: approved` parsed correctly to `verdict: approved, blocking=[], advisory=[]`. Substrate-side observation surfaced in Notes for the PR; the parser-regex requires VERDICT: to start a line.",
+      "Skipped step 4.5 (findings append) per spec: substrate-only unit with zero findings."
+    ],
+    "files_touched": [
+      "projects/CONVENTIONS.md",
+      "projects/LOOM-CONVENTIONS.md"
+    ],
+    "corrections": [
+      "correction: bin/guild parse-and-aggregate requires `VERDICT:` to start a line (line-start anchor in the regex). When authoring the heredoc-encoded evaluator-output JSON for the aggregator, the output string's `VERDICT: approved` line must be preceded by an actual newline character (encoded as `\\n` in JSON, which the heredoc passes through to the parser). The first parse-and-aggregate call collapsed it into a mid-paragraph token and returned a parse-failure; the second call with the newline preserved parsed correctly. Worth surfacing as a Sweep-4 candidate for a parse-and-aggregate tolerance improvement (e.g., accept VERDICT: anywhere on its own line, even at end-of-string without trailing newline)."
+    ]
+  },
+  "scope": [
+    "New projects/CONVENTIONS.md (~217 lines) as the cross-family framing doc — skills-as-interfaces-vs-workers, four-family taxonomy, surviving-skill count, two-axis frontmatter rubric, parallel-work invariant as a three-category taxonomy, declared-exceptions register, citation-form disambiguation.",
+    "Targeted edit to projects/LOOM-CONVENTIONS.md `## Historical note` (lines 442-458): +8 lines acknowledging the Phase 6 reintroduction; sibling-not-replacement framing.",
+    "No SUBSTRATE-COMPOSITIONS.md changes, no ev-loop body changes, no test or CLI work."
+  ],
+  "changes_since_previous": "Builds on Sweep 2 (checkin 02). Sweep 3 adds the framing layer (CONVENTIONS.md) above the recipe layer (SUBSTRATE-COMPOSITIONS.md, Sweeps 1+2) and the loom verb-contract layer (LOOM-CONVENTIONS.md, unchanged modulo the historical-note update).",
+  "verdict": {
+    "result": "approved",
+    "reasons": []
+  },
+  "notes_for_pr": [
+    "Phase 6 Sweep 3 of 4: created projects/CONVENTIONS.md as the cross-family framing doc. The substrate now has three concentric reference layers: LOOM-CONVENTIONS.md (verb contract), SUBSTRATE-COMPOSITIONS.md (recipe catalog), CONVENTIONS.md (cross-family framing). Each file is named for what it contains; each has a distinct citation form (LOOM-CONVENTIONS.md § Section vs § Recipe vs CONVENTIONS.md § Section).",
+    "The parallel-work invariant is upgraded from PLAN.md's two-category slogan (append-only OR branch-partitioned) to a three-category taxonomy per Phase 6 whiteboard convergence: append-only / partitioned / single-writer-serialized. The third category is the honest name for what `bin/draft revise`, `bin/loom phase update`, and `bin/guild whiteboard append` already do — they read-modify-write shared files but are safe-by-orchestration. Naming the category explicitly + maintaining a declared-exceptions register prevents the invariant from being decorative.",
+    "Three declared exceptions registered: PLAN.md (mutation via bin/draft revise; Revision-log audit trail), manifest.json (mutation via loom verbs; events.jsonl audit trail), whiteboard markdown (mutation via bin/guild whiteboard append; orchestrator-serialized via /guild-whiteboard). A new-exception admission policy is named so future contributors can't silently add category-3 verbs.",
+    "Aggregator parse-failure observation (correction logged): bin/guild parse-and-aggregate's regex anchors `VERDICT:` to line-start. Heredoc-encoded evaluator-output strings need an actual `\\n\\n` before the verdict line, not just inline text. First aggregator call this sweep parse-failed; second call with the newline preserved succeeded. Worth a tolerance improvement in a future substrate-gaps pass.",
+    "Sweep 4 (final) will: (a) add an in-process test that walks the declared category-1/2/3 verb registry and asserts each verb's actual write semantics match its declared category, (b) surface any remaining shared-mutable-state hotspots as advisory findings, (c) optionally add the skeptic's proposed projects/*.md tripwire that scans for duplicate `## Foo` recipe-shaped headers."
+  ]
+}

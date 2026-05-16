@@ -67,7 +67,12 @@
       "number": 6,
       "name": "§ extraction + extension + integration sweep",
       "status": "in-progress",
-      "branch": "substrate-cli/phase-6"
+      "branch": "substrate-cli/phase-6",
+      "pr": {
+        "number": 109,
+        "url": "https://github.com/example/example/pull/109",
+        "state": "open"
+      }
     }
   ]
 }

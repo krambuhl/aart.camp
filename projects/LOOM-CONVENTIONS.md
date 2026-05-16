@@ -443,7 +443,15 @@ reserved.
 
 The earlier trout substrate (this file used to be one of two —
 LOOM-CONVENTIONS.md alongside CONVENTIONS.md) was retired in
-trout-sunset Phase 3. `projects/CONVENTIONS.md` no longer exists.
+trout-sunset Phase 3, and `projects/CONVENTIONS.md` was removed at
+that time. The substrate-cli Phase 6 sweep reintroduced
+`projects/CONVENTIONS.md` with a different scope: cross-family
+framing (skills as interfaces vs workers, four-family taxonomy,
+two-axis frontmatter rubric, parallel-work invariant). The new
+CONVENTIONS.md is a sibling of this file, not a replacement —
+LOOM-CONVENTIONS.md remains the loom verb contract; the new file
+covers what loom is not in scope to cover.
+
 Archived projects under `projects/archive/` may still use the trout
 format (markdown `MANIFEST.md`, prose checkins); they are read-only
 historical artifacts and live tooling does not operate on them.
