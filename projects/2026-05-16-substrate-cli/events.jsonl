@@ -41,3 +41,5 @@
 {"at":"2026-05-16T08:14:59.102Z","event":"checkin-created","detail":{"number":"02","branch":"substrate-cli/phase-4-rollup"}}
 {"at":"2026-05-16T08:18:35.255Z","event":"pr-opened","detail":{"pr":105,"url":"https://github.com/krambuhl/aart.camp/pull/105"}}
 {"at":"2026-05-16T08:20:26.615Z","event":"session-saved","detail":{"filename":"2026-05-16-g.json"}}
+{"at":"2026-05-16T12:24:31.046Z","event":"phase-completed","detail":{"phase":4}}
+{"at":"2026-05-16T12:26:46.336Z","event":"session-saved","detail":{"filename":"2026-05-16-h.json"}}

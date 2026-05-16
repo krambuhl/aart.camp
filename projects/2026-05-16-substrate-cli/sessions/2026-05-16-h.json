@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "date": "2026-05-16",
+  "letter": "h",
+  "phases_touched": [
+    4
+  ],
+  "checkins_written": [],
+  "pr_activity": [
+    "#105 merged (substrate-cli/phase-4-rollup → main at 2026-05-16T12:22:39Z, commit 9795b25)"
+  ],
+  "what_happened": [
+    "User typed `106 is merged` — verified via gh that #106 doesn't exist; #105 is the actually-merged Phase 4 rollup PR (typo). Treated as `105 merged` since that matches the remote reality.",
+    "/ev-run cannot be composed via the Skill tool (disable-model-invocation: true; it's a top-level router that users invoke directly). Performed the router's process manually since the established session pattern is `PR merged → continue project`.",
+    "Synced main: pulled origin/main fast-forward to 9795b25 (#105's squash). Smoke-tested `bin/griot use --as=llm` against the new on-main rollup.json — emits the 13-learning corpus + citation contract correctly.",
+    "Closed Phase 4 bucket per whiteboard Round-2 Finding 5: `bin/loom phase update substrate-cli 4 --status=completed` WITHOUT --pr=<new>. Manifest now: status=completed, branch=substrate-cli/phase-4-rollup, pr={number:104, state:merged} — intentionally retains #104 (D1's PR) so the manifest preserves the bucket's first-PR linkage; #105's history lives in events.jsonl + checkin 02.",
+    "Committed the phase-close substrate state + this session-save directly to main (no work-PR to bundle with after the bucket-PRs both merged). Direct-to-main commits are a substrate gap for the post-merge phase-close case — folded into the #4 substrate-gaps queue.",
+    "Did NOT dispatch into Phase 5 this session. The session's already heavy in context budget after D2+D3+PLAN-revision+PR-open; starting Phase 5's work (4 new agent files + L-004-boundaried smoke deferral) wants a fresh session for full budget."
+  ],
+  "open_threads": [
+    "Phase 5 (New agent families) is the next actionable phase. Status: not-started. No external dependencies. Per PLAN.md Phase 5 section: ship 4 new agent files (evaluator-playwright, evaluator-vitest, whiteboard-testing-strategy, whiteboard-substrate-engineer) in one PR. Per L-004: the new agents will NOT be in the session that authored them; smoke tests of `/guild-validate` / `/guild-whiteboard` invoking the new agents must run in a fresh Claude Code process AFTER the PR merges. The unit contract must document this explicitly.",
+    "Phase 6 (§ extraction + extension + integration sweep) is also actionable. Status: not-started. Deps satisfied (P1 + P2 merged). Could ship in parallel with Phase 5 if desired. PLAN.md positions P6 as the substrate-finalization sweep: extract the duplicated `## Substrate compositions` section from ev-loop-* bodies into a shared reference, extend with griot + guild recipes, CONVENTIONS.md sweep documenting four-family taxonomy, parallel-work invariant codified. Per the PLAN's recommended execution order: cut P5 + P6 as parallel branches.",
+    "Next session: `/ev-run substrate-cli` will route to Phase 5 by lowest-numbered policy. If parallel work is desired, the user can dispatch `/ev-run substrate-cli` and `/ev-run substrate-cli` in separate Claude Code sessions on different branches — the substrate supports this per the parallel-work invariant (events.jsonl is append-only; manifest CRUD verbs are atomic).",
+    "Substrate gap surfaced this session: post-merge phase-close substrate state has no work-PR home. The bin/loom phase update --status=completed for a bucket-close happens AFTER the last bucket-PR merges, so there's no active work-branch to bundle the substrate state changes into. Current workaround: direct-to-main commit. Cleaner fix would be a `bin/loom phase close` verb that handles the bucket-close substrate state atomically and emits a phase-closed PR (or a tiny dedicated branch). Folded into #4 substrate-gaps queue.",
+    "Substrate observation: /griot-load is in the registry as of this session (the user-facing surface from PR #105 is on main now). L-004 says the authoring session can't invoke it — but the next session (a fresh Claude Code process) will see it in the available-skills list. /ev-run's loader-step continues to call `bin/griot use --as=llm` directly via Bash for the start-of-session load (skill-composition-free per the pinned Decision); /griot-load is the user-typed mid-session reload affordance."
+  ],
+  "notes": [
+    "Phase 4 (the bucket) is COMPLETE. Two PRs shipped: #104 (D1 session-notes restructure) merged at 07:32:17Z; #105 (D2 rollup format + D3 /griot-load + loader) merged at 12:22:39Z. Phase 4 manifest row's pr field intentionally retains #104 per Finding 5; events.jsonl preserves the full PR lifecycle for both.",
+    "Phase 4 was the first multi-PR phase bucket in the substrate. The bucket pattern held: PLAN.md describes both PRs as facets of one conceptual change; the manifest tracks the bucket via a single phase row; events.jsonl tracks per-PR lifecycle. The single-valued pr field is a known schema gap (Finding 5) queued for the substrate-gaps sibling project.",
+    "Substrate finding (this session): /ev-run is disable-model-invocation: true (top-level router), so it can't be composed via the Skill tool when responding to ad-hoc user messages like `106 is merged`. The Skill tool emits `Skill ev-run cannot be used with Skill tool due to disable-model-invocation` — that's the intended substrate behavior per the Phase 3 followup Decision (top-level commands are user-typed, not model-composed). The workaround is to perform the router's process manually OR ask the user to type `/ev-run` themselves. Worth noting as a known interaction pattern.",
+    "Substrate finding (this session): the user typed `106 is merged` but #106 doesn't exist (#105 is the merged PR). The `make the reasonable call` directive supports treating it as a typo for the actually-merged PR; the discrepancy was surfaced explicitly in the response.",
+    "After Phase 5 + Phase 6 ship, the project is feature-complete and ready for /loom-archive. Phase 5 will exercise L-004 prominently (4 new agent files; smoke deferred to next session). Phase 6 is the substrate-finalization sweep — § extraction is the bikeshed point (LOOM-CONVENTIONS.md appendix vs SUBSTRATE-COMPOSITIONS.md new file)."
+  ]
+}
