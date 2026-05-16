@@ -9,7 +9,7 @@ description: >-
 argument-hint: "<project-slug-or-path>"
 user-invocable: true
 disable-model-invocation: true
-allowed-tools: Read, Write, Bash(bin/loom *)
+allowed-tools: Read, Write, Bash(bin/loom *), AskUserQuestion
 ---
 
 # /loom-archive
@@ -44,22 +44,10 @@ events (`retro-written`, `archived`).
   stop and report the open ones. Archiving a project with open
   work is allowed only via explicit user override (next paragraph).
 
-### 2. Interview the user for color
+### 2. Read the corpus
 
-You have the events + checkins on disk. The user has the
-context. Ask 2-4 questions to extract the parts of the project
-that won't be in event detail or checkin notes:
-
-- What worked unexpectedly well?
-- What was harder than expected, and why?
-- Any patterns that should change in future projects (substrate
-  conventions, decomposition style, etc.)?
-- Anything that should be carried as a follow-up vs dropped on
-  the floor?
-
-Keep questions short. Let the user steer.
-
-### 3. Read the corpus
+Corpus-first: the model needs the same context the user has before
+asking grill-me questions. Read everything before § 3.
 
 - `bin/loom checkin list <slug>` — every checkin file.
 - `bin/loom events read <slug>` — full event log.
@@ -68,6 +56,50 @@ Keep questions short. Let the user steer.
 - `bin/loom retro list <slug> --type=session` — every session-tier
   retro shipped during confidence-loop work (if any).
 - Read `PLAN.md` directly via `Read` for the original framing.
+
+### 3. Grill-me interview (one dimension at a time)
+
+The corpus gives the model an opinionated draft on each retro
+dimension. The user's job is to confirm, extend, replace, or skip.
+Use `AskUserQuestion` for each dimension; one question at a time.
+Match `/draft-plan`'s grill-me pace: recommended answer first,
+discrete options, structured turn.
+
+For each of the four retro dimensions, follow this shape:
+
+1. **Draft a recommendation from the corpus.** One or two sentences,
+   opinionated. Reference specific PRs / checkins / corrections by
+   number when the corpus supports them. Don't hedge — the user
+   redirects when they disagree.
+2. **Ask the user via `AskUserQuestion`** with these options
+   (always in this order; first option is the recommended path):
+   - `Looks right — capture as-is` (the model's draft becomes the
+     finding)
+   - `Yes, and add more` (user extends with one or more additional
+     findings in this category)
+   - `Replace with mine` (user provides the actual content)
+   - `Skip this dimension` (no finding in this category for this
+     project)
+3. **Capture the resolved finding(s)** into the in-progress
+   `findings[]` array. Don't write to disk yet — that's § 4.
+
+The four dimensions, asked in order:
+
+- **What worked unexpectedly well?** → `kept-well` finding(s).
+  At least 2 by the end of this dimension and the next.
+- **What was harder than expected, and why?** → `improvement`
+  finding(s). At least 2.
+- **Any patterns that should change in future projects** (substrate
+  conventions, decomposition style, panel composition, etc.)? →
+  `process-change` finding(s). Often zero or one.
+- **Anything carried as a follow-up vs dropped on the floor?** →
+  `follow-up` finding(s). Include unresolved corrections as
+  evidence when relevant.
+
+Open-ended follow-up exchanges within a single dimension (the user
+elaborates, the model asks a clarifying natural-language question)
+stay outside `AskUserQuestion` — that's the standard grill-me
+posture from `/draft-plan` § 2.
 
 ### 4. Compose the project retro JSON
 
@@ -144,8 +176,10 @@ then squash-merge.
   description in one of four categories. If a thought is longer
   than a line, split it or compress it.
 - **Compose `bin/loom`.** Never node-invoke loom directly.
-- **Interview is short.** 2-4 questions. The corpus is the bulk
-  of the data; the user fills in color.
+- **Grill-me pace.** Corpus-first, then one dimension at a time
+  via `AskUserQuestion`. Recommended answer first, discrete options
+  second. The user redirects; the model doesn't ask open-ended
+  questions before drafting from the corpus.
 - **Stops at archive.** PR authoring is downstream.
 - **No emojis.**
 

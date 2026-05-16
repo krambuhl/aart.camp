@@ -17,3 +17,10 @@
 {"at":"2026-05-16T05:13:31.021Z","event":"pr-opened","detail":{"pr":100,"url":"https://github.com/krambuhl/aart.camp/pull/100"}}
 {"at":"2026-05-16T05:13:38.868Z","event":"phase-completed","detail":{"phase":2}}
 {"at":"2026-05-16T05:14:13.967Z","event":"session-saved","detail":{"filename":"2026-05-15-b.json"}}
+{"at":"2026-05-16T05:27:04.813Z","event":"phase-completed","detail":{"phase":2}}
+{"at":"2026-05-16T05:27:04.884Z","event":"phase-started","detail":{"phase":3,"name":"Skill surface cleanup (audit + grill-me)"}}
+{"at":"2026-05-16T05:31:55.843Z","event":"checkin-created","detail":{"number":"01","branch":"substrate-cli/phase-3"}}
+{"at":"2026-05-16T05:34:25.950Z","event":"checkin-created","detail":{"number":"02","branch":"substrate-cli/phase-3"}}
+{"at":"2026-05-16T05:35:07.415Z","event":"pr-opened","detail":{"pr":101,"url":"https://github.com/krambuhl/aart.camp/pull/101"}}
+{"at":"2026-05-16T05:35:26.232Z","event":"phase-completed","detail":{"phase":3}}
+{"at":"2026-05-16T05:35:56.728Z","event":"session-saved","detail":{"filename":"2026-05-15-c.json"}}

@@ -9,6 +9,8 @@ description: >-
   grill-me into a plan; for lighter "I know what I want" scaffolding,
   just answer the questions tersely.
 argument-hint: "<topic or short description>"
+user-invocable: true
+disable-model-invocation: true
 allowed-tools: Read, Write, Bash(bin/draft *), Bash(date *), AskUserQuestion
 ---
 
