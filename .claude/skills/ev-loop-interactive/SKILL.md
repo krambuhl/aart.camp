@@ -528,13 +528,13 @@ For each deliverable (picked per the ordering rule):
         ```
 
         Threshold-triggered corrections feed into session close (§ Save
-        session) → `griot-capture --evaluator-finding=recurring` at
+        session) → `bin/griot capture --evaluator-finding=recurring` at
         session boundary, no manual intervention. The loop does not
-        invoke `capture.ts` directly here; capture happens at session
+        invoke the verb directly here; capture happens at session
         close, with the recurring-finding arg shape:
 
         ```bash
-        node .claude/scripts/griot/capture.ts \
+        bin/griot capture \
           --evaluator-finding=recurring \
           --evaluator-name=<evaluator> \
           --code=<code> \
@@ -715,8 +715,7 @@ For "address feedback on #N":
   the generator defaulted to incorrectly, note it verbatim in the
   checkin JSON's `execution.corrections[]` array. The session handoff
   (§ Save session) surfaces unresolved corrections into `open_threads`;
-  `griot-capture` (via `node .claude/scripts/griot/capture.ts
-  --from-checkin=...`) promotes notable ones into
+  `bin/griot capture --from-checkin=...` promotes notable ones into
   `learnings/session-notes/` at session close, and `/griot-compact`
   decides which get promoted further. The loop itself never writes
   to `learnings/`.

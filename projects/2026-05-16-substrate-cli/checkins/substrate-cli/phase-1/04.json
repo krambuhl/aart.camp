@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "number": "04",
+  "created": "2026-05-15T20:25:00.000Z",
+  "phase": {
+    "number": 1,
+    "name": "Phase 1: bin/griot CLI + obvious wrapper kills"
+  },
+  "branch": "substrate-cli/phase-1",
+  "unit": "D4: Kill wrappers + update references",
+  "contract": {
+    "goal": "Close Phase 1: delete the legacy .claude/scripts/griot/ directory (8 files: 4 sources + 4 tests), delete the wrapper skills .claude/skills/griot-capture/ + .claude/skills/griot-report/, update .claude/settings.json permissions (Bash(node .claude/scripts/griot/*) → Bash(bin/griot *), drop Skill(griot-capture) entries), and update all live in-repo references in skill bodies to point at the new bin/griot <verb> CLI surface. D4 of 4 in Phase 1.",
+    "acceptance_criteria": [
+      ".claude/scripts/griot/ directory deleted entirely (8 files gone).",
+      ".claude/skills/griot-capture/ and .claude/skills/griot-report/ directories deleted.",
+      ".claude/settings.json: Bash(node .claude/scripts/griot/*) replaced with Bash(bin/griot *); Skill(griot-capture) + Skill(griot-capture:*) removed.",
+      "All live in-repo skill-body references updated from node .claude/scripts/griot/<verb>.ts → bin/griot <verb>. Affected: ev-run, ev-loop-confidence, ev-loop-interactive, griot-compact SKILL.md.",
+      "npm run lint clean; npm test clean; bin/griot --help lists 4 verbs; bin/griot use produces correct output against the live rollup.",
+      "No live, non-archive reference to .claude/scripts/griot/ or griot-capture/griot-report skills remains (verified via grep)."
+    ],
+    "rules_applied": [
+      "Don't freestyle around the substrate (feedback memory): all skill-body edits preserve orchestration semantics; only the invocation surface changed.",
+      "Treat archives as immutable: skipped projects/archive/** and learnings/session-notes/archived/**.",
+      "Treat checkins as immutable: did not edit prior checkins on this branch.",
+      "PLAN.md is CLI-owned: did not hand-edit PLAN.md (the scope description it carries is still accurate)."
+    ],
+    "disqualifiers": [
+      "Touch archive material (immutable).",
+      "Edit prior checkins (immutable).",
+      "Edit PLAN.md (CLI-owned).",
+      "Break bin/griot functionality.",
+      "Change griot-compact orchestration semantics beyond the invocation-surface swap."
+    ],
+    "inputs": [
+      "D1+D2+D3 commits on this branch",
+      ".claude/settings.json",
+      ".claude/skills/{ev-run,ev-loop-*,griot-compact}/SKILL.md (live callers)"
+    ]
+  },
+  "execution": {
+    "actions": [
+      "Inventoried all live in-repo references via grep -rn '.claude/scripts/griot|griot-capture|griot-report' (excluding archives + project checkins/PLAN).",
+      "Updated .claude/settings.json: Bash(node .claude/scripts/griot/*) → Bash(bin/griot *); removed Skill(griot-capture) + Skill(griot-capture:*) since the skill no longer exists. Left Bash(node .claude/scripts/guild/*) untouched — Phase 2 will move that to bin/guild.",
+      "Deleted directories via rm -rf: .claude/skills/griot-capture/, .claude/skills/griot-report/, .claude/scripts/griot/.",
+      "Updated .claude/skills/ev-run/SKILL.md line 102: Bash('node .claude/scripts/griot/use.ts') → Bash('bin/griot use'); surrounding prose 'script' → 'verb'.",
+      "Updated .claude/skills/ev-loop-confidence/SKILL.md corrections-feeding paragraph: griot-capture (via node .claude/scripts/griot/capture.ts ...) → bin/griot capture --from-checkin=... .",
+      "Updated .claude/skills/ev-loop-interactive/SKILL.md two locations: the recurring-finding capture code-fence + the corrections-feeding paragraph.",
+      "Updated .claude/skills/griot-compact/SKILL.md frontmatter description and 11 in-body references — prose mentions of 'helpers under .claude/scripts/griot/' → 'verbs under bin/griot'; code-fence Bash invocations (node ... operator-checks/mediate-panel) → bin/griot equivalents; replaced the orphaned '/griot-report exists' paragraph with a past-tense historical note explaining the wrapper's removal in this PR.",
+      "Verified no live references remain via grep — only 2 acceptable matches: (a) derive-panel.test.ts regex-fixture using the path as a glob-matching example string, NOT a filesystem reference; (b) the new historical-mention paragraph I authored in griot-compact/SKILL.md.",
+      "Smoke-tested bin/griot --help, bin/griot use — both work; --help lists all 4 verbs; use produces correct rollup output against the live learnings/rollup.md.",
+      "Ran npm run lint: clean (129 files; 2 pre-existing broken-symlink warnings).",
+      "Ran npm test: 34 files / 449 tests pass. Drop from 38/525 after D3 reflects the 4 deleted .claude/scripts/griot/*.test.ts files (-76 tests); the new .claude/cli/verbs/griot/*.test.ts files contribute equivalent coverage and remain.",
+      "Invoked /guild-validate with evaluator-contract-fit (single-evaluator panel per PANEL-COMPOSITION.md — substrate authoring + JSON-config files map to contract-fit only); VERDICT: approved."
+    ],
+    "files_touched": [
+      ".claude/settings.json",
+      ".claude/scripts/griot/ (DELETED — 8 files)",
+      ".claude/skills/griot-capture/ (DELETED — SKILL.md)",
+      ".claude/skills/griot-report/ (DELETED — SKILL.md)",
+      ".claude/skills/ev-run/SKILL.md",
+      ".claude/skills/ev-loop-confidence/SKILL.md",
+      ".claude/skills/ev-loop-interactive/SKILL.md",
+      ".claude/skills/griot-compact/SKILL.md"
+    ],
+    "corrections": []
+  },
+  "scope": [
+    "Delete legacy .claude/scripts/griot/ directory (8 files).",
+    "Delete wrapper skills griot-capture and griot-report.",
+    "Update .claude/settings.json permissions.",
+    "Swap script-path references in 4 caller skill bodies."
+  ],
+  "changes_since_previous": "Builds on D1+D2+D3 (checkins 01+02+03). D4 closes the migration loop: the new bin/griot is now the only path; legacy scripts and wrapper skills are gone.",
+  "verdict": {
+    "result": "approved",
+    "reasons": []
+  },
+  "notes_for_pr": [
+    "D4 closes Phase 1. Phase 1 ships as one PR with 4 checkins.",
+    "Two remaining grep matches for .claude/scripts/griot intentionally preserved: (a) derive-panel.test.ts uses the path as a regex-test example string for glob-matching, NOT a filesystem reference — pattern-test still valid; (b) griot-compact/SKILL.md contains a new past-tense historical paragraph explaining what /griot-report used to do and why it was removed (so future readers in the orchestration skill have context).",
+    "settings.json kept Bash(node .claude/scripts/guild/*) — Phase 2 (bin/guild) moves that next.",
+    "Test count dropped 76 tests from D3's 525 → D4's 449. This is the expected delta from deleting the 4 legacy .claude/scripts/griot/*.test.ts files; coverage is preserved by the new .claude/cli/verbs/griot/*.test.ts files (which were already counted in D1-D3's runs).",
+    "The contract-fit evaluator surfaced one soft note: the past-tense /griot-report mention in griot-compact/SKILL.md could quietly rot if surrounding prose gets rewritten. Worth a glance during Phase 3's skill-surface cleanup; not blocking."
+  ]
+}
