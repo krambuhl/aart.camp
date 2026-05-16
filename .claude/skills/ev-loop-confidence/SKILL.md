@@ -4,9 +4,10 @@ description: >-
   Execution loop for tiered-transform work. Runs a phase as a
   sequence of tiers, each tier processing a batch of files under a tier
   contract, gated by evaluator verdicts and pre-flight checks. Writes
-  tactical retros between tiers. Composes /trout-* primitives; composes
-  no other loop. Use when a phase is a bulk transform, audit, or
-  find-replace-style operation across many files.
+  tactical retros between tiers. Dispatches to bin/loom and bin/draft
+  CLIs directly; composes /guild-validate; composes no other loop. Use
+  when a phase is a bulk transform, audit, or find-replace-style
+  operation across many files.
 argument-hint: "<project-slug-or-path> <phase-number>"
 allowed-tools: Read, Write, Edit, Bash, Agent, Skill, mcp__github__get_file_contents
 ---
@@ -17,29 +18,310 @@ Execute one phase of a project as a confidence loop: tiered transforms,
 ratcheting from small/safe to large/risky, with an evaluator verdict per
 unit and a tactical retro per tier.
 
-**Composes**: `.claude/scripts/trout/autosave.ts`,
-`.claude/scripts/trout/autoload.ts` (both via Bash),
-`/trout-pull-request`, `/guild-validate`.
+**Composes**: `bin/loom` and `bin/draft` CLIs (via Bash) for substrate
+operations; `/guild-validate` (via the Skill tool) for the antagonist
+panel.
 **Does not compose**: other loops. Peer loops are invoked by the router,
-not by each other.
+not by each other. No ambient `/loom-*` or `/draft-revise` skills —
+substrate plumbing dispatches directly to the CLIs (see § Substrate
+compositions).
 
-**Format reference**: `projects/CONVENTIONS.md` (repo-relative).
+**Format reference**: `projects/LOOM-CONVENTIONS.md` (repo-relative).
 
-Skill invocations like `/trout-pull-request` and `/guild-validate` below
-mean `Skill(skill: <name>, args: "…")` — the Skill tool is how loops
-compose substrate skills. Script invocations like
-`.claude/scripts/trout/autosave.ts` mean
-`Bash("node .claude/scripts/trout/autosave.ts <args>")`. Antagonist
-evaluation runs through `/guild-validate`, which spawns evaluator agents
-in parallel via `/guild-spawn`; the loop itself never calls the `Agent`
-tool directly.
+Skill invocations like `/guild-validate` below mean
+`Skill(skill: <name>, args: "…")`. CLI invocations like
+`bin/loom phase update` mean `Bash("bin/loom phase update <args>")`.
+Antagonist evaluation runs through `/guild-validate`, which spawns
+evaluator agents in parallel via `/guild-spawn`; the loop itself never
+calls the `Agent` tool directly.
+
+## Substrate compositions
+
+Every substrate operation this loop performs dispatches directly to
+`bin/loom` or `bin/draft` — no ambient skills, no trout scripts. The
+unit/tier loop steps below cite these by name (e.g. "checkpoint per
+§ Compose PR"). The format reference for every operation is
+`projects/LOOM-CONVENTIONS.md`.
+
+### State refresh
+
+At pre-flight or whenever orientation is needed:
+
+```
+bin/loom project read <slug> --pretty
+bin/loom events read <slug> --limit=20 --pretty
+bin/loom project status --pretty   # if cwd is inside the project
+```
+
+Use the manifest to confirm phase state (status, branch, latest
+checkin). Use the event tail to spot recent activity.
+
+### Phase update
+
+Whenever the phase's state changes:
+
+```
+bin/loom phase update <slug> <N> --status=<state> [--branch=<b>] [--pr=<n>]
+```
+
+`<state>` is one of `not-started` | `in-progress` | `blocked` |
+`completed`. The CLI auto-emits the corresponding phase-* event. Never
+append events manually.
+
+### Checkin write
+
+Compose a Checkin JSON object matching the schema in `LOOM-CONVENTIONS.md`
+(Contract / Execution / Verdict / Phase / Notes-for-PR substructure).
+Write to `/tmp/loom-checkin-<slug>-<branch>-<NN>.json`, then:
+
+```
+bin/loom checkin write <slug> --checkin-file=<path>
+```
+
+The CLI validates, persists at `checkins/<branch>/<NN>.json`, and
+auto-emits `checkin-created`. Checkins are immutable; subsequent
+edits require a new numbered file.
+
+### Compose PR
+
+Author or refresh a GitHub PR for a branch.
+
+1. **Discover state.**
+
+   ```
+   bin/loom pr discover <slug> --branch=<branch>
+   ```
+
+   Returns `{checkins, marker_state, pr}`. Dispatch on `marker_state`:
+   - `fresh` — stop, no-op (PR body matches disk).
+   - `drift` — stop, refuse to overwrite (PR body has checkins disk
+     doesn't).
+   - `new` or `stale` — proceed.
+
+2. **Read the checkin corpus.** For each `NN` in `checkins`:
+
+   ```
+   bin/loom checkin read <slug> --branch=<branch> --number=<NN>
+   ```
+
+3. **Compose title.** Always prefix with the project's plan-name (the
+   date-less slug) — never the phase number. Phase number lives in the
+   body's orientation callout instead.
+   - Single-checkin: `[<plan-name>] <unit name>` (unit from
+     `checkin.unit`). Trim under 70 chars.
+   - Multi-checkin sharing one phase: `[<plan-name>] <phase name>`
+     (phase from `checkin.phase.name`).
+   - Multi-checkin spanning phases: stop and ask the user.
+
+4. **Compose body.** First line is the marker comment
+   `<!-- loom-pr-checkins: NN[,NN,...] -->` — discover's staleness
+   detection depends on this. Then sections in order:
+
+   - Orientation NOTE (links to `projects/<slug>/PLAN.md`, names phase
+     `<N><letter>` of `<total>`).
+   - **Motivation** (2-4 sentences distilled from
+     `checkin.contract.goal` + PLAN.md `## Context`. Why this work
+     matters now, not what it does. If thin, stop and ask.)
+   - **Summary** (3-5 one-line bullets distilled from
+     `checkin.notes_for_pr` arrays across all checkins).
+   - **Reference** (single) or **Units** (multi): for single, Goal +
+     checkin link. For multi, a table with one row per checkin.
+   - **Verification** (one line per command from
+     `checkin.contract.rules_applied` or manifest config; just commands
+     and results).
+   - **Notes** (3-5 reviewer-relevant items: trade-offs, open questions,
+     `correction:` lines from `checkin.execution.corrections[]`).
+   - Trailer: `Tracked by project substrate: <manifest path> — checkin{s} <list>`.
+
+   Body caps at 500-600 words total; section caps are hard. Acceptance
+   criteria, execution detail, and verdict are NOT pasted — they live in
+   the linked checkin file. **No manual line-wrapping in body prose** —
+   GitHub renders single newlines as line breaks, so each paragraph is
+   one long line, separated by blank lines. Lists, tables, headings,
+   and the marker comment follow normal markdown.
+
+5. **Write and dispatch.** Body file at
+   `/tmp/loom-pr-body-<branch>-<NN-list>.md`.
+
+   ```
+   # new
+   bin/loom pr open <slug> --title=<t> --body-file=<path> --branch=<b>
+
+   # stale
+   bin/loom pr update <slug> --pr=<N> --body-file=<path>
+   ```
+
+   The CLI emits `pr-opened` or `pr-updated`.
+
+### Triage PR comments + draft responses
+
+When PR feedback arrives:
+
+1. **Fetch.**
+
+   ```
+   bin/loom pr comments <slug> --pr=<N>
+   ```
+
+   Returns `{pr, branch, comments: [{id, author, body, createdAt}, ...]}`.
+   The `branch` field is critical — it tells `respond` where to write.
+
+2. **Classify each.**
+   - `blocker` — must address before merge (correctness, contract
+     violation, security, broken acceptance criterion).
+   - `advisory` — should address but doesn't block (style, naming,
+     refactor opportunity).
+   - `question` — requesting clarification; response is an answer, not
+     a fix.
+   - `nit` — trivial preference; acknowledge, optionally fix.
+   - `ignore` — off-topic, already addressed elsewhere, bot spam.
+
+3. **Draft responses.** One paragraph per actionable comment (blocker /
+   advisory / question / nit). Tone matches substrate voice — terse,
+   direct, no fluff. Skip drafts for `ignore`.
+   - blocker: "Acknowledged. Will fix in <next unit>." Or, if the
+     reviewer is mistaken, explain why.
+   - advisory: "Good call, will fold in." Or "Tradeoff is X; keeping
+     it as-is."
+   - question: direct answer with checkin or file reference.
+   - nit: "Got it." Or fix and confirm.
+
+4. **Compose responses-file** at
+   `/tmp/loom-pr-responses-<slug>-pr<N>.json`:
+
+   ```json
+   {
+     "pr": <number>,
+     "branch": "<branch from comments fetch>",
+     "responses": [
+       { "comment_id": <id>, "body": "<draft>" }
+     ]
+   }
+   ```
+
+5. **Write.**
+
+   ```
+   bin/loom pr respond <slug> --responses-file=<path>
+   ```
+
+   Returns `{paths: [...]}` of per-response files under
+   `checkins/<branch>/responses/`.
+
+The loop stops at local writes — do not auto-post via `gh`. The user (or
+a follow-up loop) posts later via `gh pr comment <N> --body-file=<p>`.
+Each blocker becomes a new unit in the loop's next iteration.
+
+### Save session
+
+End-of-session handoff. Composes a structured Session JSON, not prose.
+
+1. **Read state** (parallel):
+
+   ```
+   bin/loom events read <slug>
+   bin/loom session corrections <slug>
+   bin/loom session list <slug>
+   bin/loom project read <slug>
+   ```
+
+2. **Compose Session JSON** matching the schema:
+
+   ```json
+   {
+     "schema_version": 1,
+     "date": "YYYY-MM-DD",
+     "letter": "a",
+     "phases_touched": [<numbers>],
+     "checkins_written": ["NN", ...],
+     "pr_activity": ["#N opened", "#N merged", ...],
+     "what_happened": ["...", "..."],
+     "open_threads": ["...", "..."],
+     "notes": ["...", "..."]
+   }
+   ```
+
+   - `date` is today's UTC date.
+   - `letter` is the next unused for today (`session list` returns
+     existing; pick the next; default `a`).
+   - `phases_touched` deduplicates phase numbers from events since the
+     prior session.
+   - `checkins_written` lists every checkin number created this session.
+   - `pr_activity` summarizes `pr-opened` / `pr-updated` / `pr-merged`
+     events as one-line strings.
+   - `what_happened`: 2-6 single-line bullets — story, not paragraphs.
+   - `open_threads`: what next session should pick up. Include any
+     unresolved entries from `session corrections`.
+   - `notes`: substrate observations, friction, deferred decisions.
+
+3. **Write** to `/tmp/loom-session-<slug>-<date>-<letter>.json`, then:
+
+   ```
+   bin/loom session write <slug> --session-file=<path>
+   ```
+
+   The CLI validates, persists at `sessions/<date>-<letter>.json`, and
+   auto-emits `session-saved`. If `session-already-exists` returns,
+   another session ran in parallel — pick the next letter and retry
+   once.
+
+### Revise PLAN.md
+
+When the loop's scope-shift detection fires (two-signal concurrence,
+user-confirmed), integrate the named change into PLAN.md.
+
+1. **Read current PLAN.**
+
+   ```
+   bin/draft read <slug>
+   ```
+
+   The CLI emits `{path, content, plan: {slug, interview_path}}`.
+
+2. **Compose revised content.** Preserve unrelated sections verbatim;
+   touch only what the named scope shift affects (a phase's prose,
+   dependencies, decisions, etc.). Do NOT pre-author the Revision log
+   entry — the CLI appends it.
+
+3. **Write** to `/tmp/loom-revision-<slug>.md`.
+
+4. **Surface + confirm.** Show a 1-3 sentence summary to the user via
+   `AskUserQuestion`. Default: decline. Accept paths only when the user
+   explicitly confirms.
+
+5. **Commit on confirm.**
+
+   ```
+   bin/draft revise <slug> --revision-file=<path> --rationale=<one-line summary>
+   ```
+
+   The CLI replaces PLAN.md, appends a `<YYYY-MM-DD> — <rationale>`
+   entry to `## Revision log`, and commits with
+   `[draft revise] <slug>: <rationale>`.
+
+If declined, leave the temp file for inspection and report "revision
+declined" back to the loop. Don't shell.
+
+### Retro write
+
+When a tier or phase closes, write a structured retro:
+
+```
+bin/loom retro write <slug> --type=session|project --retro-file=<path> [--phase=<N>] [--tier=<M>]
+```
+
+`--phase` and `--tier` are required for `--type=session` and ignored for
+`--type=project` (one project retro per project, written at archive
+time). The CLI validates, persists under `retros/`, and auto-emits
+`retro-written`. Compose the retro JSON inline (terse fields:
+what_went_smoothly, what_bit_us, adjustment_for_next).
 
 ## Arguments
 
-- `<project-slug-or-path>` — resolved like `.claude/scripts/trout/autosave.ts`
-  (exact slug → suffix match → full path).
+- `<project-slug-or-path>` — resolved by loom's standard slug resolution
+  (full slug → date-less suffix → relative or absolute path).
 - `<phase-number>` — which phase of the project to run. Must exist in
-  MANIFEST.md and not be in `completed` state.
+  the manifest and not be in `completed` state.
 
 If `<phase-number>` is missing, already `completed`, or the slug does
 not resolve, stop and ask the user rather than guessing.
@@ -50,11 +332,12 @@ This loop creates and uses a scope directory at
 `./projects/<slug>/<phase-slug>/` where `<phase-slug>` is a kebab-case
 form of the phase name. Inside:
 
-- `MANIFEST.md` — phase-scoped manifest (progress within the phase)
 - `inventory.md` — the full list of files in scope, generated in step 1
-- `retros/tier-<N>.md` — tactical retro per tier
 
-Create this directory if it doesn't exist.
+Create this directory if it doesn't exist. Phase state lives in the
+project's `manifest.json` (via § Phase update); tactical retros live
+in the project's `retros/` directory (via § Retro write). The scope
+directory is now just the inventory home.
 
 ## Phase-level process
 
@@ -111,19 +394,19 @@ per Claude Code process start; `/clear` is NOT a session boundary.
 ### Step 0. Pre-flight
 
 Before any work:
-- `Bash("node .claude/scripts/trout/autoload.ts <slug>")` to refresh state.
+- Refresh state per § State refresh.
 - Confirm working tree is clean (`git status --porcelain`). If not,
   stop and ask the user to commit or stash.
-- Confirm current branch matches the phase's branch in MANIFEST.md. If
+- Confirm current branch matches the phase's branch in the manifest. If
   not, stop and ask whether to switch.
-- Run the verification commands from `config.md` as a baseline. Record
-  exit status. A red baseline before any work means the loop stops —
-  you are not making a red build redder.
+- Run the verification commands from `config.json` as a baseline.
+  Record exit status. A red baseline before any work means the loop
+  stops — you are not making a red build redder.
 
 ### Step 1. Coverage before transforms
 
 Build `inventory.md` listing every file or item in scope for this phase.
-The phase description in PLAN.md or `config.md` tells you the pattern
+The phase description in PLAN.md or `config.json` tells you the pattern
 (e.g. "all .ts/.tsx files using ESLint disable comments"). Use `git ls-files`,
 `grep`, `find`, or equivalent to enumerate. Include counts.
 
@@ -171,9 +454,8 @@ When all tiers in this phase are complete:
 - Verify every inventory item is checked off.
 - Run full verification.
 - Ensure the latest checkin exists.
-- Invoke `/trout-pull-request <slug> <branch>` so the PR reflects the
-  final state.
-- Run `Bash("node .claude/scripts/trout/autosave.ts <slug> --event=phase-completed --detail=<N> --phase-update=<N>:completed")`.
+- Refresh the PR per § Compose PR so it reflects the final state.
+- Update the phase per § Phase update with `--status=completed`.
 - Return control to the router.
 
 ## Tier-level process
@@ -223,11 +505,15 @@ unit-specific deltas.
 
 For each unit inside a tier:
 
-1. **Negotiate.** Write a new checkin file with the Contract section
-   populated. Pick the items for this batch from inventory.md (mark them
-   with a tier tag if not already). Save the checkin with just the
-   Contract section — Execution/Scope/Changes/Evaluator verdict come
-   later.
+1. **Negotiate.** Compose a Checkin JSON with just the Contract
+   substructure populated and write it per § Checkin write. Pick the
+   items for this batch from inventory.md (mark them with a tier tag if
+   not already). Execution / Verdict / Notes-for-PR substructures stay
+   empty for now — they're filled in by a later checkin once the work
+   resolves. (Loom checkins are immutable, so the "fill it in later"
+   pattern is "write a new numbered checkin," not "edit the existing
+   one." The negotiation checkin and the resolution checkin together
+   tell the story.)
 2. **Execute.** Do the transform on the batch. Keep to scope.
 3. **Evaluate.** Invoke `/guild-validate` via the `Skill` tool to run
    the antagonist panel against this unit. Compose the panel by
@@ -302,16 +588,18 @@ For each unit inside a tier:
    `.claude/agents/evaluator-base.md` for the per-evaluator verdict
    shape that `/guild-validate` parses and aggregates.
 4. **Iterate or commit.**
-   - If flagged: update the checkin Execution section with the remedy
-     taken, re-invoke `/guild-validate`. Maximum 2 re-iterations per
-     unit — on the third flag, stop and escalate to the user.
-   - If approved: finalize the checkin (Execution, Scope, Changes,
-     Evaluator verdict = approved, Notes for the PR). Check off the
-     inventory items.
+   - If flagged: write a new resolution checkin (per § Checkin write)
+     recording the remedy in Execution + Verdict (still flagged from
+     the panel's view; the resolution checkin documents what changed).
+     Re-invoke `/guild-validate`. Maximum 2 re-iterations per unit —
+     on the third flag, stop and escalate to the user.
+   - If approved: write a finalization checkin with Execution / Verdict
+     `approved` / Notes-for-PR populated. Check off the inventory
+     items.
 5. **Scope-shift detection (restrictive default).** Runs only on
    approved units (flagged-and-iterating units skip this step). Look
-   for signals that PLAN.md is stale; offer `/draft-revise` ONLY
-   on two-signal concurrence.
+   for signals that PLAN.md is stale; offer a plan revision (per
+   § Revise PLAN.md) ONLY on two-signal concurrence.
 
    **Signal sources**:
    - **Evaluator finding** mentioning a missing or changed phase,
@@ -326,23 +614,21 @@ For each unit inside a tier:
    - **Phase boundary** (this unit is the last in its phase OR
      the next phase is about to start).
 
-   **Two-signal-concurrence rule**: offer `/draft-revise` only
-   when 2+ signal sources fire for the same shift. Single signals
-   get a note (see below); the loop does NOT interrupt.
+   **Two-signal-concurrence rule**: offer a plan revision only when 2+
+   signal sources fire for the same shift. Single signals get a note
+   (see below); the loop does NOT interrupt.
 
-   **Offer flow**: surface a short paragraph naming the two
-   signals and a proposed one-line rationale. Use
-   `AskUserQuestion` (or natural-language confirm) for
-   accept/decline/defer. Default: decline (no interrupt unless
-   the user explicitly accepts).
+   **Offer flow**: surface a short paragraph naming the two signals
+   and a proposed one-line rationale. Use `AskUserQuestion` (or
+   natural-language confirm) for accept/decline/defer. Default: decline
+   (no interrupt unless the user explicitly accepts).
 
-   **On accept**: invoke
-   `Skill(skill: draft-revise, args: "<slug> <one-line summary>")`.
-   After `/draft-revise` returns, proceed to step 6 (Autosave). Do
-   not re-execute the unit.
+   **On accept**: integrate the change per § Revise PLAN.md. After the
+   revision lands, proceed to step 6 (Phase update). Do not re-execute
+   the unit.
 
-   **On single signal** (no concurrence): append to the unit's
-   `## Notes for the PR` section in the checkin file:
+   **On single signal** (no concurrence): append the signal to the
+   unit's `notes_for_pr` array in the checkin JSON:
    ```
    signal: <signal type>: <one-line description> (single signal; no revise offered)
    ```
@@ -350,11 +636,14 @@ For each unit inside a tier:
 
    **On zero signals**: no action. Loop continues.
 
-6. **Autosave.** Run `Bash("node .claude/scripts/trout/autosave.ts <slug> --event=checkin-created --detail='<NN> on <branch>' --phase-update=<N>:in-progress:branch=<branch>:checkin=<NN>")`.
+6. **Phase update.** After a checkin lands, the checkin-created event
+   auto-fires from § Checkin write. Then update phase state per
+   § Phase update with `--status=in-progress --branch=<branch>` (no
+   need to set `--pr` here; the PR reference lives on the phase only
+   after § Compose PR runs).
 7. **Checkpoint?** Evaluate the should-checkpoint policy (below). If
-   any condition holds, invoke `/trout-pull-request <slug> <branch>`
-   so the PR tracks the latest state. Otherwise continue to the next
-   unit.
+   any condition holds, refresh the PR per § Compose PR so it tracks
+   the latest state. Otherwise continue to the next unit.
 
 ### Panel auto-derivation
 
@@ -408,7 +697,7 @@ retros and future per-specialist tier budgets.
 
 ### Should-checkpoint policy
 
-Checkpoint (invoke `/trout-pull-request`) when any of the following
+Checkpoint (refresh the PR per § Compose PR) when any of the following
 hold. All are read off state — there is no callable function.
 
 - A full tier has just finished.
@@ -425,29 +714,13 @@ Immediately after the last unit of a tier is approved, before moving to
 the next tier:
 
 1. Re-run pre-flight (working tree, verification).
-2. Write `<scope-dir>/retros/tier-<N>.md`:
-
-```markdown
-# Tier <N> retro
-
-**Items processed**: <count>
-**Units**: <NN .. NN>
-**Verification at tier close**: <green|red>
-
-## What went smoothly
-- …
-
-## What bit us
-- …
-
-## Adjustment for next tier
-- <one concrete change to batch size, tier assignment, or process>
-```
-
-3. Run `Bash("node .claude/scripts/trout/autosave.ts <slug> --event=retro-written --detail='tier-<N>'")`.
+2. Compose the retro JSON (terse fields: `items_processed`, `units`,
+   `verification_at_close`, `what_went_smoothly`, `what_bit_us`,
+   `adjustment_for_next`) and write per § Retro write with
+   `--type=session --phase=<N> --tier=<M>`.
 
 Tactical retros are short and specific. Strategic retrospection happens
-at `/trout-archive`, not here.
+at `/loom-archive`, not here.
 
 ### Gate-and-ratchet
 
@@ -463,11 +736,11 @@ whether to resume, re-tier, or bail.
 
 If the router passes a message like "address feedback on #14", this
 loop:
-1. Invokes `/trout-pr-respond <slug> <pr>` to get the response plan.
-2. Treats each Blocker item as a new unit in the current tier (or a new
-   tier if the feedback rewrites scope).
-3. Iterates the unit loop. When done, re-invokes
-   `/trout-pull-request` to update the PR.
+1. Triage the PR's comments per § Triage PR comments + draft responses
+   to get a classified list.
+2. Treats each `blocker` comment as a new unit in the current tier (or
+   a new tier if the feedback rewrites scope).
+3. Iterates the unit loop. When done, refreshes the PR per § Compose PR.
 
 ## Rules
 
@@ -482,12 +755,13 @@ loop:
 - **Record corrections in the checkin.** If the user redirects a unit
   mid-flight, overrides a decision, or the evaluator flags something
   the generator defaulted to incorrectly, note it verbatim in the
-  checkin's "Notes for the PR" section with a `correction:` prefix.
-  `/trout-save-session` captures every such line to
-  `learnings/session-notes/` via
-  `Bash("node .claude/scripts/griot/capture.ts --from-checkin=...")`
-  at end of session; `/griot-compact` decides which get promoted.
-  The loop itself never writes to `learnings/`.
+  checkin JSON's `execution.corrections[]` array. The session handoff
+  (§ Save session) surfaces unresolved corrections into `open_threads`;
+  `griot-capture` (via `node .claude/scripts/griot/capture.ts
+  --from-checkin=...`) promotes notable ones into
+  `learnings/session-notes/` at session close, and `/griot-compact`
+  decides which get promoted further. The loop itself never writes
+  to `learnings/`.
 - **No emojis.**
 
 ## Output to router

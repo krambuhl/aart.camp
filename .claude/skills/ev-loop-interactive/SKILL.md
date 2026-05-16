@@ -4,9 +4,9 @@ description: >-
   Execution loop for human-paired work. Runs a phase as a sequence
   of deliverables, each with its own unit contract and evaluator
   checkpoint. Supports sequential (ordered) and free (user picks next)
-  deliverable ordering. Composes /trout-* primitives; composes no
-  other loop. Use when a phase is exploratory, creative, or otherwise
-  not a bulk transform.
+  deliverable ordering. Dispatches to bin/loom and bin/draft CLIs
+  directly; composes /guild-validate; composes no other loop. Use when
+  a phase is exploratory, creative, or otherwise not a bulk transform.
 argument-hint: "<project-slug-or-path> <phase-number>"
 allowed-tools: Read, Write, Edit, Bash, Agent, Skill
 ---
@@ -17,31 +17,298 @@ Execute one phase of a project as a human-paired loop: discrete
 deliverables, per-deliverable contract and checkpoint. The human drives
 order when ordering is free; the loop keeps the substrate honest.
 
-**Composes**: `.claude/scripts/trout/autosave.ts`,
-`.claude/scripts/trout/autoload.ts` (both via Bash),
-`/trout-pull-request`, `/guild-validate`.
-**Does not compose**: other loops.
+**Composes**: `bin/loom` and `bin/draft` CLIs (via Bash) for substrate
+operations; `/guild-validate` (via the Skill tool) for the antagonist
+panel.
+**Does not compose**: other loops. No ambient `/loom-*` or
+`/draft-revise` skills — substrate plumbing dispatches directly to the
+CLIs (see § Substrate compositions).
 
-**Format reference**: `projects/CONVENTIONS.md` (repo-relative).
+**Format reference**: `projects/LOOM-CONVENTIONS.md` (repo-relative).
 
-Skill invocations like `/trout-pull-request` and `/guild-validate` below
-mean `Skill(skill: <name>, args: "…")` — the Skill tool is how loops
-compose substrate skills. Script invocations like
-`.claude/scripts/trout/autosave.ts` mean
-`Bash("node .claude/scripts/trout/autosave.ts <args>")`. Antagonist
-evaluation runs through `/guild-validate`, which spawns evaluator agents
-in parallel via `/guild-spawn`; the loop itself never calls the `Agent`
-tool directly.
+Skill invocations like `/guild-validate` below mean
+`Skill(skill: <name>, args: "…")`. CLI invocations like
+`bin/loom phase update` mean `Bash("bin/loom phase update <args>")`.
+Antagonist evaluation runs through `/guild-validate`, which spawns
+evaluator agents in parallel via `/guild-spawn`; the loop itself never
+calls the `Agent` tool directly.
+
+## Substrate compositions
+
+Every substrate operation this loop performs dispatches directly to
+`bin/loom` or `bin/draft` — no ambient skills, no trout scripts. The
+unit loop steps below cite these by name (e.g. "checkpoint per § Compose
+PR"). The format reference for every operation is
+`projects/LOOM-CONVENTIONS.md`.
+
+### State refresh
+
+At pre-flight or whenever orientation is needed:
+
+```
+bin/loom project read <slug> --pretty
+bin/loom events read <slug> --limit=20 --pretty
+bin/loom project status --pretty   # if cwd is inside the project
+```
+
+Use the manifest to confirm phase state (status, branch, latest
+checkin). Use the event tail to spot recent activity.
+
+### Phase update
+
+Whenever the phase's state changes:
+
+```
+bin/loom phase update <slug> <N> --status=<state> [--branch=<b>] [--pr=<n>]
+```
+
+`<state>` is one of `not-started` | `in-progress` | `blocked` |
+`completed`. The CLI auto-emits the corresponding phase-* event. Never
+append events manually.
+
+### Checkin write
+
+Compose a Checkin JSON object matching the schema in `LOOM-CONVENTIONS.md`
+(Contract / Execution / Verdict / Phase / Notes-for-PR substructure).
+Write to `/tmp/loom-checkin-<slug>-<branch>-<NN>.json`, then:
+
+```
+bin/loom checkin write <slug> --checkin-file=<path>
+```
+
+The CLI validates, persists at `checkins/<branch>/<NN>.json`, and
+auto-emits `checkin-created`. Checkins are immutable; subsequent
+edits require a new numbered file.
+
+### Compose PR
+
+Author or refresh a GitHub PR for a branch.
+
+1. **Discover state.**
+
+   ```
+   bin/loom pr discover <slug> --branch=<branch>
+   ```
+
+   Returns `{checkins, marker_state, pr}`. Dispatch on `marker_state`:
+   - `fresh` — stop, no-op (PR body matches disk).
+   - `drift` — stop, refuse to overwrite (PR body has checkins disk
+     doesn't).
+   - `new` or `stale` — proceed.
+
+2. **Read the checkin corpus.** For each `NN` in `checkins`:
+
+   ```
+   bin/loom checkin read <slug> --branch=<branch> --number=<NN>
+   ```
+
+3. **Compose title.** Always prefix with the project's plan-name (the
+   date-less slug) — never the phase number. Phase number lives in the
+   body's orientation callout instead.
+   - Single-checkin: `[<plan-name>] <unit name>` (unit from
+     `checkin.unit`). Trim under 70 chars.
+   - Multi-checkin sharing one phase: `[<plan-name>] <phase name>`
+     (phase from `checkin.phase.name`).
+   - Multi-checkin spanning phases: stop and ask the user.
+
+4. **Compose body.** First line is the marker comment
+   `<!-- loom-pr-checkins: NN[,NN,...] -->` — discover's staleness
+   detection depends on this. Then sections in order:
+
+   - Orientation NOTE (links to `projects/<slug>/PLAN.md`, names phase
+     `<N><letter>` of `<total>`).
+   - **Motivation** (2-4 sentences distilled from
+     `checkin.contract.goal` + PLAN.md `## Context`. Why this work
+     matters now, not what it does. If thin, stop and ask.)
+   - **Summary** (3-5 one-line bullets distilled from
+     `checkin.notes_for_pr` arrays across all checkins).
+   - **Reference** (single) or **Units** (multi): for single, Goal +
+     checkin link. For multi, a table with one row per checkin.
+   - **Verification** (one line per command from
+     `checkin.contract.rules_applied` or manifest config; just commands
+     and results).
+   - **Notes** (3-5 reviewer-relevant items: trade-offs, open questions,
+     `correction:` lines from `checkin.execution.corrections[]`).
+   - Trailer: `Tracked by project substrate: <manifest path> — checkin{s} <list>`.
+
+   Body caps at 500-600 words total; section caps are hard. Acceptance
+   criteria, execution detail, and verdict are NOT pasted — they live in
+   the linked checkin file. **No manual line-wrapping in body prose** —
+   GitHub renders single newlines as line breaks, so each paragraph is
+   one long line, separated by blank lines. Lists, tables, headings,
+   and the marker comment follow normal markdown.
+
+5. **Write and dispatch.** Body file at
+   `/tmp/loom-pr-body-<branch>-<NN-list>.md`.
+
+   ```
+   # new
+   bin/loom pr open <slug> --title=<t> --body-file=<path> --branch=<b>
+
+   # stale
+   bin/loom pr update <slug> --pr=<N> --body-file=<path>
+   ```
+
+   The CLI emits `pr-opened` or `pr-updated`.
+
+### Triage PR comments + draft responses
+
+When PR feedback arrives:
+
+1. **Fetch.**
+
+   ```
+   bin/loom pr comments <slug> --pr=<N>
+   ```
+
+   Returns `{pr, branch, comments: [{id, author, body, createdAt}, ...]}`.
+   The `branch` field is critical — it tells `respond` where to write.
+
+2. **Classify each.**
+   - `blocker` — must address before merge (correctness, contract
+     violation, security, broken acceptance criterion).
+   - `advisory` — should address but doesn't block (style, naming,
+     refactor opportunity).
+   - `question` — requesting clarification; response is an answer, not
+     a fix.
+   - `nit` — trivial preference; acknowledge, optionally fix.
+   - `ignore` — off-topic, already addressed elsewhere, bot spam.
+
+3. **Draft responses.** One paragraph per actionable comment (blocker /
+   advisory / question / nit). Tone matches substrate voice — terse,
+   direct, no fluff. Skip drafts for `ignore`.
+   - blocker: "Acknowledged. Will fix in <next unit>." Or, if the
+     reviewer is mistaken, explain why.
+   - advisory: "Good call, will fold in." Or "Tradeoff is X; keeping
+     it as-is."
+   - question: direct answer with checkin or file reference.
+   - nit: "Got it." Or fix and confirm.
+
+4. **Compose responses-file** at
+   `/tmp/loom-pr-responses-<slug>-pr<N>.json`:
+
+   ```json
+   {
+     "pr": <number>,
+     "branch": "<branch from comments fetch>",
+     "responses": [
+       { "comment_id": <id>, "body": "<draft>" }
+     ]
+   }
+   ```
+
+5. **Write.**
+
+   ```
+   bin/loom pr respond <slug> --responses-file=<path>
+   ```
+
+   Returns `{paths: [...]}` of per-response files under
+   `checkins/<branch>/responses/`.
+
+The loop stops at local writes — do not auto-post via `gh`. The user (or
+a follow-up loop) posts later via `gh pr comment <N> --body-file=<p>`.
+Each blocker becomes a new unit in the loop's next iteration.
+
+### Save session
+
+End-of-session handoff. Composes a structured Session JSON, not prose.
+
+1. **Read state** (parallel):
+
+   ```
+   bin/loom events read <slug>
+   bin/loom session corrections <slug>
+   bin/loom session list <slug>
+   bin/loom project read <slug>
+   ```
+
+2. **Compose Session JSON** matching the schema:
+
+   ```json
+   {
+     "schema_version": 1,
+     "date": "YYYY-MM-DD",
+     "letter": "a",
+     "phases_touched": [<numbers>],
+     "checkins_written": ["NN", ...],
+     "pr_activity": ["#N opened", "#N merged", ...],
+     "what_happened": ["...", "..."],
+     "open_threads": ["...", "..."],
+     "notes": ["...", "..."]
+   }
+   ```
+
+   - `date` is today's UTC date.
+   - `letter` is the next unused for today (`session list` returns
+     existing; pick the next; default `a`).
+   - `phases_touched` deduplicates phase numbers from events since the
+     prior session.
+   - `checkins_written` lists every checkin number created this session.
+   - `pr_activity` summarizes `pr-opened` / `pr-updated` / `pr-merged`
+     events as one-line strings.
+   - `what_happened`: 2-6 single-line bullets — story, not paragraphs.
+   - `open_threads`: what next session should pick up. Include any
+     unresolved entries from `session corrections`.
+   - `notes`: substrate observations, friction, deferred decisions.
+
+3. **Write** to `/tmp/loom-session-<slug>-<date>-<letter>.json`, then:
+
+   ```
+   bin/loom session write <slug> --session-file=<path>
+   ```
+
+   The CLI validates, persists at `sessions/<date>-<letter>.json`, and
+   auto-emits `session-saved`. If `session-already-exists` returns,
+   another session ran in parallel — pick the next letter and retry
+   once.
+
+### Revise PLAN.md
+
+When the loop's scope-shift detection fires (two-signal concurrence,
+user-confirmed), integrate the named change into PLAN.md.
+
+1. **Read current PLAN.**
+
+   ```
+   bin/draft read <slug>
+   ```
+
+   The CLI emits `{path, content, plan: {slug, interview_path}}`.
+
+2. **Compose revised content.** Preserve unrelated sections verbatim;
+   touch only what the named scope shift affects (a phase's prose,
+   dependencies, decisions, etc.). Do NOT pre-author the Revision log
+   entry — the CLI appends it.
+
+3. **Write** to `/tmp/loom-revision-<slug>.md`.
+
+4. **Surface + confirm.** Show a 1-3 sentence summary to the user via
+   `AskUserQuestion`. Default: decline. Accept paths only when the user
+   explicitly confirms.
+
+5. **Commit on confirm.**
+
+   ```
+   bin/draft revise <slug> --revision-file=<path> --rationale=<one-line summary>
+   ```
+
+   The CLI replaces PLAN.md, appends a `<YYYY-MM-DD> — <rationale>`
+   entry to `## Revision log`, and commits with
+   `[draft revise] <slug>: <rationale>`.
+
+If declined, leave the temp file for inspection and report "revision
+declined" back to the loop. Don't shell.
 
 ## Arguments
 
-- `<project-slug-or-path>` — resolved like `.claude/scripts/trout/autosave.ts`
-  (exact slug → suffix match → full path). If missing or unresolved,
-  stop and ask the user for the project.
+- `<project-slug-or-path>` — resolved by loom's standard slug resolution
+  (full slug → date-less suffix → relative or absolute path). If missing
+  or unresolved, stop and ask the user for the project.
 - `<phase-number>` — which phase to run. If missing, default to the
-  next non-`completed` phase from MANIFEST.md and confirm with the
-  user before proceeding. If the named phase is already `completed`,
-  stop and ask whether to re-run or pick a different phase.
+  next non-`completed` phase from the manifest and confirm with the user
+  before proceeding. If the named phase is already `completed`, stop
+  and ask whether to re-run or pick a different phase.
 
 ## Ordering
 
@@ -111,8 +378,9 @@ Claude Code process start; `/clear` is NOT a session boundary.
 
 ### Step 0. Pre-flight
 
-- `Bash("node .claude/scripts/trout/autoload.ts <slug>")` to refresh state.
-- Working tree clean, branch matches MANIFEST, verification baseline.
+- Refresh state per § State refresh.
+- Working tree clean, branch matches the manifest's current branch,
+  verification baseline.
 
 ### Step 1. Enumerate deliverables
 
@@ -259,11 +527,11 @@ For each deliverable (picked per the ordering rule):
         - correction: recurring evaluator finding — `<evaluator>` flagged `<code>` on <count> occurrences. Evidence: <evidence>. Avoid this pattern.
         ```
 
-        Threshold-triggered corrections are how `/trout-save-session`
-        → `griot-capture --evaluator-finding=recurring` fires at
-        session close without manual intervention. The loop does not
+        Threshold-triggered corrections feed into session close (§ Save
+        session) → `griot-capture --evaluator-finding=recurring` at
+        session boundary, no manual intervention. The loop does not
         invoke `capture.ts` directly here; capture happens at session
-        close as today, but with the new arg shape:
+        close, with the recurring-finding arg shape:
 
         ```bash
         node .claude/scripts/griot/capture.ts \
@@ -273,10 +541,6 @@ For each deliverable (picked per the ordering rule):
           --evidence=<evidence> \
           --frequency-count=<count>
         ```
-
-        (The `/trout-save-session` integration is post-D1 work — D1
-        only writes the `correction:` line. D2 or a follow-up wires
-        the recurring-shape line through to capture's new arg group.)
 
      d. Generator-antipattern detection is NOT done here. That
         classification requires human judgment about whether the
@@ -292,8 +556,8 @@ For each deliverable (picked per the ordering rule):
      about real artifacts, not contract-shape issues.
 5. **Scope-shift detection (restrictive default).** Runs only on
    approved units (flagged-and-iterating units skip this step). Look
-   for signals that PLAN.md is stale; offer `/draft-revise` ONLY
-   on two-signal concurrence.
+   for signals that PLAN.md is stale; offer a plan revision (per
+   § Revise PLAN.md) ONLY on two-signal concurrence.
 
    **Signal sources**:
    - **Evaluator finding** mentioning a missing or changed phase,
@@ -308,23 +572,21 @@ For each deliverable (picked per the ordering rule):
    - **Phase boundary** (this unit is the last in its phase OR
      the next phase is about to start).
 
-   **Two-signal-concurrence rule**: offer `/draft-revise` only
-   when 2+ signal sources fire for the same shift. Single signals
-   get a note (see below); the loop does NOT interrupt.
+   **Two-signal-concurrence rule**: offer a plan revision only when 2+
+   signal sources fire for the same shift. Single signals get a note
+   (see below); the loop does NOT interrupt.
 
-   **Offer flow**: surface a short paragraph naming the two
-   signals and a proposed one-line rationale. Use
-   `AskUserQuestion` (or natural-language confirm) for
-   accept/decline/defer. Default: decline (no interrupt unless
-   the user explicitly accepts).
+   **Offer flow**: surface a short paragraph naming the two signals
+   and a proposed one-line rationale. Use `AskUserQuestion` (or
+   natural-language confirm) for accept/decline/defer. Default: decline
+   (no interrupt unless the user explicitly accepts).
 
-   **On accept**: invoke
-   `Skill(skill: draft-revise, args: "<slug> <one-line summary>")`.
-   After `/draft-revise` returns, proceed to step 6 (Autosave). Do
-   not re-execute the unit.
+   **On accept**: integrate the change per § Revise PLAN.md. After the
+   revision lands, proceed to step 6 (Phase update). Do not re-execute
+   the unit.
 
-   **On single signal** (no concurrence): append to the unit's
-   `## Notes for the PR` section in the checkin file:
+   **On single signal** (no concurrence): append the signal to the
+   unit's `notes_for_pr` array in the checkin JSON:
    ```
    signal: <signal type>: <one-line description> (single signal; no revise offered)
    ```
@@ -332,10 +594,13 @@ For each deliverable (picked per the ordering rule):
 
    **On zero signals**: no action. Loop continues.
 
-6. **Autosave.** `Bash("node .claude/scripts/trout/autosave.ts <slug> --event=checkin-created --detail='<NN> on <branch>' --phase-update=<N>:in-progress:branch=<branch>:checkin=<NN>")`.
+6. **Phase update.** After a checkin lands, the checkin-created event
+   auto-fires from § Checkin write. Then update phase state per
+   § Phase update with `--status=in-progress --branch=<branch>` (the
+   PR reference is set later when § Compose PR runs).
 7. **Checkpoint.** Free mode: after every deliverable. Sequential mode:
    after every deliverable **or** when the human explicitly asks.
-   Invoke `/trout-pull-request <slug> <branch>`.
+   Refresh the PR per § Compose PR.
 
 ### Panel auto-derivation
 
@@ -346,13 +611,12 @@ policy) live in `.claude/agents/PANEL-COMPOSITION.md` and are the
 source of truth.
 
 1. **Collect file paths.** Take the unit's changed and created files.
-   Practical recipe: `git status --short` minus any deletions, minus
-   the carryover stash file (typically `MANIFEST.md` from a prior
-   reconcile), plus any freshly-authored untracked paths that will
-   land in the artifact commit. Substrate-only mutations
-   (`projects/<slug>/MANIFEST.md` reconcile events) generally should
-   be excluded — they shipped in the prelude commit and don't
-   represent the unit's artifact.
+   Practical recipe: `git status --short` minus any deletions, plus
+   any freshly-authored untracked paths that will land in the artifact
+   commit. Substrate-only mutations (`projects/<slug>/manifest.json`
+   or `events.jsonl` updates auto-written by `bin/loom` verbs)
+   generally should be excluded — they shipped via the substrate
+   itself, not as the unit's artifact.
 2. **Derive the panel.** Run
    `node .claude/scripts/guild/derive-panel.ts --files=<comma-
    separated paths>`. The script prints a comma-separated list of
@@ -408,8 +672,8 @@ specialist-specific retry budgets or escalation thresholds.
 
 - All deliverables accounted for.
 - Full verification passes.
-- `/trout-pull-request` is fresh.
-- `Bash("node .claude/scripts/trout/autosave.ts <slug> --event=phase-completed --detail=<N> --phase-update=<N>:completed")`.
+- Refresh the PR per § Compose PR so it reflects the final state.
+- Update the phase per § Phase update with `--status=completed`.
 
 ## Output format
 
@@ -431,9 +695,9 @@ branch, branch into the flow below instead of continuing the normal
 unit loop.
 
 For "address feedback on #N":
-1. `/trout-pr-respond <slug> <pr>` → plan.
-2. Each Blocker becomes a new unit.
-3. Run the unit loop. Re-checkpoint when done.
+1. Triage the comments per § Triage PR comments + draft responses.
+2. Each `blocker` classification becomes a new unit.
+3. Run the unit loop. Refresh the PR per § Compose PR when done.
 
 ## Rules
 
@@ -449,12 +713,13 @@ For "address feedback on #N":
 - **Record corrections in the checkin.** If the user redirects a unit
   mid-flight, overrides a decision, or the evaluator flags something
   the generator defaulted to incorrectly, note it verbatim in the
-  checkin's "Notes for the PR" section with a `correction:` prefix.
-  `/trout-save-session` captures every such line to
-  `learnings/session-notes/` via
-  `Bash("node .claude/scripts/griot/capture.ts --from-checkin=...")`
-  at end of session; `/griot-compact` decides which get promoted.
-  The loop itself never writes to `learnings/`.
+  checkin JSON's `execution.corrections[]` array. The session handoff
+  (§ Save session) surfaces unresolved corrections into `open_threads`;
+  `griot-capture` (via `node .claude/scripts/griot/capture.ts
+  --from-checkin=...`) promotes notable ones into
+  `learnings/session-notes/` at session close, and `/griot-compact`
+  decides which get promoted further. The loop itself never writes
+  to `learnings/`.
 - **No emojis.**
 
 ## Failure modes
