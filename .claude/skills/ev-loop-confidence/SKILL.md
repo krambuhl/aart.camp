@@ -253,10 +253,9 @@ For each unit inside a tier:
    included as the baseline. The spec (file-type → evaluator mapping,
    precedence list, tokens-vs-naming boundary) lives in
    `.claude/agents/PANEL-COMPOSITION.md`; the derivation logic is
-   `bin/guild derive-panel`.
-   - `agents`: comma-separated output of
-     `bin/guild derive-panel --files=<paths>`
-     (see § Panel auto-derivation for `<paths>` composition).
+   § Derive panel.
+   - `agents`: comma-separated output of § Derive panel (paths
+     composed per § Panel auto-derivation below).
    - `packet`: build a **dense packet** (see shape below). The substrate
      default is dense — verbose packets correlate with budget-exhaustion
      failures under `evaluator-*`'s `maxTurns=5`. Live examples in
@@ -387,11 +386,9 @@ source of truth.
    from the tier batch. Practical recipe: `git status --short` minus
    deletions and substrate carryovers, plus any freshly-authored
    untracked paths.
-2. **Derive the panel.** Run
-   `bin/guild derive-panel --files=<comma-separated paths>`. The
-   verb prints a comma-separated list of `subagent_type` names on
-   stdout, precedence-ordered, with `evaluator-contract-fit` always
-   first.
+2. **Derive the panel** per § Derive panel, passing the file paths
+   from step 1. Use the verb's stdout as the `agents=` argument
+   verbatim.
 3. **Pass to `/guild-validate`.** Use the verb's stdout as the
    `agents=` argument verbatim. Confidence-loop tiers tend to touch
    a single file family (a codemod over .module.css, a rename over
@@ -487,7 +484,7 @@ loop:
   the generator defaulted to incorrectly, note it verbatim in the
   checkin JSON's `execution.corrections[]` array. The session handoff
   (§ Save session) surfaces unresolved corrections into `open_threads`;
-  `bin/griot capture --from-checkin=...` promotes notable ones into
+  § Capture finding (from-checkin pathway) promotes notable ones into
   `learnings/session-notes/` at session close, and `/griot-compact`
   decides which get promoted further. The loop itself never writes
   to `learnings/`.

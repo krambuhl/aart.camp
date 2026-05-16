@@ -16,10 +16,10 @@ a mid-document read.
 
 The recipes are deliberately flat — no per-family grouping in the
 section namespace. The consumer cites a verb-shaped operation, not a
-family's internal API. Today's catalog covers the recipes lifted from
-the ev-loop bodies' prior duplicated `## Substrate compositions`
-block; griot- and guild-shaped recipes (Load rollup, Capture finding,
-Append finding, Derive panel) will be added in subsequent work.
+family's internal API. Today's catalog covers loom recipes (originally
+duplicated across the two ev-loop bodies) plus griot + guild recipes
+that compose findings capture, rollup loading, and panel derivation
+into named gestures the loops can cite by §.
 
 For loom verb shapes, event vocabulary, and JSON schema details, see
 `projects/LOOM-CONVENTIONS.md`. This catalog is a layer above that
@@ -298,3 +298,153 @@ bin/loom retro write <slug> --type=session|project --retro-file=<path> [--phase=
 time). The CLI validates, persists under `retros/`, and auto-emits
 `retro-written`. Compose the retro JSON inline (terse fields:
 what_went_smoothly, what_bit_us, adjustment_for_next).
+
+## Load rollup
+
+At session start (once per /ev-run invocation):
+
+```
+bin/griot use --as=llm
+```
+
+Reads `learnings/rollup.json`, renders LLM-friendly prose with the
+citation contract, and prints both to stdout. The caller (typically
+the /ev-run router) lands the load in conversation context by
+capturing the Bash result.
+
+Status line on stdout has one of four shapes (handle each):
+
+- `griot-use: loaded N learnings from learnings/rollup.json` — N
+  entries loaded; citation contract active.
+- `griot-use: loaded N learnings + M antipatterns from learnings/rollup.json`
+  — same as above with an antipattern catalog included.
+- `griot-use: rollup empty — no validated learnings yet` — rollup file
+  exists but contains zero entries.
+- `griot-use: no rollup yet — run /griot-compact once captures exist`
+  — rollup file does not exist; the captures pipeline hasn't promoted
+  any.
+
+A format-detection error (exit 1, stderr names the legacy
+`learnings/rollup.md`) indicates a mid-flight session running against
+post-cutover state. Surface stderr verbatim and stop; the remedy is
+in the message.
+
+The `--as=llm` flag is the default render mode and the only mode
+shipped today.
+
+## Capture finding
+
+Two arg shapes for two purposes. Both write into a fresh
+`learnings/session-notes/<folder>/` directory (partitioned by
+capture; no read-modify-write).
+
+**Capture from a checkin's corrections** (session-close pathway):
+
+```
+bin/griot capture --from-checkin=<path> [--slug=<slug>] [--correction-text=<text>]
+```
+
+Reads `correction:` lines from the checkin's `## Notes for the PR`
+section. If the checkin has multiple correction lines,
+`--correction-text=<one of them>` disambiguates; otherwise the first
+one is captured.
+
+**Capture a recurring evaluator finding** (loop step 4.5 pathway):
+
+```
+bin/griot capture \
+  --evaluator-finding=recurring \
+  --evaluator-name=<name> \
+  --code=<code> \
+  --evidence=<text> \
+  --frequency-count=<N> \
+  [--slug=<slug>] [--file-line=<path:line>]
+```
+
+The classification arg supports `recurring` today; `catalog-gap`,
+`evaluator-conflict`, and `sanctioned-exception` are reserved but
+not-yet-supported. `--frequency-count` is required when
+`--evaluator-finding=recurring`.
+
+The verb writes a fresh per-capture session-note folder and routes
+the classification into the folder's `state.json`. `/griot-compact`
+reads `state.json` to drive classification-aware promotion.
+
+## Append finding
+
+When an evaluator panel returns approved with findings (blocking or
+advisory), append each finding to the project's `.guild-findings.jsonl`:
+
+```
+bin/guild findings append \
+  --slug=<slug> \
+  --evaluator=<finding.evaluator> \
+  --code=<finding.code> \
+  --evidence=<finding.evidence> \
+  --severity=<blocking|advisory> \
+  [--branch=<name>] [--unit=<NN>]
+```
+
+The file is append-only (`appendFileSync` semantics); concurrent
+writers are safe. The verb trims and normalizes whitespace; quote
+characters in `--evidence` may need heredoc-style escaping for shell
+safety.
+
+For threshold detection, query the count of prior occurrences with
+the same finding signature:
+
+```
+bin/guild findings count \
+  --slug=<slug> \
+  --evaluator=<finding.evaluator> \
+  --code=<finding.code> \
+  --evidence=<finding.evidence>
+```
+
+The verb writes a single integer to stdout. The recurring threshold
+lives in the calling loop's body, not in this CLI — `count >= N` is
+the loop's call.
+
+## Derive panel
+
+Compute the evaluator panel for a unit's file list at evaluation
+time. The composition rules (file-type → evaluator mapping,
+precedence ordering, conflict policy) live in
+`.claude/agents/PANEL-COMPOSITION.md` and are parsed at runtime — the
+verb does not duplicate the rules.
+
+```
+bin/guild derive-panel --files=<comma-separated paths>
+```
+
+Or, for large file lists, read newline-separated paths from stdin
+with `--files=-`:
+
+```
+git status --porcelain | awk '{print $2}' | bin/guild derive-panel --files=-
+```
+
+The verb prints a comma-separated list of `subagent_type` names on
+stdout, precedence-ordered, with `evaluator-contract-fit` always
+first.
+
+**Common cases the verb handles:**
+
+- **Empty file list** (substrate-only unit, no artifact files yet)
+  → `evaluator-contract-fit` only.
+- **Substrate-only files** (`.claude/agents/*.md`, skill `SKILL.md`,
+  checkin `*.json`, `projects/**/{MANIFEST,PLAN}.md`) →
+  `evaluator-contract-fit` only. Domain evaluators don't apply to
+  agent definitions, skill bodies, or project artifacts.
+- **Substrate scripts** (`.claude/cli/**/*.ts`,
+  `.claude/scripts/**/*.ts`) → `evaluator-contract-fit` +
+  `evaluator-test-unit`. Script identifiers are public-API surface
+  for substrate consumers.
+
+**L-004 session-boundary**: if the verb's output includes a
+`whiteboard-*` or `evaluator-*` agent that was added to
+`.claude/agents/` during this Claude Code process, the caller must
+manually drop it from the panel list and surface the override in the
+unit's `Notes for the PR`. The verb does not know which agents are
+session-cached vs runtime-loaded; that metadata is the caller's
+responsibility.

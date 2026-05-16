@@ -153,9 +153,8 @@ For each deliverable (picked per the ordering rule):
    precedence list, tokens-vs-naming boundary) lives in
    `.claude/agents/PANEL-COMPOSITION.md`; the derivation logic is
    `bin/guild derive-panel`.
-   - `agents`: comma-separated output of
-     `bin/guild derive-panel --files=<paths>`
-     (see § Panel auto-derivation for `<paths>` composition).
+   - `agents`: comma-separated output of § Derive panel (paths
+     composed per § Panel auto-derivation below).
    - `packet`: build a **dense packet** (see shape below). The substrate
      default is dense — verbose packets correlate with budget-exhaustion
      failures under `evaluator-*`'s `maxTurns=5`. Live examples in
@@ -230,36 +229,14 @@ For each deliverable (picked per the ordering rule):
      For each entry in the verdict's `blocking_findings` AND
      `advisory_findings` lists:
 
-     a. Append the finding to the project's `.guild-findings.jsonl`:
+     a. Append the finding per § Append finding with severity from
+        the finding's list (`blocking` | `advisory`). Pass
+        `--branch=<branch>` and `--unit=<NN>` so the entry is
+        attributable; the recipe documents the quote-safety caveat.
 
-        ```bash
-        bin/guild findings append \
-          --slug=<slug> \
-          --evaluator=<finding.evaluator> \
-          --code=<finding.code> \
-          --evidence=<finding.evidence> \
-          --severity=<blocking|advisory> \
-          --branch=<branch> \
-          --unit=<NN>
-        ```
-
-        Caveat: `--evidence` may contain quote characters that break
-        the shell. Pipe via stdin or use a heredoc if the evidence
-        string is at risk. The verb trims and normalizes whitespace
-        internally, so any safe escape that preserves the semantic
-        content is fine.
-
-     b. Query the recurring threshold for that finding's signature:
-
-        ```bash
-        bin/guild findings count \
-          --slug=<slug> \
-          --evaluator=<finding.evaluator> \
-          --code=<finding.code> \
-          --evidence=<finding.evidence>
-        ```
-
-        The verb writes a single integer to stdout.
+     b. Query the recurring threshold for this finding's signature
+        via § Append finding (the `count` subverb). The verb writes a
+        single integer to stdout.
 
      c. **If the count is ≥ 3** (the recurring threshold for this
         SKILL — hardcoded; configurability is post-Phase-5), append
@@ -270,20 +247,11 @@ For each deliverable (picked per the ordering rule):
         - correction: recurring evaluator finding — `<evaluator>` flagged `<code>` on <count> occurrences. Evidence: <evidence>. Avoid this pattern.
         ```
 
-        Threshold-triggered corrections feed into session close (§ Save
-        session) → `bin/griot capture --evaluator-finding=recurring` at
+        Threshold-triggered corrections feed into session close
+        (§ Save session) → § Capture finding (recurring pathway) at
         session boundary, no manual intervention. The loop does not
         invoke the verb directly here; capture happens at session
-        close, with the recurring-finding arg shape:
-
-        ```bash
-        bin/griot capture \
-          --evaluator-finding=recurring \
-          --evaluator-name=<evaluator> \
-          --code=<code> \
-          --evidence=<evidence> \
-          --frequency-count=<count>
-        ```
+        close.
 
      d. Generator-antipattern detection is NOT done here. That
         classification requires human judgment about whether the
@@ -360,11 +328,9 @@ source of truth.
    or `events.jsonl` updates auto-written by `bin/loom` verbs)
    generally should be excluded — they shipped via the substrate
    itself, not as the unit's artifact.
-2. **Derive the panel.** Run
-   `bin/guild derive-panel --files=<comma-separated paths>`. The
-   verb prints a comma-separated list of `subagent_type` names on
-   stdout, precedence-ordered, with `evaluator-contract-fit` always
-   first.
+2. **Derive the panel** per § Derive panel, passing the file paths
+   from step 1. Use the verb's stdout as the `agents=` argument
+   verbatim.
 3. **Pass to `/guild-validate`.** Use the verb's stdout as the
    `agents=` argument verbatim. The skill body composes the dense
    packet as before; only the `agents` list changes.
@@ -458,7 +424,7 @@ For "address feedback on #N":
   the generator defaulted to incorrectly, note it verbatim in the
   checkin JSON's `execution.corrections[]` array. The session handoff
   (§ Save session) surfaces unresolved corrections into `open_threads`;
-  `bin/griot capture --from-checkin=...` promotes notable ones into
+  § Capture finding (from-checkin pathway) promotes notable ones into
   `learnings/session-notes/` at session close, and `/griot-compact`
   decides which get promoted further. The loop itself never writes
   to `learnings/`.

@@ -52,3 +52,4 @@
 {"at":"2026-05-16T17:31:41.808Z","event":"phase-completed","detail":{"phase":5}}
 {"at":"2026-05-16T18:18:08.626Z","event":"phase-started","detail":{"phase":6,"name":"§ extraction + extension + integration sweep"}}
 {"at":"2026-05-16T18:43:16.316Z","event":"checkin-created","detail":{"number":"01","branch":"substrate-cli/phase-6"}}
+{"at":"2026-05-16T18:51:02.127Z","event":"checkin-created","detail":{"number":"02","branch":"substrate-cli/phase-6"}}
