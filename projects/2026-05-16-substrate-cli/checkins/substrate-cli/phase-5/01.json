@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "number": "01",
+  "created": "2026-05-16T13:00:00.000Z",
+  "phase": {
+    "number": 5,
+    "name": "New agent families"
+  },
+  "branch": "substrate-cli/phase-5",
+  "unit": "Unit 1 — author both new evaluators (test-integration + test-unit) + wire PANEL-COMPOSITION + derive-panel fallback",
+  "contract": {
+    "goal": "Author `evaluator-test-integration.md` and `evaluator-test-unit.md` under `.claude/agents/` with sibling-consistent voice and frontmatter. Wire them into auto-derivation via `PANEL-COMPOSITION.md` (file-type mappings + precedence + cross-references) and `derive-panel.ts` FALLBACK_RULES + FALLBACK_PRECEDENCE. Smoke tests deferred per L-004 (new agents NOT runtime-callable until next session). Whiteboard Round 1 directed: tier names over tool names, explicit a11y-axe carve-out, no L-004 in agent bodies, mirror whiteboard-a11y/evaluator-a11y design-review-phase split.",
+    "acceptance_criteria": [
+      "Both new agent files exist with correct frontmatter (`role: evaluator`, `model: inherit`, `maxTurns: 5`, Read/Glob/Grep + safe Bash tools).",
+      "Each body follows existing template: role statement, inherited base note, Process, Antipattern catalog (numbered, severity + flag code per entry, 15 entries each), Flag codes table, CLI validators (or `When no signal applies` carve-out), Boundary section.",
+      "`evaluator-test-unit.md` declares `npm test` as primary CLI signal; tied to vitest idioms; tools allowlist includes `Bash(npm test:*)`.",
+      "`evaluator-test-integration.md` declares `npm run test:e2e` as opt-in runtime signal + uses `evaluator-nextjs.md`'s `When no signal applies` pattern for substrate-only artifacts; explicitly carves out a11y-axe findings and defers to `evaluator-a11y` (Process step 1 exclusion clause; CLI validators Runtime-signal subsection; Boundary section's a11y entry).",
+      "Each file declares `**Primary tool**:` inline near the top of the body (vitest / Playwright) per react-architect's recommendation.",
+      "Each file references `whiteboard-testing-strategy` in the Boundary section as a forward reference (whiteboarders ship in Unit 2).",
+      "NO L-004 / session-restart / session-boundary language in agent bodies (consensus from whiteboard).",
+      "`PANEL-COMPOSITION.md` updated: added `*.test.ts`/`*.test.tsx`/`*.spec.ts`/`*.spec.tsx` row → `evaluator-test-unit`; updated existing `.claude/scripts/**/*.test.ts` and `.claude/cli/**/*.test.ts` rows from `contract-fit only` to `evaluator-test-unit`; added `tests/e2e/**`/`tests/integration/**`/`e2e/**` → `evaluator-test-integration`; added `tests/e2e/a11y/**` override → `evaluator-a11y`; precedence list inserts `evaluator-test-integration` then `evaluator-test-unit` between `evaluator-react-api` and `evaluator-tokens` (now 9 entries); Cross-references section adds new evaluator entries.",
+      "`derive-panel.ts` FALLBACK_RULES + FALLBACK_PRECEDENCE updated to match (no core logic changes; 12 fallback rules; 8 fallback precedence entries).",
+      "Baselines: `npm run lint` clean (no new warnings; 2 pre-existing symlink warnings preserved); `npm run build` succeeds (58 sketch pages + 2 routes prerendered); `npm test` 496/496 pass (up from 491; 5 new derive-panel.test.ts cases for the new mappings)."
+    ],
+    "rules_applied": [
+      "L-004 split agent-creation from agent-use: this unit creates 2 new evaluator files; smoke tests via `/guild-validate` invoking them are deferred to next session per the session-boundary contract. The derive-panel call for this unit's own evaluation manually dropped `evaluator-test-unit` from the panel list since it was authored this session and is not runtime-callable until session restart.",
+      "L-005 re-run git status fresh before evaluator: `git status --porcelain` ran immediately before the evaluator packet was composed; the file list reflects fresh state at evaluator-spawn time.",
+      "L-006 parse markdown at runtime: PANEL-COMPOSITION.md remains the source of truth; derive-panel.ts parses it at runtime; FALLBACK_RULES + FALLBACK_PRECEDENCE updates are defensive-backup only.",
+      "L-009 dense evaluator packet: packet supplied pre-computed verification + AC→file:line mappings + trust-precomputed instruction; spot-check budget kept investigation efficient (both evaluators returned approved with one or two reads).",
+      "L-013 ground prose claims in execution: every verification claim (lint, build, test counts, derive-panel output) is grounded in the command's actual output captured in the same session; no inferred-from-source claims.",
+      "Substrate-no-freestyle: no PLAN.md hand-edits; manifest changes only via `bin/loom phase update`."
+    ],
+    "disqualifiers": [
+      "Smoke-test the new evaluators by spawning them as `subagent_type` this session (L-004 boundary).",
+      "Include L-004 / session-restart / session-boundary notes in either new agent file's body (consensus from whiteboard: process metadata belongs in PLAN, not in runtime artifacts).",
+      "Have `evaluator-test-integration`'s rubric or CLI validators overlap with `evaluator-a11y`'s axe-core signal (a11y wrinkle from whiteboard).",
+      "Change `derive-panel.ts` core matchPath/derivePanel/parseRules/parsePrecedence logic (only FALLBACK constants are in scope this unit; the runtime parse path was untouched).",
+      "Author the 2 whiteboarders (`whiteboard-testing-strategy.md`, `whiteboard-substrate-engineer.md`) — those are Unit 2 territory.",
+      "Open the PR for Phase 5 this unit — PR opens at phase close after Unit 2 lands (or as a checkpoint refresh; the loop spec leaves this open)."
+    ],
+    "inputs": [
+      "projects/2026-05-16-substrate-cli/whiteboards/5-new-agent-families.md (Round 1 design pass; 6 attributed sections; primary signal from design-systems + react-architect + skeptic on naming, a11y, and substrate-engineer scope).",
+      ".claude/agents/evaluator-base.md (base contract to inherit).",
+      ".claude/agents/evaluator-a11y.md (shape reference; carve-out template; CLI-validators When-no-signal pattern).",
+      ".claude/agents/evaluator-nextjs.md (shape reference for tool-anchored evaluator + When-no-signal-applies pattern).",
+      ".claude/agents/PANEL-COMPOSITION.md (composition spec; mapping table + precedence + cross-references).",
+      ".claude/cli/verbs/guild/derive-panel.ts (auto-derivation impl; FALLBACK constants).",
+      ".claude/cli/verbs/guild/derive-panel.test.ts (live-spec assertions to update).",
+      "projects/2026-05-16-substrate-cli/PLAN.md Phase 5 section (deliverable list, verification step, L-004 note)."
+    ]
+  },
+  "execution": {
+    "actions": [
+      "Synced git: fetched origin, fast-forwarded local main to 58c0cc8 (PR #106 merge), cut substrate-cli/phase-5 from main. Pre-flight baseline: npm run lint clean, npm run build succeeds, npm test 491/491 pass.",
+      "Ran the always-on whiteboard pre-step via /guild-whiteboard with all 6 registered engineers (a11y, design-systems, performance, react-architect, skeptic, sketch-ideation). Round 1 artifact at projects/2026-05-16-substrate-cli/whiteboards/5-new-agent-families.md. Key signals: 3 voices for tier-name rename (react-architect, skeptic, design-systems-with-caveat); a11y flagged evaluator-playwright (now test-integration) overlap with evaluator-a11y on the axe-core runtime signal; consensus on L-004 follow-up-unit shape and no body-notes; substrate-engineer rubric sketched by design-systems + skeptic + performance.",
+      "Surfaced the tier-name-vs-tool-name fork to the user via AskUserQuestion plus the deliverable ordering question (4 sequential vs 2 paired vs 1 bulk). User chose: tier names (`evaluator-test-integration`, `evaluator-test-unit`) and two paired units (evaluators first, then whiteboarders).",
+      "Authored .claude/agents/evaluator-test-integration.md: frontmatter (role: evaluator, model: inherit, maxTurns: 5, tools includes Read/Glob/Grep + safe Bash subset + Bash(npm run test:e2e:*)); body opens with role statement + Primary tool: Playwright declaration; inherited base note; 6-step Process (scope detection excludes tests/e2e/a11y/; opt-in runtime signal at step 5); 15-entry antipattern catalog (fixture-leak, hardcoded-wait, brittle-locator, attached-not-visible, parallel-unsafe, auth-not-stored, retry-masks-flake, focus-or-skip-committed, hardcoded-url, mock-not-restored, storage-state-race, test-too-broad, no-auto-wait, snapshot-too-loose, worker-fixture-mutation); Flag codes table; CLI validators section with Static + Runtime + Inspection + When-no-signal-applies subsections; Boundary section with explicit evaluator-a11y carve-out (a11y-axe findings defer) + test-unit boundary + react-api boundary + whiteboard-testing-strategy forward reference.",
+      "Authored .claude/agents/evaluator-test-unit.md: same shape; frontmatter tools includes Bash(npm test:*); body opens with role + Primary tool: Vitest; 5-step Process; 15-entry antipattern catalog (mock-of-sut, no-assertion-count, describe-too-deep, snapshot-impl-detail, shared-state-leak, vi-mock-not-hoisted, no-fake-timers, loose-truthy, uninformative-name, name-inconsistent-with-repo, parallel-unsafe, expect-any-overused, focus-committed, skip-committed, spy-not-reset); Flag codes table; CLI validators with Runtime (npm test) + Static (npm run lint) + When-neither-signal-applies; Boundary section referencing test-integration, naming, react-api, and whiteboard-testing-strategy.",
+      "Discovered during scope-detection authoring that npm run test:e2e DOES exist in package.json (it runs `npm run build-storybook && playwright test`) — the brief's claim that there was no e2e script was stale. Updated evaluator-test-integration.md to declare npm run test:e2e as the runtime signal (opt-in due to cost) rather than declaring no-runtime-signal. The When-no-signal-applies carve-out is still useful for substrate-only artifacts.",
+      "Discovered tests/e2e/ already contains 4 spec files: tests/e2e/index.spec.ts, tests/e2e/storybook.spec.ts (both integration), tests/e2e/a11y/home.spec.ts, tests/e2e/a11y/sketch.spec.ts (both a11y, run via playwright.config.a11y.ts). Added a tests/e2e/a11y/** override row to PANEL-COMPOSITION.md to route those to evaluator-a11y (preserving the runtime-signal lane boundary).",
+      "Updated .claude/agents/PANEL-COMPOSITION.md: added new file-type rows for general unit test files (*.test.ts/.test.tsx/.spec.ts/.spec.tsx → evaluator-test-unit), integration test paths (tests/e2e/**, tests/integration/**, e2e/** → evaluator-test-integration), and the a11y override (tests/e2e/a11y/** → evaluator-a11y). Updated the two substrate-test rows (.claude/scripts/**/*.test.ts and .claude/cli/**/*.test.ts) to route to evaluator-test-unit instead of contract-fit-only. Inserted the two new evaluators into the precedence list between evaluator-react-api and evaluator-tokens (rationale: false-confidence regressions ship to users but the harness itself doesn't run in production; integration before unit because broader scope masks more). Updated the Cross-references section with new bullet items for both new evaluators.",
+      "Updated .claude/cli/verbs/guild/derive-panel.ts FALLBACK_RULES (9 → 12 entries; added test-file rules; updated substrate-tests rule to include evaluator-test-unit) and FALLBACK_PRECEDENCE (6 → 8 entries; inserted test-integration and test-unit between react-api and tokens). No changes to globToRegex, specificity, parseRules, parsePrecedence, matchPath, derivePanel, or derivePanelVerb core logic.",
+      "Updated .claude/cli/verbs/guild/derive-panel.test.ts: live-spec precedence assertion expanded from 7 to 9 entries; fallback precedence length assertion 6 → 8; substrate-test case expectation contract-fit → contract-fit + test-unit. Added 6 new test cases for the new mappings (substrate-cli test, general unit test, .spec.ts file, integration spec, a11y e2e spec override).",
+      "First test run revealed a glob-pattern bug: `tests/e2e/**/*.spec.ts` does NOT match direct children like `tests/e2e/index.spec.ts` because the regex `^tests/e2e/.*/[^/]*\\.spec\\.ts$` requires at least one intermediate `/`. Same issue for the a11y override. Simplified both patterns to bare `tests/e2e/**` and `tests/e2e/a11y/**` (matches any path under the directory). Re-ran tests: 496/496 pass.",
+      "Pre-evaluation fresh git status: M PANEL-COMPOSITION.md, M derive-panel.test.ts, M derive-panel.ts, ?? evaluator-test-integration.md, ?? evaluator-test-unit.md, ?? whiteboards/5-new-agent-families.md (auto-written by guild-whiteboard append, treated as substrate state not unit artifact).",
+      "Derived panel via bin/guild derive-panel: evaluator-contract-fit, evaluator-test-unit, evaluator-naming. Per L-004, manually dropped evaluator-test-unit (authored this session, not runtime-callable until restart). Effective evaluator panel: evaluator-contract-fit, evaluator-naming.",
+      "Composed dense evaluator packet (How-to-evaluate + Contract paraphrase + Artifact with pre-computed verification + AC→file:line mappings + Original ask + Suggested spot-check). Invoked /guild-validate. Both evaluators returned VERDICT: approved on a single iteration. bin/guild parse-and-aggregate confirmed: verdict=approved, blocking=[], advisory=[], conflicts=[]."
+    ],
+    "files_touched": [
+      ".claude/agents/evaluator-test-integration.md",
+      ".claude/agents/evaluator-test-unit.md",
+      ".claude/agents/PANEL-COMPOSITION.md",
+      ".claude/cli/verbs/guild/derive-panel.ts",
+      ".claude/cli/verbs/guild/derive-panel.test.ts",
+      "projects/2026-05-16-substrate-cli/whiteboards/5-new-agent-families.md",
+      "projects/2026-05-16-substrate-cli/manifest.json",
+      "projects/2026-05-16-substrate-cli/events.jsonl"
+    ],
+    "corrections": [
+      "correction: Initial brief from /ev-run dispatch (and PLAN.md prose) claimed there was no `npm run test:e2e` script in the repo and asked the design panel to consider deferring the runtime hook. Reality: package.json HAS `test:e2e` (runs storybook build + playwright). The brief was stale. Updated evaluator-test-integration.md authoring to declare npm run test:e2e as the runtime signal (opt-in due to cost) rather than declaring no-signal. PLAN.md Phase 5 prose remains accurate at the level of the deliverable list; the runtime-signal phrasing in the verification step is the only stale bit and is implicitly corrected by this unit's authoring.",
+      "correction: Initial PANEL-COMPOSITION mapping patterns used `tests/e2e/**/*.spec.ts` and `tests/e2e/a11y/**/*.spec.ts`. These match nested files (e.g., tests/e2e/a11y/home.spec.ts via the parent rule) but FAIL to match direct children (e.g., tests/e2e/index.spec.ts) because the globToRegex `**/*.spec.ts` translation requires an intermediate slash. Tests caught this on first run. Simplified to bare `tests/e2e/**` and `tests/e2e/a11y/**` which match any path under the directory; spec-file filtering happens at panel-input time anyway (only changed source files reach derive-panel). Substrate observation: a richer glob (handling `**/*` matching zero-or-more segments) would prevent this class of mistake; not worth fixing now but worth noting if future patterns need it."
+    ]
+  },
+  "scope": [
+    "Two new evaluator files under .claude/agents/ (test-integration + test-unit), each sibling-consistent with existing evaluators in voice, frontmatter, structure, and CLI-signal pattern.",
+    "PANEL-COMPOSITION.md auto-derivation updates: 3 new file-type rows (general unit tests, integration tests, a11y override) + 2 row updates (substrate-test rows) + precedence list expansion + Cross-references additions.",
+    "derive-panel.ts FALLBACK_RULES + FALLBACK_PRECEDENCE constant updates to mirror the spec; no core logic changes.",
+    "derive-panel.test.ts assertion updates + 6 new test cases covering the new mappings.",
+    "L-004 boundary respected: smoke tests of the new evaluators via /guild-validate are deferred to next session; this session's own evaluation manually dropped evaluator-test-unit from the panel."
+  ],
+  "changes_since_previous": "First checkin on substrate-cli/phase-5 branch. Baseline: origin/main at 58c0cc8 (post-#106 merge, Phase 4 bucket close).",
+  "verdict": {
+    "result": "approved",
+    "reasons": []
+  },
+  "notes_for_pr": [
+    "Phase 5 Unit 1 ships the two new evaluators (evaluator-test-integration, evaluator-test-unit) and wires them into the panel auto-derivation. Tier names chosen over tool names per Whiteboard Round 1 + user input — the new files slot in alongside evaluator-a11y, evaluator-nextjs, evaluator-react-api, evaluator-tokens, evaluator-naming as concern-shaped lenses. Tool anchor declared inline at top of each body (Vitest / Playwright).",
+    "evaluator-test-integration explicitly carves out a11y-axe findings and defers them to evaluator-a11y, addressing the wrinkle whiteboard-a11y raised: two evaluators racing for the same `npm run test:a11y` axe-core signal would produce duplicate or contradictory findings. The Process scope clause excludes tests/e2e/a11y/; the Boundary section names the carve-out explicitly. PANEL-COMPOSITION.md reinforces this by routing tests/e2e/a11y/** → evaluator-a11y at the auto-derivation layer.",
+    "L-004 boundary observed: the new evaluators are NOT runtime-callable in this session (registry-cache invariant). This unit's own /guild-validate invocation manually dropped evaluator-test-unit from the derived panel. Smoke tests of the new evaluators (spawn each via /guild-validate, verify rubric fires) are deferred to the next-session follow-up unit per the consensus in Whiteboard Round 1.",
+    "Substrate finding (folds into #4 substrate-gaps sibling project): derive-panel's globToRegex translation requires an intermediate slash for `**/*` patterns. `tests/e2e/**/*.spec.ts` matches `tests/e2e/foo/bar.spec.ts` but NOT `tests/e2e/index.spec.ts`. Workaround used here is to use bare `tests/e2e/**` (matches any path under the dir). A future glob improvement could relax `**/*` to match zero-or-more segments.",
+    "Substrate finding (folds into #4 substrate-gaps sibling project): /ev-run router's panel-derivation step doesn't know which evaluators are session-cached vs newly-authored. This session manually dropped evaluator-test-unit per the L-004 note in the loop body. A `bin/guild derive-panel --exclude-session-cached=<list>` flag (or similar) would mechanize the dropping. Low priority — manual override works fine for now."
+  ]
+}

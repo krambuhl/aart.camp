@@ -150,7 +150,10 @@ const FALLBACK_RULES: Rule[] = [
     [],
   ),
   fallbackRule(['.claude/scripts/**/*.ts'], ['evaluator-naming']),
-  fallbackRule(['.claude/scripts/**/*.test.ts'], []),
+  fallbackRule(['.claude/scripts/**/*.test.ts'], ['evaluator-test-unit']),
+  fallbackRule(['*.test.ts', '*.test.tsx', '*.spec.ts', '*.spec.tsx'], ['evaluator-test-unit']),
+  fallbackRule(['tests/e2e/**', 'tests/integration/**', 'e2e/**'], ['evaluator-test-integration']),
+  fallbackRule(['tests/e2e/a11y/**'], ['evaluator-a11y']),
 ];
 
 const FALLBACK_PRECEDENCE = [
@@ -158,6 +161,8 @@ const FALLBACK_PRECEDENCE = [
   'evaluator-a11y',
   'evaluator-nextjs',
   'evaluator-react-api',
+  'evaluator-test-integration',
+  'evaluator-test-unit',
   'evaluator-tokens',
   'evaluator-naming',
 ];

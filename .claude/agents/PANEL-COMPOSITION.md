@@ -47,9 +47,12 @@ different files is a no-op.
 | `*.json`, `package.json`, lock files | `evaluator-contract-fit` only |
 | `.claude/agents/*.md`, `.claude/skills/*/SKILL.md`, `projects/**/checkins/**/*.md` | `evaluator-contract-fit` only — this is substrate authoring; domain evaluators don't apply to agent definitions, skill bodies, or checkin files |
 | `.claude/scripts/**/*.ts` (substrate scripts) | `evaluator-contract-fit`, `evaluator-naming` (script identifiers / function names are public-API surface for substrate consumers) |
-| `.claude/scripts/**/*.test.ts` (substrate tests) | `evaluator-contract-fit` only — the naming evaluator's `test files` carve-out applies |
+| `.claude/scripts/**/*.test.ts` (substrate tests) | `evaluator-test-unit` — vitest antipattern catalog applies; the naming evaluator's `test files` carve-out still applies |
 | `.claude/cli/**/*.ts` (substrate CLI) | `evaluator-contract-fit`, `evaluator-naming` — same rationale as `.claude/scripts/`; CLI verb names + exported types are public-API surface for loops and humans |
-| `.claude/cli/**/*.test.ts` (substrate CLI tests) | `evaluator-contract-fit` only — the naming evaluator's `test files` carve-out applies |
+| `.claude/cli/**/*.test.ts` (substrate CLI tests) | `evaluator-test-unit` — vitest antipattern catalog applies; same rationale as substrate scripts |
+| `*.test.ts`, `*.test.tsx`, `*.spec.ts`, `*.spec.tsx` (general test files; more-specific paths below override) | `evaluator-test-unit` — vitest unit-test antipattern catalog |
+| `tests/e2e/**`, `tests/integration/**`, `e2e/**` | `evaluator-test-integration` — Playwright integration-test antipattern catalog; the `tests/e2e/a11y/**` subtree overrides below |
+| `tests/e2e/a11y/**` | `evaluator-a11y` — a11y test specs run via `playwright.config.a11y.ts` are accessibility's lane, not test-integration's |
 
 ### Union rule
 
@@ -105,10 +108,23 @@ remedies. Higher position = higher precedence.
 5. **`evaluator-react-api`** — runtime correctness within React
    itself (hooks rules, state mutation, ref-in-render). These don't
    crash the build but produce subtle runtime bugs.
-6. **`evaluator-tokens`** — design-system drift. Bypassing the
+6. **`evaluator-test-integration`** — integration-test correctness
+   in production-shipped test code. Bad fixtures, parallel-unsafe
+   state, hardcoded waits produce false confidence — a green suite
+   that doesn't catch real user-facing regressions. Above tokens
+   because false-confidence regressions ship to users; below
+   react-api because the test harness itself doesn't run in
+   production.
+7. **`evaluator-test-unit`** — unit-test correctness in
+   production-shipped test code. Mock-vs-real boundaries, isolation
+   failures, focused/skipped tests. Lower than integration tests
+   because unit-test antipatterns mask narrower failure modes (a
+   single function's behavior) than integration-test antipatterns
+   (a whole user flow).
+8. **`evaluator-tokens`** — design-system drift. Bypassing the
    token system doesn't break the artifact at runtime, but it
    drifts the visual system over time.
-7. **`evaluator-naming`** — rhetoric and readability. The lowest-
+9. **`evaluator-naming`** — rhetoric and readability. The lowest-
    stakes lens in the panel; flags here affect how code reads, not
    whether it works.
 
@@ -116,8 +132,10 @@ remedies. Higher position = higher precedence.
 unit-fatal. Accessibility failures harm users. Framework breakage
 prevents shipping. CSS-architecture fragility produces visual
 breakage on shipped code. Runtime correctness produces hidden bugs.
-Token drift degrades the visual system. Naming affects
-comprehension. Each step down the list is a smaller blast radius.
+Test-suite antipatterns produce false confidence (integration above
+unit because broader scope masks more). Token drift degrades the
+visual system. Naming affects comprehension. Each step down the
+list is a smaller blast radius.
 
 ### Conflict vs overlap
 
@@ -294,6 +312,15 @@ evaluators" section that covers the per-evaluator nuance:
 - `.claude/agents/evaluator-react-api.md` — boundary with nextjs
   (runtime vs framework) and naming (API surface vs identifier
   choice)
+- `.claude/agents/evaluator-test-integration.md` — boundary with
+  a11y (axe-core scans defer to a11y; test shape stays here),
+  test-unit (tier choice at file boundary), react-api (fixture
+  components), and whiteboard-testing-strategy (design vs review
+  phase)
+- `.claude/agents/evaluator-test-unit.md` — boundary with
+  test-integration (tier choice), naming (test-file naming
+  carve-out), react-api (production code under test), and
+  whiteboard-testing-strategy (design vs review phase)
 - `.claude/agents/evaluator-tokens.md` — boundary with naming
   (literal-vs-token vs right-name) and a11y (contrast outcomes)
 - `.claude/agents/evaluator-naming.md` — boundary with tokens

@@ -55,7 +55,13 @@
     {
       "number": 5,
       "name": "New agent families",
-      "status": "not-started"
+      "status": "in-progress",
+      "branch": "substrate-cli/phase-5",
+      "pr": {
+        "number": 107,
+        "url": "https://github.com/example/example/pull/107",
+        "state": "open"
+      }
     },
     {
       "number": 6,

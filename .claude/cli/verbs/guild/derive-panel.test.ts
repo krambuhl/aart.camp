@@ -108,9 +108,45 @@ describe('derivePanel (live spec)', () => {
     ]);
   });
 
-  test('substrate test (.claude/scripts/foo/bar.test.ts) → contract-fit only', () => {
+  test('substrate test (.claude/scripts/foo/bar.test.ts) → contract-fit + test-unit', () => {
     expect(derivePanel(['.claude/scripts/foo/bar.test.ts'], spec)).toEqual([
       'evaluator-contract-fit',
+      'evaluator-test-unit',
+    ]);
+  });
+
+  test('substrate CLI test (.claude/cli/foo/bar.test.ts) → contract-fit + test-unit', () => {
+    expect(derivePanel(['.claude/cli/foo/bar.test.ts'], spec)).toEqual([
+      'evaluator-contract-fit',
+      'evaluator-test-unit',
+    ]);
+  });
+
+  test('general unit test (scripts/check-nextjs.test.ts) → contract-fit + test-unit', () => {
+    expect(derivePanel(['scripts/check-nextjs.test.ts'], spec)).toEqual([
+      'evaluator-contract-fit',
+      'evaluator-test-unit',
+    ]);
+  });
+
+  test('general spec file (utilities/foo.spec.ts) → contract-fit + test-unit', () => {
+    expect(derivePanel(['utilities/foo.spec.ts'], spec)).toEqual([
+      'evaluator-contract-fit',
+      'evaluator-test-unit',
+    ]);
+  });
+
+  test('integration spec (tests/e2e/index.spec.ts) → contract-fit + test-integration', () => {
+    expect(derivePanel(['tests/e2e/index.spec.ts'], spec)).toEqual([
+      'evaluator-contract-fit',
+      'evaluator-test-integration',
+    ]);
+  });
+
+  test('a11y e2e spec (tests/e2e/a11y/home.spec.ts) → contract-fit + a11y (overrides test-integration)', () => {
+    expect(derivePanel(['tests/e2e/a11y/home.spec.ts'], spec)).toEqual([
+      'evaluator-contract-fit',
+      'evaluator-a11y',
     ]);
   });
 
@@ -230,7 +266,7 @@ describe('loadSpec fallback', () => {
     try {
       const { spec, warning } = loadSpec(tmp);
       expect(spec.rules.length).toBeGreaterThan(0);
-      expect(spec.precedence.length).toBe(6);
+      expect(spec.precedence.length).toBe(8);
       expect(spec.precedence[0]).toBe('evaluator-contract-fit');
       expect(warning).toMatch(/panel-spec-unreadable/);
       expect(derivePanel(['components/Foo.tsx'], spec)).toEqual([
@@ -287,6 +323,8 @@ describe('spec parsing', () => {
       'evaluator-nextjs',
       'evaluator-css-architecture',
       'evaluator-react-api',
+      'evaluator-test-integration',
+      'evaluator-test-unit',
       'evaluator-tokens',
       'evaluator-naming',
     ]);

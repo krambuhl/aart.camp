@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "number": "02",
+  "created": "2026-05-16T13:40:00.000Z",
+  "phase": {
+    "number": 5,
+    "name": "New agent families"
+  },
+  "branch": "substrate-cli/phase-5",
+  "unit": "Unit 2 — author both new whiteboard engineers (testing-strategy + substrate-engineer)",
+  "contract": {
+    "goal": "Author `whiteboard-testing-strategy.md` and `whiteboard-substrate-engineer.md` under `.claude/agents/` per the existing whiteboard-*.md template. Both inherit from `whiteboard-base.md`; both declare `role: whiteboard-engineer` frontmatter. Both reference the Unit 1 evaluators (`evaluator-test-integration`, `evaluator-test-unit`) in symmetric Boundary sections mirroring the existing whiteboard-a11y/evaluator-a11y design/review-phase split. Smoke tests deferred per L-004.",
+    "acceptance_criteria": [
+      "Both files exist with correct frontmatter (`role: whiteboard-engineer`, `model: inherit`, `tools: Read, Glob, Grep`; no maxTurns field per whiteboard convention).",
+      "Each body follows the existing whiteboard-*.md template: opening Read-whiteboard-base instruction, Your perspective section with 5-7 pressing-on bullets, What you lean toward section with reasoned defaults, What you don't do carve-outs, Boundary with sibling engineers section listing all 5 existing siblings + the other new sibling, Multi-round dynamic + Example perspective sections.",
+      "`whiteboard-testing-strategy.md` Your perspective covers: tier choice (unit/integration/e2e), fixture-vs-factory architecture, mock-vs-real dependency boundary, parallel-test safety, what-to-test vs CI signals, test-the-boundary-not-the-implementation.",
+      "`whiteboard-substrate-engineer.md` Your perspective covers the 6+1 pressing-on points from the whiteboard consensus: CRUD-vs-orchestration boundary, append-only invariants under parallelism, parallel-session safety, family-shape consistency for new artifact types, schema-version evolution, idempotency of CLI verbs, cost-of-substrate. Includes the `What 'substrate' means here` intro paragraph defining the project-internal vocabulary. Explicitly notes there is no `evaluator-substrate-engineer` (substrate concerns are design-phase only).",
+      "Both files reference `evaluator-test-integration` and `evaluator-test-unit` in their Boundary section as the design-phase/review-phase sibling pair (testing-strategy explicitly mirrors the whiteboard-a11y/evaluator-a11y split).",
+      "Both files reference the other new whiteboarder as a sibling in their Boundary section.",
+      "NO L-004 / session-restart / session-boundary language in either body.",
+      "Baselines: `npm run lint` clean (no new warnings; 2 pre-existing symlink warnings preserved); `npm test` 496/496 pass (no test changes in this unit, just two new agent .md files)."
+    ],
+    "rules_applied": [
+      "L-004 split agent-creation from agent-use: this unit creates 2 new whiteboard files; smoke tests via /guild-whiteboard invoking them are deferred to next session per the session-boundary contract. No in-session attempt to spawn either as a whiteboard engineer.",
+      "L-005 re-run git status fresh before evaluator: `git status --porcelain` ran immediately before the evaluator packet was composed; the file list reflects fresh state.",
+      "L-009 dense evaluator packet: packet supplied pre-computed verification + AC→file:line mappings + trust-precomputed instruction; evaluator returned approved on first iteration with one spot-check.",
+      "L-013 ground prose claims in execution: lint and test counts grounded in actual command output; derive-panel result grounded in actual CLI invocation.",
+      "Substrate-no-freestyle: no PLAN.md hand-edits; no manifest edits outside `bin/loom` verb usage."
+    ],
+    "disqualifiers": [
+      "Smoke-test the new whiteboard engineers by spawning them as `subagent_type` this session (L-004 boundary).",
+      "Include L-004 / session-restart / session-boundary notes in either whiteboard file's body.",
+      "Modify PANEL-COMPOSITION.md or derive-panel.ts (whiteboarders aren't auto-derived; PANEL-COMPOSITION wiring was Unit 1's scope).",
+      "Have `whiteboard-substrate-engineer` overlap with `whiteboard-skeptic`'s general-purpose pressure-test role (substrate-engineer presses on shape; skeptic presses on premise).",
+      "Open the PR this unit — the Compose PR step is the phase checkpoint that follows."
+    ],
+    "inputs": [
+      "projects/2026-05-16-substrate-cli/whiteboards/5-new-agent-families.md (Round 1 design pass; substrate-engineer rubric sketches from design-systems + skeptic + performance; testing-strategy boundary direction).",
+      ".claude/agents/whiteboard-base.md (base contract to inherit).",
+      ".claude/agents/whiteboard-skeptic.md (shape reference for the body template + carve-out language).",
+      ".claude/agents/whiteboard-react-architect.md (shape reference for the boundary section structure).",
+      ".claude/agents/evaluator-test-integration.md (Unit 1; referenced in Boundary).",
+      ".claude/agents/evaluator-test-unit.md (Unit 1; referenced in Boundary)."
+    ]
+  },
+  "execution": {
+    "actions": [
+      "Authored .claude/agents/whiteboard-testing-strategy.md (~165 lines): frontmatter (role: whiteboard-engineer, model: inherit, tools: Read/Glob/Grep, no maxTurns); body opens with Read-whiteboard-base note; Your perspective section with 6 pressing-on bullets (tier choice, fixture-vs-factory, mock-vs-real, parallel-test safety, what-to-test vs CI signals, test-the-boundary-not-the-implementation); What you lean toward section with 5 reasoned defaults; What you don't do section with 3 explicit carve-outs (no post-hoc code review, no coverage thresholds, no testing-tool recommendations); Boundary with sibling engineers section explicitly mirroring the whiteboard-a11y/evaluator-a11y design-vs-review-phase split, naming evaluator-test-integration + evaluator-test-unit + react-architect + a11y + performance + substrate-engineer + skeptic; Multi-round dynamic; Example perspective showing a <DataTable> tier-choice scenario.",
+      "Authored .claude/agents/whiteboard-substrate-engineer.md (~210 lines): frontmatter matching the whiteboard convention; body opens with What 'substrate' means here intro paragraph (defines project-internal vocabulary, explicitly notes there is no evaluator-substrate-engineer); Your perspective section with 7 pressing-on bullets (CRUD-vs-orchestration, append-only invariants, parallel-session safety, family-shape consistency, schema-version evolution, idempotency, cost-of-substrate); What you lean toward section with 7 reasoned defaults; What you don't do section with 3 carve-outs (not a code reviewer, not the skeptic, not a performance voice); Boundary with sibling engineers section naming all 5 existing siblings + testing-strategy adjacency; Multi-round dynamic; Example perspective showing a `bin/loom phase update --pr=<N>` flag-vs-verb scenario.",
+      "Verified baselines: npm run lint clean (2 pre-existing symlink warnings unchanged); npm test 496/496 pass (no test changes); git status shows 2 untracked files.",
+      "Derived panel via bin/guild derive-panel for the two new files: evaluator-contract-fit only (per the existing .claude/agents/*.md rule).",
+      "Composed dense evaluator packet (How-to-evaluate + Contract + Artifact with pre-computed verification + AC mappings + Original ask + Suggested spot-check). Invoked /guild-validate with the single-agent panel. evaluator-contract-fit returned VERDICT: approved after one spot-check (Boundary section of substrate-engineer file). bin/guild parse-and-aggregate confirmed: verdict=approved, no findings."
+    ],
+    "files_touched": [
+      ".claude/agents/whiteboard-testing-strategy.md",
+      ".claude/agents/whiteboard-substrate-engineer.md",
+      "projects/2026-05-16-substrate-cli/events.jsonl",
+      "projects/2026-05-16-substrate-cli/manifest.json"
+    ],
+    "corrections": []
+  },
+  "scope": [
+    "Two new whiteboard engineer files under .claude/agents/ (testing-strategy + substrate-engineer), each sibling-consistent with existing whiteboard-* engineers in voice, frontmatter, and section structure.",
+    "testing-strategy mirrors whiteboard-a11y/evaluator-a11y design/review-phase split in its Boundary section, paired with the Unit 1 evaluators.",
+    "substrate-engineer introduces a novel perspective (no prior sibling); the body's intro paragraph explicitly defines the 'substrate' vocabulary and notes the absence of an evaluator-substrate-engineer counterpart.",
+    "L-004 boundary respected: no in-session smoke spawn of either new whiteboarder."
+  ],
+  "changes_since_previous": "Second checkin on substrate-cli/phase-5. Phase 5 Unit 1 (checkin 01) committed as c7a8952 earlier this session.",
+  "verdict": {
+    "result": "approved",
+    "reasons": []
+  },
+  "notes_for_pr": [
+    "Phase 5 Unit 2 ships the two new whiteboard engineers. testing-strategy mirrors the whiteboard-a11y/evaluator-a11y design/review-phase split, paired with Unit 1's evaluator-test-integration + evaluator-test-unit. substrate-engineer is genuinely novel (no prior sibling); its body's intro defines 'substrate' as the project-internal vocabulary it engages with and explicitly notes the absence of an evaluator-substrate-engineer counterpart (substrate concerns are design-phase only).",
+    "Both new whiteboarders are NOT runtime-callable in this session (registry-cache invariant per L-004). Smoke tests via /guild-whiteboard invoking each new engineer against a representative brief are deferred to the next-session follow-up unit, per the consensus reached in Whiteboard Round 1.",
+    "Whiteboard roster growth surfaced in skeptic's Round 1 contribution (going from ~9 agents to 13 with this PR) — at some point the orchestrator's picking heuristic for which whiteboard engineers to invoke becomes load-bearing. Not blocking; phase-7-or-8 concern. Folds into the #4 substrate-gaps sibling project."
+  ]
+}
