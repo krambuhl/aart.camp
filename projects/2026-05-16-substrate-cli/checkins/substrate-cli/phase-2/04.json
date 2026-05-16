@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "number": "04",
+  "created": "2026-05-15T22:07:00.000Z",
+  "phase": {
+    "number": 2,
+    "name": "bin/guild CLI"
+  },
+  "branch": "substrate-cli/phase-2",
+  "unit": "D4: Port derive-panel verb",
+  "contract": {
+    "goal": "Port .claude/scripts/guild/derive-panel.ts (panel composer that parses .claude/agents/PANEL-COMPOSITION.md and emits comma-separated agent list) to .claude/cli/verbs/guild/derive-panel.ts. Byte-equivalent verb behavior. Spec path resolved against ctx.cwd. Stdin reads from ctx.stdin. loadSpec() signature changes to return {spec, warning} so the verb can surface fallback warnings via DispatchResult.stderr (vs the legacy script's eager process.stderr.write). D4 of 5 in Phase 2.",
+    "acceptance_criteria": [
+      "derivePanelVerb(rest, ctx) exported. Args: --files=<csv> or stdin newline-separated. Spec at <ctx.cwd>/.claude/agents/PANEL-COMPOSITION.md.",
+      "Fallback to FALLBACK_RULES/FALLBACK_PRECEDENCE if parse fails; warning surfaces on stderr.",
+      "loadSpec() now returns {spec, warning}.",
+      "Pure helpers re-exported for unit testing.",
+      "Registered in GUILD_VERBS + help.",
+      "31 sibling tests pass.",
+      "Byte-parity confirmed via diff against legacy script.",
+      "Legacy .claude/scripts/guild/derive-panel.ts preserved (D5)."
+    ],
+    "rules_applied": [
+      "Mirror <verb>Verb naming.",
+      "Erasable TypeScript; sibling .test.ts.",
+      "loadSpec's new {spec, warning} return shape lets the verb populate DispatchResult.stderr cleanly without eager process.stderr writes."
+    ],
+    "disqualifiers": [
+      "Modify or delete legacy derive-panel.ts/.test.ts (D5).",
+      "Change panel composition logic.",
+      "Change spec-parsing behavior."
+    ],
+    "inputs": [
+      ".claude/scripts/guild/derive-panel.ts + .test.ts (legacy)",
+      ".claude/agents/PANEL-COMPOSITION.md (live spec)",
+      ".claude/cli/verbs/guild/index.ts + .claude/cli/guild.ts (D1-D3)"
+    ]
+  },
+  "execution": {
+    "actions": [
+      "Wrote .claude/cli/verbs/guild/derive-panel.ts (~270 lines, ports legacy with loadSpec signature change to {spec, warning}).",
+      "Registered 'derive-panel' in GUILD_VERBS and VERBS help registry.",
+      "Wrote derive-panel.test.ts (31 tests: live-spec assertions + glob tests + verb tests + fallback tests + spec-parsing tests).",
+      "Verified parity via diff <(bin/guild derive-panel --files=...) <(node .claude/scripts/guild/derive-panel.ts --files=...) → exit 0 for representative inputs.",
+      "Discovered while testing: PANEL-COMPOSITION.md's `.claude/cli/**/*.ts` pattern requires `**` to match at least one segment, so files DIRECTLY in `.claude/cli/` (guild.ts, griot.ts) don't match this row and fall through to generic *.ts (which includes react-api). This is the cause of my Phase 1 D1-D4 manual-override rationale ('script's panel includes react-api') — the script is correct per the spec's literal pattern, the SPEC's pattern is too tight. Filing as separate substrate finding for the deferred sibling project; not D4's scope.",
+      "Ran npm test: 39 files / 554 tests pass.",
+      "Ran npm run lint: clean.",
+      "Spawned evaluator-contract-fit + evaluator-naming in parallel. Both approved."
+    ],
+    "files_touched": [
+      ".claude/cli/verbs/guild/derive-panel.ts",
+      ".claude/cli/verbs/guild/derive-panel.test.ts",
+      ".claude/cli/verbs/guild/index.ts",
+      ".claude/cli/guild.ts"
+    ],
+    "corrections": []
+  },
+  "scope": [
+    "Port derive-panel verb with byte-equivalent CLI output.",
+    "Refactor loadSpec to return {spec, warning} for verb-shape compatibility.",
+    "31 sibling tests adapted from legacy."
+  ],
+  "changes_since_previous": "Builds on D1+D2+D3 (checkins 01+02+03).",
+  "verdict": {
+    "result": "approved",
+    "reasons": []
+  },
+  "notes_for_pr": [
+    "D4 of 5 in Phase 2. PR refresh at phase close.",
+    "loadSpec signature change is a deliberate verb-shape adaptation (returns {spec, warning} instead of just Spec, since DispatchResult can't do eager stderr writes mid-execution). Same observable behavior at the CLI layer — fallback warning appears on stderr.",
+    "Substrate finding discovered during D4: PANEL-COMPOSITION.md's `.claude/cli/**/*.ts` glob requires `**` to match at least one segment. So `.claude/cli/guild.ts` (directly in dir) doesn't match — falls through to generic `*.ts` rule (which adds react-api). My Phase 1 D1-D4 manual-override rationale was based on this misread; the script was correct per the spec's literal pattern. The SPEC's pattern is what needs adjusting (or the spec should add `| `.claude/cli/*.ts` | contract-fit, naming |` as a sibling row). Logged for the deferred sibling project."
+  ]
+}

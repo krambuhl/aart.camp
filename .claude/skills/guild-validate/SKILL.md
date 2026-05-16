@@ -100,21 +100,20 @@ depend on the shape:
    evaluators with per-agent context; this skill does not.)
 3. **Parse and aggregate.** Build a JSON array of `{agent, output}`
    entries from `guild-spawn`'s outputs and pipe it to
-   `.claude/scripts/guild/parse-and-aggregate.ts` via stdin. The script
-   returns the locked Result shape (`{verdict, blocking_findings,
+   `bin/guild parse-and-aggregate` via stdin. The verb returns the
+   locked Result shape (`{verdict, blocking_findings,
    advisory_findings, cli_runs, conflicts}`) on stdout. Bash invocation
    uses a quoted heredoc so JSON content passes through verbatim:
 
    ```bash
-   node .claude/scripts/guild/parse-and-aggregate.ts <<'GUILD_INPUT'
+   bin/guild parse-and-aggregate <<'GUILD_INPUT'
    [
      {"agent": "evaluator-contract-fit", "output": "...full evaluator output..."}
    ]
    GUILD_INPUT
    ```
 
-   The script is the implementation; the rules below are the spec it
-   implements. They live in this skill body as the contract the script
+   The verb is the implementation; the rules below are the spec it
    honors:
 
    - For each entry, locate `VERDICT:`. `approved` → no findings.

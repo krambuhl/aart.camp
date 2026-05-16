@@ -96,22 +96,22 @@ work)" below.
 2. **Resolve round number.**
    - If `round` arg supplied, use it verbatim.
    - Otherwise call
-     `Bash("node .claude/scripts/guild/whiteboard.ts detect-round <whiteboard-path>")`.
-     The script returns a single integer on stdout (`1` if the file
+     `Bash("bin/guild whiteboard detect-round <whiteboard-path>")`.
+     The verb returns a single integer on stdout (`1` if the file
      does not exist or has no `## Round N` headers, else
      `max(existing) + 1`).
 
 3. **Initialize the whiteboard if needed.**
    - If the file does not exist (round = 1), call
-     `Bash("node .claude/scripts/guild/whiteboard.ts init
-     <whiteboard-path> --topic='<first line of brief>'")`. The
-     script writes the file with a `# Whiteboard: <topic>` header.
-     Idempotent — no-op if the file already exists.
+     `Bash("bin/guild whiteboard init <whiteboard-path>
+     --topic='<first line of brief>'")`. The verb writes the file
+     with a `# Whiteboard: <topic>` header. Idempotent — no-op if
+     the file already exists.
 
 4. **For round > 1: read prior state.**
    - Call
-     `Bash("node .claude/scripts/guild/whiteboard.ts read-state
-     <whiteboard-path>")`. The script returns JSON
+     `Bash("bin/guild whiteboard read-state <whiteboard-path>")`.
+     The verb returns JSON
      `{rounds: [{number, sections: [{engineer, section}]}]}`.
    - Construct `per_agent_context` for `/guild-spawn` as a JSON
      object keyed by engineer `subagent_type`, where each value is
@@ -161,12 +161,12 @@ work)" below.
    via stdin:
 
    ```bash
-   echo '<json-array>' | node .claude/scripts/guild/whiteboard.ts append <whiteboard-path>
+   echo '<json-array>' | bin/guild whiteboard append <whiteboard-path>
    ```
 
-   The script writes the new `## Round N` block with each
-   engineer's `### From <name>` subsection and returns the locked
-   Result JSON on stdout.
+   The verb writes the new `## Round N` block with each engineer's
+   `### From <name>` subsection and returns the locked Result JSON
+   on stdout.
 
 7. **Return** the script's output (parsed back into a structured
    value) to the caller. This skill performs no further work.
@@ -268,7 +268,7 @@ Explicitly the caller's responsibility, not the substrate primitive's:
 - **Compose `/guild-spawn`.** Do not call the `Agent` tool directly.
   The layering is the point.
 - **Engineers are read-only.** All writes to the whiteboard file flow
-  through `.claude/scripts/guild/whiteboard.ts`. No engineer agent
+  through `bin/guild whiteboard`. No engineer agent
   should ever be passed a `Write`/`Edit` tool in its `tools:`
   allowlist.
 - **Lock the output shape.** Even when v1 leaves `contradictions`

@@ -523,9 +523,9 @@ For each unit inside a tier:
    included as the baseline. The spec (file-type → evaluator mapping,
    precedence list, tokens-vs-naming boundary) lives in
    `.claude/agents/PANEL-COMPOSITION.md`; the derivation logic is
-   `.claude/scripts/guild/derive-panel.ts`.
+   `bin/guild derive-panel`.
    - `agents`: comma-separated output of
-     `node .claude/scripts/guild/derive-panel.ts --files=<paths>`
+     `bin/guild derive-panel --files=<paths>`
      (see § Panel auto-derivation for `<paths>` composition).
    - `packet`: build a **dense packet** (see shape below). The substrate
      default is dense — verbose packets correlate with budget-exhaustion
@@ -658,11 +658,11 @@ source of truth.
    deletions and substrate carryovers, plus any freshly-authored
    untracked paths.
 2. **Derive the panel.** Run
-   `node .claude/scripts/guild/derive-panel.ts --files=<comma-
-   separated paths>`. The script prints a comma-separated list of
-   `subagent_type` names on stdout, precedence-ordered, with
-   `evaluator-contract-fit` always first.
-3. **Pass to `/guild-validate`.** Use the script's stdout as the
+   `bin/guild derive-panel --files=<comma-separated paths>`. The
+   verb prints a comma-separated list of `subagent_type` names on
+   stdout, precedence-ordered, with `evaluator-contract-fit` always
+   first.
+3. **Pass to `/guild-validate`.** Use the verb's stdout as the
    `agents=` argument verbatim. Confidence-loop tiers tend to touch
    a single file family (a codemod over .module.css, a rename over
    .tsx imports, etc.), so the derived panel is typically narrower

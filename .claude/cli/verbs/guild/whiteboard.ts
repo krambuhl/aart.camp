@@ -1,12 +1,11 @@
-#!/usr/bin/env node
-// Helper script for /guild-whiteboard.
+// Helper verb for /guild-whiteboard.
 //
-// Four verbs:
+// Four subverbs:
 //   init <path> --topic=<str>   — create the whiteboard file with the
 //                                  topical header. Idempotent.
 //   detect-round <path>         — return max(existing ## Round N) + 1
 //                                  (or 1 if file is new/empty).
-//   append <path>               — read JSON array from stdin
+//   append <path>               — read JSON array from ctx.stdin
 //                                  ({engineer, section}[]), append a
 //                                  new round block, emit the locked
 //                                  Result JSON on stdout.
@@ -16,12 +15,12 @@
 //
 // Error prefix: `guild-whiteboard-error:` (mirrors
 // `parse-and-aggregate-error:` and `derive-panel-error:` conventions
-// in the sibling guild scripts). All errors go to stderr; non-zero
-// exit on failure.
+// in the sibling guild verbs).
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
+import type { DispatchResult, GuildCliContext } from './index.ts';
 
 type Section = { engineer: string; section: string };
 type Round = { number: number; sections: Section[] };
@@ -33,25 +32,16 @@ type AppendResult = {
   contradictions: never[];
 };
 
-function fail(reason: string): never {
-  process.stderr.write(`guild-whiteboard-error: ${reason}\n`);
-  process.exit(1);
-}
+class WhiteboardError extends Error {}
 
-function readStdin(): string {
-  try {
-    return readFileSync(0, 'utf-8');
-  } catch (err) {
-    fail(`could not read stdin: ${(err as Error).message}`);
-  }
+function fail(reason: string): DispatchResult {
+  return {
+    stderr: `guild-whiteboard-error: ${reason}`,
+    exitCode: 1,
+  };
 }
 
 // Parse the whiteboard file into {rounds: [{number, sections}]}.
-// Rounds are identified by `## Round N` headers (case-insensitive on
-// the word "Round", N is a positive integer). Sections within a round
-// are identified by `### From <engineer-name>` headers; the section
-// body is everything between that header and the next `###`/`##`
-// boundary, trimmed of trailing whitespace.
 function parseState(content: string): State {
   if (!content.trim()) return { rounds: [] };
 
@@ -63,8 +53,10 @@ function parseState(content: string): State {
 
   const flushSection = () => {
     if (currentSection && currentRound) {
-      // Trim leading and trailing blank lines; preserve internal blanks.
-      currentSection.section = buffer.join('\n').replace(/^\s*\n/, '').replace(/\s+$/, '');
+      currentSection.section = buffer
+        .join('\n')
+        .replace(/^\s*\n/, '')
+        .replace(/\s+$/, '');
       currentRound.sections.push(currentSection);
     }
     currentSection = null;
@@ -98,7 +90,10 @@ function parseState(content: string): State {
 function detectNextRound(content: string): number {
   const state = parseState(content);
   if (state.rounds.length === 0) return 1;
-  const max = state.rounds.reduce((acc, r) => (r.number > acc ? r.number : acc), 0);
+  const max = state.rounds.reduce(
+    (acc, r) => (r.number > acc ? r.number : acc),
+    0,
+  );
   return max + 1;
 }
 
@@ -107,46 +102,57 @@ function ensureParentDir(path: string): void {
   if (!existsSync(parent)) mkdirSync(parent, { recursive: true });
 }
 
-function runInit(path: string, topic: string): void {
+function initSubverb(path: string, args: string[]): DispatchResult {
+  let topic: string;
+  try {
+    topic = parseTopic(args);
+  } catch (err) {
+    if (err instanceof WhiteboardError) return fail(err.message);
+    throw err;
+  }
   if (existsSync(path)) {
-    // Idempotent: no-op if file exists. Topic-mismatch is the caller's
-    // problem; we don't second-guess the existing header.
-    return;
+    // Idempotent: no-op if file exists.
+    return { exitCode: 0 };
   }
   ensureParentDir(path);
   const header = `# Whiteboard: ${topic.trim()}\n`;
   writeFileSync(path, header, 'utf-8');
+  return { exitCode: 0 };
 }
 
-function runDetectRound(path: string): void {
+function detectRoundSubverb(path: string): DispatchResult {
   let content = '';
   if (existsSync(path)) {
     try {
       content = readFileSync(path, 'utf-8');
     } catch (err) {
-      fail(`could not read whiteboard at ${path}: ${(err as Error).message}`);
+      return fail(`could not read whiteboard at ${path}: ${(err as Error).message}`);
     }
   }
   const next = detectNextRound(content);
-  process.stdout.write(`${next}\n`);
+  return { stdout: `${next}`, exitCode: 0 };
 }
 
 function validateAppendInput(parsed: unknown): Section[] {
   if (!Array.isArray(parsed)) {
-    fail('append input must be a JSON array of {engineer, section} entries');
+    throw new WhiteboardError(
+      'append input must be a JSON array of {engineer, section} entries',
+    );
   }
   const sections: Section[] = [];
   for (let i = 0; i < parsed.length; i++) {
     const e = parsed[i];
     if (typeof e !== 'object' || e === null || Array.isArray(e)) {
-      fail(`entry [${i}] must be an object`);
+      throw new WhiteboardError(`entry [${i}] must be an object`);
     }
     const obj = e as Record<string, unknown>;
     if (typeof obj.engineer !== 'string' || obj.engineer.length === 0) {
-      fail(`entry [${i}] must have a non-empty string \`engineer\` field`);
+      throw new WhiteboardError(
+        `entry [${i}] must have a non-empty string \`engineer\` field`,
+      );
     }
     if (typeof obj.section !== 'string') {
-      fail(`entry [${i}] must have a string \`section\` field`);
+      throw new WhiteboardError(`entry [${i}] must have a string \`section\` field`);
     }
     sections.push({ engineer: obj.engineer, section: obj.section });
   }
@@ -161,32 +167,35 @@ function formatRoundBlock(round: number, sections: Section[]): string {
   return `${parts.join('\n')}\n`;
 }
 
-function runAppend(path: string): void {
-  const stdin = readStdin();
+function appendSubverb(path: string, stdin: string): DispatchResult {
   if (!stdin.trim()) {
-    fail('empty input on stdin; expected JSON array of {engineer, section} entries');
+    return fail('empty input on stdin; expected JSON array of {engineer, section} entries');
   }
   let parsed: unknown;
   try {
     parsed = JSON.parse(stdin);
   } catch (err) {
-    fail(`JSON parse error: ${(err as Error).message}`);
+    return fail(`JSON parse error: ${(err as Error).message}`);
   }
-  const sections = validateAppendInput(parsed);
+  let sections: Section[];
+  try {
+    sections = validateAppendInput(parsed);
+  } catch (err) {
+    if (err instanceof WhiteboardError) return fail(err.message);
+    throw err;
+  }
 
   let existing = '';
   if (existsSync(path)) {
     try {
       existing = readFileSync(path, 'utf-8');
     } catch (err) {
-      fail(`could not read whiteboard at ${path}: ${(err as Error).message}`);
+      return fail(`could not read whiteboard at ${path}: ${(err as Error).message}`);
     }
   }
   const round = detectNextRound(existing);
   const block = formatRoundBlock(round, sections);
 
-  // If file does not exist yet, prepend a minimal header so subsequent
-  // detect-round / read-state calls have something to anchor on.
   const base = existing.length > 0 ? existing : '# Whiteboard\n';
   const separator = base.endsWith('\n\n') ? '' : base.endsWith('\n') ? '\n' : '\n\n';
   const next = `${base}${separator}${block}`;
@@ -200,20 +209,20 @@ function runAppend(path: string): void {
     sections,
     contradictions: [],
   };
-  process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+  return { stdout: JSON.stringify(result, null, 2), exitCode: 0 };
 }
 
-function runReadState(path: string): void {
+function readStateSubverb(path: string): DispatchResult {
   let content = '';
   if (existsSync(path)) {
     try {
       content = readFileSync(path, 'utf-8');
     } catch (err) {
-      fail(`could not read whiteboard at ${path}: ${(err as Error).message}`);
+      return fail(`could not read whiteboard at ${path}: ${(err as Error).message}`);
     }
   }
   const state = parseState(content);
-  process.stdout.write(`${JSON.stringify(state, null, 2)}\n`);
+  return { stdout: JSON.stringify(state, null, 2), exitCode: 0 };
 }
 
 function parseTopic(args: string[]): string {
@@ -224,41 +233,45 @@ function parseTopic(args: string[]): string {
     strict: false,
   });
   if (typeof values.topic !== 'string' || values.topic.length === 0) {
-    fail('init requires --topic=<string>');
+    throw new WhiteboardError('init requires --topic=<string>');
   }
   return values.topic;
 }
 
-function main(): void {
-  const [, , verb, ...rest] = process.argv;
-  if (!verb) {
-    fail('usage: whiteboard.ts <init|detect-round|append|read-state> <path> [args]');
+export function whiteboardVerb(
+  rest: string[],
+  ctx: GuildCliContext,
+): DispatchResult {
+  const subverb = rest[0];
+  if (!subverb) {
+    return fail(
+      'usage: whiteboard <init|detect-round|append|read-state> <path> [args]',
+    );
   }
-  const path = rest[0];
-  if (!path) {
-    fail(`verb \`${verb}\` requires a whiteboard path as the first positional argument`);
+  const pathArg = rest[1];
+  if (!pathArg) {
+    return fail(
+      `verb \`${subverb}\` requires a whiteboard path as the first positional argument`,
+    );
   }
-  switch (verb) {
+  const path = resolve(ctx.cwd, pathArg);
+  const subArgs = rest.slice(2);
+  switch (subverb) {
     case 'init':
-      runInit(path, parseTopic(rest.slice(1)));
-      return;
+      return initSubverb(path, subArgs);
     case 'detect-round':
-      runDetectRound(path);
-      return;
+      return detectRoundSubverb(path);
     case 'append':
-      runAppend(path);
-      return;
+      return appendSubverb(path, ctx.stdin ?? '');
     case 'read-state':
-      runReadState(path);
-      return;
+      return readStateSubverb(path);
     default:
-      fail(`unknown verb \`${verb}\` (expected one of: init, detect-round, append, read-state)`);
+      return fail(
+        `unknown verb \`${subverb}\` (expected one of: init, detect-round, append, read-state)`,
+      );
   }
 }
 
-const invokedDirectly = import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith('whiteboard.ts');
-if (invokedDirectly) main();
-
-// Exports for testing.
+// Exports for unit testing of pure helpers.
 export { detectNextRound, formatRoundBlock, parseState };
 export type { AppendResult, Round, Section, State };

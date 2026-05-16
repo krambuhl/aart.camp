@@ -1,19 +1,23 @@
-#!/usr/bin/env node
-import { parseArgs } from 'node:util';
 import { appendFileSync, existsSync, readFileSync, statSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { resolve, join } from 'node:path';
+import { join, resolve } from 'node:path';
+import { parseArgs } from 'node:util';
+import type { DispatchResult, GuildCliContext } from './index.ts';
 
 const USAGE = [
   'usage:',
-  "  findings.ts append --slug=<slug> --evaluator=<name> --code=<code> --evidence=<text> [--severity=blocking|advisory] [--branch=<name>] [--unit=<NN>]",
-  "  findings.ts count  --slug=<slug> --evaluator=<name> --code=<code> --evidence=<text>",
+  '  findings append --slug=<slug> --evaluator=<name> --code=<code> --evidence=<text> [--severity=blocking|advisory] [--branch=<name>] [--unit=<NN>]',
+  '  findings count  --slug=<slug> --evaluator=<name> --code=<code> --evidence=<text>',
 ].join('\n');
 
-function fail(reason: string): never {
-  process.stderr.write(`findings-error: ${reason}\n${USAGE}\n`);
-  process.exit(1);
+function fail(reason: string): DispatchResult {
+  return {
+    stderr: `findings-error: ${reason}\n${USAGE}`,
+    exitCode: 1,
+  };
 }
+
+class ValidationError extends Error {}
 
 function normalizeEvidence(s: string): string {
   return s.replace(/\s+/g, ' ').trim().toLowerCase();
@@ -25,12 +29,12 @@ function signatureFor(evaluator: string, code: string, evidence: string): string
     .digest('hex');
 }
 
-function jsonlPathFor(slug: string): string {
-  return resolve(process.cwd(), 'projects', slug, '.guild-findings.jsonl');
+function jsonlPathFor(cwd: string, slug: string): string {
+  return resolve(cwd, 'projects', slug, '.guild-findings.jsonl');
 }
 
-function projectDirFor(slug: string): string {
-  return resolve(process.cwd(), 'projects', slug);
+function projectDirFor(cwd: string, slug: string): string {
+  return resolve(cwd, 'projects', slug);
 }
 
 function timestamp(): string {
@@ -64,7 +68,7 @@ function parseAppendArgs(rawArgs: string[]): AppendArgs {
       args: rawArgs,
     });
   } catch (err) {
-    fail(`argument parse failure: ${(err as Error).message}`);
+    throw new ValidationError(`argument parse failure: ${(err as Error).message}`);
   }
   const v = parsed.values;
   const slug = v.slug as string | undefined;
@@ -72,12 +76,12 @@ function parseAppendArgs(rawArgs: string[]): AppendArgs {
   const code = v.code as string | undefined;
   const evidence = v.evidence as string | undefined;
   const severityRaw = (v.severity as string | undefined) ?? 'blocking';
-  if (!slug) fail('--slug=<slug> is required');
-  if (!evaluator) fail('--evaluator=<name> is required');
-  if (code === undefined) fail('--code=<code> is required');
-  if (evidence === undefined) fail('--evidence=<text> is required');
+  if (!slug) throw new ValidationError('--slug=<slug> is required');
+  if (!evaluator) throw new ValidationError('--evaluator=<name> is required');
+  if (code === undefined) throw new ValidationError('--code=<code> is required');
+  if (evidence === undefined) throw new ValidationError('--evidence=<text> is required');
   if (severityRaw !== 'blocking' && severityRaw !== 'advisory') {
-    fail("--severity must be 'blocking' or 'advisory'");
+    throw new ValidationError("--severity must be 'blocking' or 'advisory'");
   }
   return {
     slug,
@@ -111,32 +115,40 @@ function parseCountArgs(rawArgs: string[]): CountArgs {
       args: rawArgs,
     });
   } catch (err) {
-    fail(`argument parse failure: ${(err as Error).message}`);
+    throw new ValidationError(`argument parse failure: ${(err as Error).message}`);
   }
   const v = parsed.values;
   const slug = v.slug as string | undefined;
   const evaluator = v.evaluator as string | undefined;
   const code = v.code as string | undefined;
   const evidence = v.evidence as string | undefined;
-  if (!slug) fail('--slug=<slug> is required');
-  if (!evaluator) fail('--evaluator=<name> is required');
-  if (code === undefined) fail('--code=<code> is required');
-  if (evidence === undefined) fail('--evidence=<text> is required');
+  if (!slug) throw new ValidationError('--slug=<slug> is required');
+  if (!evaluator) throw new ValidationError('--evaluator=<name> is required');
+  if (code === undefined) throw new ValidationError('--code=<code> is required');
+  if (evidence === undefined) throw new ValidationError('--evidence=<text> is required');
   return { slug, evaluator, code, evidence };
 }
 
-function appendVerb(rawArgs: string[]): void {
-  const args = parseAppendArgs(rawArgs);
-  const projectDir = projectDirFor(args.slug);
+function appendSubverb(rawArgs: string[], cwd: string): DispatchResult {
+  let args: AppendArgs;
+  try {
+    args = parseAppendArgs(rawArgs);
+  } catch (err) {
+    if (err instanceof ValidationError) return fail(err.message);
+    throw err;
+  }
+  const projectDir = projectDirFor(cwd, args.slug);
   if (!existsSync(projectDir)) {
-    fail(`project directory not found: projects/${args.slug}/`);
+    return fail(`project directory not found: projects/${args.slug}/`);
   }
   try {
     if (!statSync(projectDir).isDirectory()) {
-      fail(`project directory not found: projects/${args.slug}/ (not a directory)`);
+      return fail(
+        `project directory not found: projects/${args.slug}/ (not a directory)`,
+      );
     }
   } catch {
-    fail(`project directory not found: projects/${args.slug}/`);
+    return fail(`project directory not found: projects/${args.slug}/`);
   }
 
   const row = {
@@ -151,17 +163,25 @@ function appendVerb(rawArgs: string[]): void {
     severity: args.severity,
   };
 
-  appendFileSync(jsonlPathFor(args.slug), JSON.stringify(row) + '\n');
-  process.stdout.write(`findings-append: 1 row appended to projects/${args.slug}/.guild-findings.jsonl (signature ${row.signature.slice(0, 12)}...)\n`);
+  appendFileSync(jsonlPathFor(cwd, args.slug), `${JSON.stringify(row)}\n`);
+  return {
+    stdout: `findings-append: 1 row appended to projects/${args.slug}/.guild-findings.jsonl (signature ${row.signature.slice(0, 12)}...)`,
+    exitCode: 0,
+  };
 }
 
-function countVerb(rawArgs: string[]): void {
-  const args = parseCountArgs(rawArgs);
+function countSubverb(rawArgs: string[], cwd: string): DispatchResult {
+  let args: CountArgs;
+  try {
+    args = parseCountArgs(rawArgs);
+  } catch (err) {
+    if (err instanceof ValidationError) return fail(err.message);
+    throw err;
+  }
   const target = signatureFor(args.evaluator, args.code, args.evidence);
-  const path = jsonlPathFor(args.slug);
+  const path = jsonlPathFor(cwd, args.slug);
   if (!existsSync(path)) {
-    process.stdout.write('0\n');
-    return;
+    return { stdout: '0', exitCode: 0 };
   }
   const text = readFileSync(path, 'utf-8');
   let count = 0;
@@ -177,25 +197,17 @@ function countVerb(rawArgs: string[]): void {
     }
     if (row.signature === target) count += 1;
   }
-  process.stdout.write(`${count}\n`);
+  return { stdout: `${count}`, exitCode: 0 };
 }
 
-function main(): void {
-  const argv = process.argv.slice(2);
-  const verb = argv[0];
-  const rest = argv.slice(1);
-  if (verb === 'append') {
-    appendVerb(rest);
-    return;
-  }
-  if (verb === 'count') {
-    countVerb(rest);
-    return;
-  }
-  if (!verb) {
-    fail('missing verb');
-  }
-  fail(`unknown verb '${verb}'`);
+export function findingsVerb(
+  rest: string[],
+  ctx: GuildCliContext,
+): DispatchResult {
+  const subverb = rest[0];
+  const rawArgs = rest.slice(1);
+  if (!subverb) return fail('missing verb');
+  if (subverb === 'append') return appendSubverb(rawArgs, ctx.cwd);
+  if (subverb === 'count') return countSubverb(rawArgs, ctx.cwd);
+  return fail(`unknown verb '${subverb}'`);
 }
-
-main();

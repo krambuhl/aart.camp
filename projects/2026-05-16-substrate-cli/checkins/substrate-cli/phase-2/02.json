@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "number": "02",
+  "created": "2026-05-15T21:58:00.000Z",
+  "phase": {
+    "number": 2,
+    "name": "bin/guild CLI"
+  },
+  "branch": "substrate-cli/phase-2",
+  "unit": "D2: Port findings verb",
+  "contract": {
+    "goal": "Port .claude/scripts/guild/findings.ts (subverbs: append + count) to .claude/cli/verbs/guild/findings.ts. Byte-equivalent behavior. Both subverbs read/write projects/<slug>/.guild-findings.jsonl via ctx.cwd. D2 of 5 in Phase 2.",
+    "acceptance_criteria": [
+      "findingsVerb(rest, ctx) exported; dispatches on rest[0] to append or count subverb.",
+      "append: writes JSONL row {ts, slug, branch, unit, evaluator, code, signature, evidence, severity} to <cwd>/projects/<slug>/.guild-findings.jsonl. Signature is sha1 of evaluator+code+normalizedEvidence.",
+      "count: returns count of rows matching the computed signature. '0' if file missing. Skips malformed JSONL rows.",
+      "All legacy error paths preserved (missing args, invalid severity, missing project dir, unknown/missing subverb).",
+      "Registered in GUILD_VERBS + help text.",
+      "15 sibling tests pass. Byte-parity confirmed via diff against legacy.",
+      "Legacy .claude/scripts/guild/findings.ts preserved (D5 deletes)."
+    ],
+    "rules_applied": [
+      "Mirror Phase 1 / Phase 2 D1 <verb>Verb naming convention.",
+      "Erasable TypeScript; sibling .test.ts.",
+      "ValidationError class for cross-function flow (matches the pattern from mediate-panel + parse-and-aggregate).",
+      "Subverb helpers renamed appendSubverb/countSubverb to avoid colliding with the verb-handler suffix."
+    ],
+    "disqualifiers": [
+      "Modify or delete legacy .claude/scripts/guild/findings.ts (D5).",
+      "Change JSONL row schema, signature algorithm, or stdout text.",
+      "Change the JSONL file location or filename."
+    ],
+    "inputs": [
+      ".claude/scripts/guild/findings.ts + .test.ts (legacy)",
+      ".claude/cli/verbs/guild/index.ts + .claude/cli/guild.ts (D1)"
+    ]
+  },
+  "execution": {
+    "actions": [
+      "Wrote .claude/cli/verbs/guild/findings.ts (220 lines, ports legacy with ValidationError class; helpers renamed appendSubverb/countSubverb).",
+      "Registered 'findings' in GUILD_VERBS map and VERBS help registry.",
+      "Wrote findings.test.ts (15 tests adapted from legacy).",
+      "Verified parity: bin/guild findings append/count vs node .claude/scripts/guild/findings.ts append/count — same signature, same row content, same count output.",
+      "Ran npm test: 37 files / 496 tests pass.",
+      "Ran npm run lint: clean.",
+      "Spawned evaluator-contract-fit + evaluator-naming in parallel. Both approved."
+    ],
+    "files_touched": [
+      ".claude/cli/verbs/guild/findings.ts",
+      ".claude/cli/verbs/guild/findings.test.ts",
+      ".claude/cli/verbs/guild/index.ts",
+      ".claude/cli/guild.ts"
+    ],
+    "corrections": [
+      "Line-number citations in evaluator packets continue to drift (cited 218-235 / 223-235 when actual file ends at 214). Same friction as Phase 1 D3. Recurring L-013 violation. Fix: cite ranges only after a fresh Read."
+    ]
+  },
+  "scope": [
+    "Port findings verb (append + count subverbs).",
+    "Register in GUILD_VERBS + help."
+  ],
+  "changes_since_previous": "Builds on D1 checkin 01.",
+  "verdict": {
+    "result": "approved",
+    "reasons": []
+  },
+  "notes_for_pr": [
+    "D2 of 5 in Phase 2. PR refresh at phase close.",
+    "Byte-for-byte parity verified for both subverbs via diff against legacy script.",
+    "Naming evaluator advisory observation (not blocking): the codebase now has 3 sibling ValidationError classes (mediate-panel, parse-and-aggregate, findings). Same name, same concept; appropriate to keep separate for module-local catch flow. Worth a panel-level consolidation thought if a future cross-module catch ever materializes — not D2's scope.",
+    "Recurring L-013 friction: cited line numbers from memory; off by 5-10 lines. Next packet should cite ranges only after a fresh Read."
+  ]
+}

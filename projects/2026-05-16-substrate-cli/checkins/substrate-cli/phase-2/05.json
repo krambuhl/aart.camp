@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "number": "05",
+  "created": "2026-05-15T22:12:00.000Z",
+  "phase": {
+    "number": 2,
+    "name": "bin/guild CLI"
+  },
+  "branch": "substrate-cli/phase-2",
+  "unit": "D5: Kill .claude/scripts/guild/ + update references",
+  "contract": {
+    "goal": "Close Phase 2: delete .claude/scripts/guild/ (4 sources + 4 sibling tests + __smoke-fixtures__/), swap .claude/settings.json permission, update 4 caller skill bodies to use bin/guild <verb>. D5 of 5.",
+    "acceptance_criteria": [
+      ".claude/scripts/guild/ deleted entirely.",
+      "settings.json: Bash(node .claude/scripts/guild/*) → Bash(bin/guild *).",
+      "Updated skill bodies: guild-whiteboard, guild-validate, ev-loop-interactive, ev-loop-confidence.",
+      "npm run lint + npm test pass; bin/guild --help works; no live grep matches remain (only the intentional regex-fixture string in my own test).",
+      ".claude/scripts/ parent dir NOT deleted (P6's survey scope)."
+    ],
+    "rules_applied": [
+      "Don't freestyle around the substrate: only invocation-surface changes in skill bodies; no orchestration semantics changed.",
+      "Treat archives + checkins as immutable.",
+      "Respect PLAN.md's open question: parent .claude/scripts/ dir survey is P6, not D5."
+    ],
+    "disqualifiers": [
+      "Touch archive material.",
+      "Edit prior checkins.",
+      "Edit PLAN.md.",
+      "Delete .claude/scripts/ parent (P6 scope).",
+      "Break bin/guild functionality."
+    ],
+    "inputs": [
+      "D1+D2+D3+D4 commits on this branch.",
+      ".claude/settings.json.",
+      ".claude/skills/{guild-whiteboard,guild-validate,ev-loop-interactive,ev-loop-confidence}/SKILL.md."
+    ]
+  },
+  "execution": {
+    "actions": [
+      "grep -rn '.claude/scripts/guild|node .claude/scripts/guild' (excluding archives + this project's checkins + PLAN.md) inventoried all references.",
+      "settings.json: swapped Bash(node .claude/scripts/guild/*) for Bash(bin/guild *).",
+      "rm -rf .claude/scripts/guild (8 files + __smoke-fixtures__ dir).",
+      "Updated guild-whiteboard/SKILL.md: 4 Bash invocations (detect-round, init, read-state, append) + 1 prose reference, all swapped to bin/guild whiteboard.",
+      "Updated guild-validate/SKILL.md: heredoc invocation + 'script'/'verb' prose.",
+      "Updated ev-loop-interactive/SKILL.md: 3 spots — derive-panel invocation, findings append/count blocks, panel-auto-derivation prose.",
+      "Updated ev-loop-confidence/SKILL.md: 2 spots — derive-panel invocation, panel-auto-derivation prose.",
+      "Verified grep returns only 1 acceptable match (regex-fixture string in derive-panel.test.ts:167 — not a filesystem reference).",
+      "Smoke-tested bin/guild --help and bin/guild derive-panel --files=Foo.tsx — both work.",
+      "Ran npm test: 35 files / 470 tests pass. Delta from D4 (39/554): -4 files -84 tests = exactly the 4 deleted .claude/scripts/guild/*.test.ts files.",
+      "Ran npm run lint: clean.",
+      "Spawned evaluator-contract-fit (single-evaluator panel per PANEL-COMPOSITION.md for substrate-authoring + JSON-config files). VERDICT: approved."
+    ],
+    "files_touched": [
+      ".claude/settings.json",
+      ".claude/scripts/guild/ (DELETED — 8 source files + __smoke-fixtures__/)",
+      ".claude/skills/guild-whiteboard/SKILL.md",
+      ".claude/skills/guild-validate/SKILL.md",
+      ".claude/skills/ev-loop-interactive/SKILL.md",
+      ".claude/skills/ev-loop-confidence/SKILL.md"
+    ],
+    "corrections": []
+  },
+  "scope": [
+    "Delete legacy .claude/scripts/guild/ (8 files + fixtures dir).",
+    "Swap .claude/settings.json permission.",
+    "Update 4 caller skill bodies."
+  ],
+  "changes_since_previous": "Closes the bin/guild migration loop. Bin/guild is now the only path; legacy scripts gone.",
+  "verdict": {
+    "result": "approved",
+    "reasons": []
+  },
+  "notes_for_pr": [
+    "D5 closes Phase 2.",
+    "One acceptable grep match remains: .claude/cli/verbs/guild/derive-panel.test.ts:167 uses the path as a regex example string (matches the existing pattern from Phase 1's D4 with the same fixture preservation).",
+    ".claude/scripts/ parent directory left alone (now contains just package.json + a never-deleted guild/ entry's __pycache__-style emptiness). PLAN.md open question (parent dir cleanup) is P6's survey scope.",
+    "Test count dropped 84 tests from D4's 554 → D5's 470. Net change vs main since Phase 2 start: +37 tests (new .claude/cli/verbs/guild/*.test.ts files contribute 90 tests; 4 deleted legacy test files removed 84). Coverage preserved + slightly expanded (the new tests have more edge cases on EAGAIN handling, ctx-cwd resolution, etc.)."
+  ]
+}

@@ -1,5 +1,4 @@
-#!/usr/bin/env node
-import { readFileSync } from 'node:fs';
+import type { DispatchResult, GuildCliContext } from './index.ts';
 
 type AgentOutput = { agent: string; output: string };
 
@@ -32,14 +31,20 @@ type Result = {
   conflicts: Conflict[];
 };
 
-class ParseAndAggregateError extends Error {}
+class ValidationError extends Error {}
 
-function fail(reason: string): never {
-  process.stderr.write(`parse-and-aggregate-error: ${reason}\n`);
-  process.exit(1);
+function fail(reason: string): DispatchResult {
+  return {
+    stderr: `parse-and-aggregate-error: ${reason}`,
+    exitCode: 1,
+  };
 }
 
-function sliceFromHeader(output: string, headerRe: RegExp, endRe: RegExp): string {
+function sliceFromHeader(
+  output: string,
+  headerRe: RegExp,
+  endRe: RegExp,
+): string {
   const headerMatch = output.match(headerRe);
   if (!headerMatch || headerMatch.index === undefined) return '';
   const start = headerMatch.index + headerMatch[0].length;
@@ -88,22 +93,32 @@ function parseReason(text: string): ParsedReason {
   }
   // Try to extract a code prefix: optional backticks around a kebab-style
   // identifier, optional parenthetical context, then ":".
-  const codeMatch = remaining.match(/^`?([a-z][a-z0-9-]*[a-z0-9])`?\s*(?:\([^)]*\))?\s*:\s*(.+)$/i);
+  const codeMatch = remaining.match(
+    /^`?([a-z][a-z0-9-]*[a-z0-9])`?\s*(?:\([^)]*\))?\s*:\s*(.+)$/i,
+  );
   if (codeMatch) {
     return { advisory, code: codeMatch[1], evidence: codeMatch[2].trim() };
   }
   return { advisory, code: 'criterion-unmet', evidence: remaining.trim() };
 }
 
-function parseEvaluatorOutput(agent: string, output: string): { findings: ParsedReason[]; cliRuns: CliRun[]; parseFailure: boolean } {
-  const verdictMatch = output.match(/^[\s>]*VERDICT:\s*(approved|flagged|flagged-conflict)\s*$/m);
+function parseEvaluatorOutput(
+  _agent: string,
+  output: string,
+): { findings: ParsedReason[]; cliRuns: CliRun[]; parseFailure: boolean } {
+  const verdictMatch = output.match(
+    /^[\s>]*VERDICT:\s*(approved|flagged|flagged-conflict)\s*$/m,
+  );
   if (!verdictMatch) {
     return {
-      findings: [{
-        advisory: false,
-        code: 'parse-failure',
-        evidence: 'no VERDICT: line found in output (expected `VERDICT: approved` or `VERDICT: flagged`)',
-      }],
+      findings: [
+        {
+          advisory: false,
+          code: 'parse-failure',
+          evidence:
+            'no VERDICT: line found in output (expected `VERDICT: approved` or `VERDICT: flagged`)',
+        },
+      ],
       cliRuns: [],
       parseFailure: true,
     };
@@ -119,10 +134,11 @@ function parseEvaluatorOutput(agent: string, output: string): { findings: Parsed
   const remedyBullets = extractBullets(remediesBlock);
 
   const findings = reasonBullets.map((reason) => parseReason(reason));
-  // Pair remedies to reasons by index; any extra remedies are dropped, missing
-  // remedies become empty strings.
+  // Pair remedies to reasons by index; any extra remedies are dropped,
+  // missing remedies become empty strings.
   for (let i = 0; i < findings.length; i++) {
-    (findings[i] as ParsedReason & { remedy?: string }).remedy = remedyBullets[i] ?? '';
+    (findings[i] as ParsedReason & { remedy?: string }).remedy =
+      remedyBullets[i] ?? '';
   }
 
   return { findings, cliRuns: [], parseFailure: false };
@@ -133,7 +149,10 @@ function aggregate(entries: AgentOutput[]): Result {
   const advisory: Finding[] = [];
   const cliRuns: CliRun[] = [];
   for (const entry of entries) {
-    const { findings, cliRuns: runs } = parseEvaluatorOutput(entry.agent, entry.output);
+    const { findings, cliRuns: runs } = parseEvaluatorOutput(
+      entry.agent,
+      entry.output,
+    );
     for (const f of findings as (ParsedReason & { remedy?: string })[]) {
       const finding: Finding = {
         evaluator: entry.agent,
@@ -162,46 +181,51 @@ function aggregate(entries: AgentOutput[]): Result {
   };
 }
 
-function readStdin(): string {
-  try {
-    return readFileSync(0, 'utf-8');
-  } catch (err) {
-    fail(`could not read stdin: ${(err as Error).message}`);
+function validateEntries(raw: unknown): AgentOutput[] {
+  if (!Array.isArray(raw)) {
+    throw new ValidationError(
+      'input must be a JSON array of {agent, output} entries',
+    );
   }
+  const validated: AgentOutput[] = [];
+  for (let i = 0; i < raw.length; i++) {
+    const e = raw[i];
+    if (typeof e !== 'object' || e === null || Array.isArray(e)) {
+      throw new ValidationError(`entry [${i}] must be an object`);
+    }
+    const obj = e as Record<string, unknown>;
+    if (typeof obj.agent !== 'string') {
+      throw new ValidationError(`entry [${i}] must have a string \`agent\` field`);
+    }
+    if (typeof obj.output !== 'string') {
+      throw new ValidationError(`entry [${i}] must have a string \`output\` field`);
+    }
+    validated.push({ agent: obj.agent, output: obj.output });
+  }
+  return validated;
 }
 
-function main(): void {
-  const input = readStdin();
+export function parseAndAggregateVerb(
+  _rest: string[],
+  ctx: GuildCliContext,
+): DispatchResult {
+  const input = ctx.stdin ?? '';
   if (!input.trim()) {
-    fail('empty input on stdin; expected JSON array of {agent, output} entries');
+    return fail('empty input on stdin; expected JSON array of {agent, output} entries');
   }
   let entries: unknown;
   try {
     entries = JSON.parse(input);
   } catch (err) {
-    fail(`JSON parse error: ${(err as Error).message}`);
+    return fail(`JSON parse error: ${(err as Error).message}`);
   }
-  if (!Array.isArray(entries)) {
-    fail('input must be a JSON array of {agent, output} entries');
+  let validated: AgentOutput[];
+  try {
+    validated = validateEntries(entries);
+  } catch (err) {
+    if (err instanceof ValidationError) return fail(err.message);
+    throw err;
   }
-  const validated: AgentOutput[] = [];
-  for (let i = 0; i < entries.length; i++) {
-    const e = entries[i];
-    if (typeof e !== 'object' || e === null || Array.isArray(e)) {
-      fail(`entry [${i}] must be an object`);
-    }
-    const obj = e as Record<string, unknown>;
-    if (typeof obj.agent !== 'string') {
-      fail(`entry [${i}] must have a string \`agent\` field`);
-    }
-    if (typeof obj.output !== 'string') {
-      fail(`entry [${i}] must have a string \`output\` field`);
-    }
-    validated.push({ agent: obj.agent, output: obj.output });
-  }
-
   const result = aggregate(validated);
-  process.stdout.write(JSON.stringify(result, null, 2) + '\n');
+  return { stdout: JSON.stringify(result, null, 2), exitCode: 0 };
 }
-
-main();

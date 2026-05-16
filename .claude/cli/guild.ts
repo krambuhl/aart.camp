@@ -4,27 +4,26 @@ import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import {
   type DispatchResult,
-  GRIOT_VERBS,
-  type GriotCliContext,
-} from './verbs/griot/index.ts';
+  GUILD_VERBS,
+  type GuildCliContext,
+} from './verbs/guild/index.ts';
 
-export type { DispatchResult, GriotCliContext };
+export type { DispatchResult, GuildCliContext };
 
 // ---------- Verb registry ----------
 
-// griot has a flat verb namespace — each verb is a standalone operation
-// on the learnings substrate (rollup, session-notes, judge panels).
-// Modeled on bin/draft's flat-verb shape (see .claude/cli/draft.ts);
-// the rationale lives in projects/2026-05-15-draft-cli/PLAN.md and is
-// reaffirmed for griot in projects/2026-05-16-substrate-cli/PLAN.md.
+// guild has a flat verb namespace — each verb is a standalone
+// operation in the antagonist-panel substrate. Modeled on bin/draft's
+// and bin/griot's flat-verb shape.
 export const VERBS: Record<string, string> = {
-  use: 'Print learnings/rollup.md with citation contract for session injection',
-  capture:
-    'Capture a correction (from a checkin) or an evaluator finding into a session-note folder',
-  'operator-checks':
-    'Helper checks (verify-rubric | log-intervention) for griot scripts; reads JSON from stdin',
-  'mediate-panel':
-    'Aggregate judge-panel verdicts into a consensus result; reads JSON from stdin',
+  'derive-panel':
+    'Compute the evaluator panel for a file list (--files=<csv> or newline-stdin)',
+  findings:
+    'Append or count panel findings (.guild-findings.jsonl). Subverbs: append, count',
+  'parse-and-aggregate':
+    'Aggregate evaluator outputs into a structured verdict (JSON stdin → JSON stdout)',
+  whiteboard:
+    'Compose multi-round design whiteboards. Subverbs: init, detect-round, append, read-state',
 };
 
 // ---------- Pure helpers (exported for direct unit tests) ----------
@@ -50,13 +49,13 @@ export function parseInvocation(argv: string[]): Invocation {
 
 export function formatHelp(): string {
   const verbLines = Object.entries(VERBS).map(
-    ([name, purpose]) => `  ${name.padEnd(18)}  ${purpose}`,
+    ([name, purpose]) => `  ${name.padEnd(22)}  ${purpose}`,
   );
   return [
-    'griot — learnings-substrate CLI',
+    'guild — antagonist-panel substrate CLI',
     '',
     'Usage:',
-    '  griot <verb> [options]',
+    '  guild <verb> [options]',
     '',
     'Verbs:',
     ...verbLines,
@@ -76,7 +75,7 @@ export function formatUnknownVerbError(verb: string): string {
 
 export function dispatch(
   invocation: Invocation,
-  ctx: GriotCliContext,
+  ctx: GuildCliContext,
 ): DispatchResult {
   if (invocation.kind === 'help') {
     return { stdout: formatHelp(), exitCode: 0 };
@@ -87,10 +86,10 @@ export function dispatch(
       exitCode: 1,
     };
   }
-  const handler = GRIOT_VERBS[invocation.verb];
+  const handler = GUILD_VERBS[invocation.verb];
   if (handler === undefined) {
     // Reachable only if VERBS includes a name not present in
-    // GRIOT_VERBS. Kept as a defensive branch so the surface stays
+    // GUILD_VERBS. Kept as a defensive branch so the surface stays
     // consistent if the two registries drift.
     const payload = {
       error: 'not-implemented',
@@ -105,8 +104,6 @@ export function dispatch(
 // ---------- Entry ----------
 
 function main(argv: string[]): never {
-  // parseArgs is invoked here for forward compatibility with top-level
-  // flags. Verb-level argument parsing lives in each verb's handler.
   parseArgs({
     args: argv,
     options: {
@@ -116,15 +113,16 @@ function main(argv: string[]): never {
     strict: false,
   });
 
-  // Eagerly read stdin when the process is not running in a TTY. Verbs
-  // that consume stdin (mediate-panel, operator-checks) read ctx.stdin;
-  // verbs that don't (use, capture) ignore it. The TTY check prevents
-  // the dispatcher from blocking on an interactive terminal when the
-  // verb doesn't need stdin at all. EAGAIN catch handles the case
-  // where stdin is non-blocking but empty (common in bash compounds
-  // where a prior command consumed the parent's stdin pipe); empty
-  // string is the right interpretation, and verbs that do need stdin
-  // will fail their own downstream "empty input" check.
+  // Eagerly read stdin when the process is not running in a TTY.
+  // Verbs that consume stdin (parse-and-aggregate, whiteboard append)
+  // read ctx.stdin; verbs that don't (findings count, derive-panel)
+  // ignore it. The TTY check prevents the dispatcher from blocking
+  // on an interactive terminal when the verb doesn't need stdin.
+  // EAGAIN catch handles the case where stdin is non-blocking but
+  // empty (common in bash compounds where a prior command consumed
+  // the parent's stdin pipe); for verbs that don't need stdin, an
+  // empty string is the right interpretation, and verbs that do
+  // need it will fail their own downstream "empty input" check.
   let stdin = '';
   if (!process.stdin.isTTY) {
     try {
@@ -133,7 +131,7 @@ function main(argv: string[]): never {
       if ((err as NodeJS.ErrnoException).code !== 'EAGAIN') throw err;
     }
   }
-  const ctx: GriotCliContext = { cwd: process.cwd(), stdin };
+  const ctx: GuildCliContext = { cwd: process.cwd(), stdin };
   const invocation = parseInvocation(argv);
   const result = dispatch(invocation, ctx);
   if (result.stdout !== undefined) process.stdout.write(`${result.stdout}\n`);

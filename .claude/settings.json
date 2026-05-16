@@ -14,7 +14,7 @@
       "Skill(loom-archive)",
       "Skill(loom-archive:*)",
       "Bash(bin/griot *)",
-      "Bash(node .claude/scripts/guild/*)",
+      "Bash(bin/guild *)",
       "Skill(guild-spawn)",
       "Skill(guild-spawn:*)",
       "Skill(guild-validate)",
