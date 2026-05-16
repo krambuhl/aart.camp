@@ -293,6 +293,49 @@ substrate-cli --pretty` shows Phase 3's PR row with `state:
 
 **One PR.**
 
+### Phase 3 followup 2: guild-* frontmatter correction
+
+Discovered post-#102-merge while `/ev-loop-interactive` attempted to
+invoke the Phase 4 whiteboard step: the Phase 3 audit's "Substrate-
+internal primitives pin to `disable-model-invocation: true`" rule
+applied to `guild-spawn`, `guild-validate`, and `guild-whiteboard` —
+but these skills are composed by `/ev-loop-*` via the Skill tool
+(whiteboard pre-step, per-unit evaluator panel). Same trap as #102:
+`disable-model-invocation: true` blocks ALL model-driven Skill
+invocation, not just ambient routing. Composition from another skill
+fails identically to composition from a top-level command. The Phase
+3 followup fixed the symptom for ev-loop-*; this followup extends the
+fix to the guild-* family that ev-loop composes.
+
+One deliverable in one PR:
+
+- **guild-* frontmatter correction**: remove
+  `disable-model-invocation: true` from `.claude/skills/guild-spawn/
+  SKILL.md`, `.claude/skills/guild-validate/SKILL.md`, and
+  `.claude/skills/guild-whiteboard/SKILL.md`. All three remain
+  `user-invocable: false` — they are internal composition primitives,
+  not top-level commands. Net result: `/ev-loop-interactive` and
+  `/ev-loop-confidence` can compose `/guild-whiteboard` and
+  `/guild-validate` via the Skill tool as the loop spec requires,
+  while no `/guild-*` ambient slash commands appear in the registry.
+  Update the audit-rubric Decision to correct the source-of-the-trap
+  rule ("Substrate-internal primitives pin to `disable-model-invocation:
+  true`") — the correct shape for an internal primitive composed via
+  Skill from another skill is `user-invocable: false` +
+  `disable-model-invocation: false`.
+
+**Branch:** `substrate-cli/phase-3-followup-2`. No new manifest phase
+row is added (same reason as the prior followup). This section
+documents the work in PLAN.md so it's part of the project's plan
+history.
+
+**Verification:** Next session, `/ev-loop-interactive` successfully
+composes `/guild-whiteboard` and `/guild-validate` via the Skill tool
+(smoke verifiable after the registry reloads the frontmatter changes
+— same session-cache pattern as L-004). `npm run lint` clean.
+
+**One PR.**
+
 ### Phase 4: griot internal restructure
 
 Two restructures shipped together:
@@ -423,6 +466,13 @@ mutable-state hotspots are documented in the sweep's checkin Notes.
   The frontmatter edit propagates at session boundary (registry
   reload), same shape as L-004.
 
+- **Phase 3 followup 2 precedes Phase 4** — extends the followup's
+  fix to the guild-* family. Phase 4's whiteboard pre-step and
+  per-unit evaluator panel compose `/guild-whiteboard` and
+  `/guild-validate` via the Skill tool, blocked by the same
+  flag-pinning the Phase 3 audit applied. Same session-boundary
+  registry-reload caveat applies; smoke-test from the next session.
+
 Recommended execution order: cut P1+P2+P3+P5 parallel branches → P4
 starts when P1 lands → P6 starts when P1+P2 land.
 
@@ -534,9 +584,19 @@ them so future revisions preserve them.
   invocation` × `user-invocable`. The "no useless ambient skills"
   rule applies ONLY to the ambient-routing axis; user-invocable +
   non-ambient skills with any synthesis coverage over raw CLI are
-  legitimate. Substrate-internal primitives pin to
-  `disable-model-invocation: true`. This rubric is the audit frame
-  for P3 and the convention for all future skill authors.
+  legitimate. **Skills composed via the Skill tool from any caller
+  — top-level slash command or another skill — MUST be
+  `disable-model-invocation: false`. The flag's actual semantics
+  block ALL model-driven Skill invocation, including legitimate
+  composition from another skill; the audit's original "pin
+  internal substrate primitives to `disable-model-invocation: true`"
+  rule was wrong and is the source of both the Phase 3 followup
+  (#102, ev-loop-*) and Phase 3 followup 2 (guild-*) corrections.
+  `disable-model-invocation: true` is correct only when no
+  Skill-composition path exists (the skill is invoked exclusively
+  by humans via `/<name>` or by Bash via `bin/<family>` directly).**
+  This rubric is the audit frame for P3 and the convention for all
+  future skill authors.
 - **`/griot-load` is `disable-model-invocation: true` +
   `user-invocable: true`**. Pattern-matches the two-axis rubric.
   Composition from `/ev-run` and similar goes through
@@ -577,10 +637,25 @@ them so future revisions preserve them.
   `disable-model-invocation: false` + `user-invocable: true`, not
   the substrate-internal-primitive shape
   (`disable-model-invocation: true`).
+- **`/guild-spawn`, `/guild-validate`, `/guild-whiteboard` are
+  internal substrate primitives composed by `/ev-loop-*` via the
+  Skill tool**. All three are `user-invocable: false` AND
+  `disable-model-invocation: false`. They do not surface as ambient
+  slash commands (user-invocable: false), but ev-loop composes them
+  via the Skill tool, so the disable-model-invocation flag must NOT
+  be set. This is the canonical shape for an internal substrate
+  primitive composed via Skill: `user-invocable: false` +
+  `disable-model-invocation: false`. Pins against the Phase 3
+  audit's original "pin internal substrate primitives to
+  disable-model-invocation: true" rule (the source of the followup
+  2 correction).
 
 ## Revision log
 
 
+
+
+- 2026-05-16 — add Phase 3 followup 2: extend ev-loop-* frontmatter fix to guild-* family (guild-spawn/guild-validate/guild-whiteboard had disable-model-invocation: true that blocks Skill composition from ev-loop); amend audit-rubric Decision to correct the source-of-the-trap rule; pin new Decision for guild-* canonical shape; add Phase 3 followup 2 → Phase 4 dependency
 
 - 2026-05-16 — add Phase 3 followup: flip ev-loop-* to top-level user-invocable (remove disable-model-invocation that blocks /ev-run Skill composition); reconcile PR #101 manifest drift; pin new Decision for top-level loops + add Phase 3 followup → Phase 4 dependency
 

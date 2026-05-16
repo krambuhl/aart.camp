@@ -9,7 +9,6 @@ description: >-
   validate roles, or iterate.
 argument-hint: "agents=<comma-separated names> brief=<text> [per_agent_context=<json-map>]"
 user-invocable: false
-disable-model-invocation: true
 allowed-tools: Agent
 ---
 

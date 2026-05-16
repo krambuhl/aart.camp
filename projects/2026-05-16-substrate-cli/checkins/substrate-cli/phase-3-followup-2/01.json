@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "number": "01",
+  "created": "2026-05-16T07:00:00.000Z",
+  "phase": {
+    "number": 3,
+    "name": "Skill surface cleanup (audit + grill-me)"
+  },
+  "branch": "substrate-cli/phase-3-followup-2",
+  "unit": "Phase 3 followup 2: guild-* frontmatter correction",
+  "contract": {
+    "goal": "Close out Phase 3's remaining loose end discovered when /ev-loop-interactive attempted the Phase 4 whiteboard step. The Phase 3 audit applied 'Substrate-internal primitives pin to disable-model-invocation: true' to guild-spawn, guild-validate, and guild-whiteboard — but ev-loop composes these via the Skill tool, and the flag blocks model-driven Skill composition (the same trap #102 just fixed for ev-loop-*). Remove the flag from all three guild-* skills; keep them user-invocable: false (they remain internal primitives, not top-level commands). Update PLAN.md to document the followup-2 section, amend the audit-rubric Decision to correct the source-of-the-trap rule, and pin a new Decision for the guild-* canonical shape.",
+    "acceptance_criteria": [
+      "`.claude/skills/guild-spawn/SKILL.md`, `.claude/skills/guild-validate/SKILL.md`, and `.claude/skills/guild-whiteboard/SKILL.md` no longer contain `disable-model-invocation: true`. All three retain `user-invocable: false`.",
+      "PLAN.md has a new `### Phase 3 followup 2: guild-* frontmatter correction` subsection between the existing Phase 3 followup and Phase 4 sections.",
+      "PLAN.md's audit-rubric Decision (the two-axis frontmatter rubric) is amended to correct the 'pin internal substrate primitives to disable-model-invocation: true' rule that was the source of the trap.",
+      "PLAN.md has a new Decision pinning the canonical guild-* shape (user-invocable: false + disable-model-invocation: false) against the original audit intent.",
+      "PLAN.md Dependencies section has a new bullet: 'Phase 3 followup 2 precedes Phase 4' parallel to the existing followup-precedes-Phase-4 line.",
+      "`npm run lint` clean."
+    ],
+    "rules_applied": [
+      "L-002 halt-and-fork was applied at dispatch: discovered the substrate gap during Phase 4 whiteboard-step setup, halted Phase 4, surfaced multiple named options, picked the consistent option (separate followup PR mirroring #102's shape) rather than silently bundling into Phase 4.",
+      "L-013 grounding (the bug claim was confirmed via the actual Skill-tool error 'cannot be used with Skill tool due to disable-model-invocation' returned when /ev-loop-interactive tried to compose /guild-whiteboard, not inferred from frontmatter reading).",
+      "Substrate-no-freestyle (feedback memory): PLAN edit goes through `bin/draft revise`; manifest is not touched (no phase changes); frontmatter-only edits to three SKILL.md files.",
+      "Frontmatter-only edits to SKILL.md files; no body prose touched.",
+      "L-004-shape session-boundary note: smoke verification of /ev-loop-interactive → /guild-whiteboard composition was observed in-session (the available-skills list updated after edits, mirroring the in-session pickup we saw for ev-loop-* in #102). Full composition smoke deferred to next session for harness-reload confirmation."
+    ],
+    "disqualifiers": [
+      "Touch any SKILL.md body prose.",
+      "Edit /griot-load's frontmatter (the Phase 4 design pins it as `disable-model-invocation: true` + `user-invocable: true`; no Skill composition path exists for it).",
+      "Add a new manifest phase row (loom lacks `phase add`; the followup is documented in PLAN only, same pattern as #102).",
+      "Bundle Phase 4 work into this PR (followup-2 is a single conceptual change: extending #102's pattern to guild-*)."
+    ],
+    "inputs": [
+      ".claude/skills/guild-spawn/SKILL.md, .claude/skills/guild-validate/SKILL.md, .claude/skills/guild-whiteboard/SKILL.md (frontmatter only).",
+      "projects/2026-05-16-substrate-cli/PLAN.md (revision via bin/draft revise)."
+    ]
+  },
+  "execution": {
+    "actions": [
+      "Discovered the gap mid-session: /ev-run substrate-cli dispatched to /ev-loop-interactive for Phase 4, which attempted /guild-whiteboard via Skill, which failed with 'cannot be used with Skill tool due to disable-model-invocation'. Same trap as #102, different family.",
+      "Halted Phase 4: switched back to main, rolled back the phase 4 in-progress flag (`bin/loom phase update substrate-cli 4 --status=not-started`), reverted the orphan substrate writes (events.jsonl phase-started event + manifest branch-name reference), and deleted the local substrate-cli/phase-4 branch.",
+      "Cut substrate-cli/phase-3-followup-2 from main (at ea59446 post-#102 squash).",
+      "Edited all three guild-* SKILL.md files via Edit tool: removed `disable-model-invocation: true` from frontmatter; kept `user-invocable: false`.",
+      "Composed revised PLAN.md in /tmp/loom-revision-substrate-cli.md: added `### Phase 3 followup 2: guild-* frontmatter correction` subsection (one deliverable + branch + verification + 'One PR.'), amended the audit-rubric Decision to correct the 'Substrate-internal primitives pin to disable-model-invocation: true' rule, added a new Decision pinning the canonical guild-* shape, added Dependencies bullet placing the followup 2 before Phase 4. Preserved all prior `## Revision log` entries verbatim per the substrate finding from the 2026-05-16 entry.",
+      "Ran `bin/draft revise substrate-cli --revision-file=/tmp/loom-revision-substrate-cli.md --rationale=...`. PLAN.md replaced; new revision-log entry appended by the CLI; CLI also committed automatically per substrate convention.",
+      "Verified in-session: all three guild-* skills now appear in the harness's available-skills list (Skill-registry pickup of frontmatter changes is in-session, matching what #102 observed for ev-loop-*).",
+      "Ran `npm run lint`: clean. Two pre-existing symlink warnings for .claude/skills/vercel-react-best-practices (unrelated)."
+    ],
+    "files_touched": [
+      ".claude/skills/guild-spawn/SKILL.md",
+      ".claude/skills/guild-validate/SKILL.md",
+      ".claude/skills/guild-whiteboard/SKILL.md",
+      "projects/2026-05-16-substrate-cli/PLAN.md"
+    ],
+    "corrections": [
+      "correction: Phase 3's audit-rubric rule 'Substrate-internal primitives pin to disable-model-invocation: true' is wrong. The flag's semantics block ALL model-driven Skill invocation, not just ambient routing. Any skill composed via the Skill tool by another skill — even an internal substrate primitive — must be `disable-model-invocation: false`. The correct shape for an internal primitive composed via Skill is `user-invocable: false` + `disable-model-invocation: false`. This is the second occurrence of the same pattern bug (#102 was ev-loop-*; this is guild-*); future audits should smoke-test the actual composition path, not just classify by intent."
+    ]
+  },
+  "scope": [
+    "Three SKILL.md frontmatter edits (guild-spawn, guild-validate, guild-whiteboard).",
+    "One PLAN.md revision via bin/draft revise (new followup-2 section + Decision amendment + new Decision pin + Dependencies bullet)."
+  ],
+  "changes_since_previous": "First checkin on substrate-cli/phase-3-followup-2 branch. Baseline: origin/main at ea59446 (post-#102 squash merge).",
+  "verdict": {
+    "result": "approved",
+    "reasons": []
+  },
+  "notes_for_pr": [
+    "Phase 3 closeout (second followup), not a new phase. Manifest Phase 3 row stays `completed`; PLAN.md captures followup-2 as a subsection under Phase 3, mirroring how #102 documented the first followup.",
+    "Bug surfaced when /ev-loop-interactive (dispatched by /ev-run for Phase 4) tried to compose /guild-whiteboard for the always-on whiteboard pre-step. The Skill tool refused with `cannot be used with Skill tool due to disable-model-invocation` — identical error shape to the original Phase 4-dispatch trap that #102 fixed for ev-loop-*.",
+    "Recurring pattern observed: the Phase 3 audit set `disable-model-invocation: true` on internal primitives composed by other skills. The original intent ('not ambient routing') is correct; the flag mapping is too strict. Two corrections have now landed: #102 for ev-loop-* (composed by /ev-run) and this PR for guild-* (composed by /ev-loop-*). Future skill audits should smoke-test the actual Skill-composition path as part of the audit's verification step, not just classify on intent.",
+    "Substrate observation reinforced: Claude Code's skill registry picks up SKILL.md frontmatter changes mid-session — all three guild-* skills appeared in the available-skills list after the edits without a restart. This is the second observation of the in-session pickup behavior (the first was during #102). Worth promoting to a learning via /griot-capture if it stays consistent.",
+    "Verification: a true end-to-end smoke of /ev-loop-interactive → /guild-whiteboard composition is most cleanly done in a fresh session after this PR merges (the harness saw the original disable-model-invocation flag at session start). Lint clean; PLAN.md documents the work; on-disk frontmatter is correct."
+  ]
+}

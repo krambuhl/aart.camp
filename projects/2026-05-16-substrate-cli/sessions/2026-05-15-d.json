@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "date": "2026-05-15",
+  "letter": "d",
+  "phases_touched": [
+    4
+  ],
+  "checkins_written": [
+    "01"
+  ],
+  "pr_activity": [
+    "#103 opened (substrate-cli/phase-3-followup-2 — Phase 3 followup 2: guild-* frontmatter correction)"
+  ],
+  "what_happened": [
+    "Resumed via /ev-run substrate-cli after #102 merged. Dispatched to /ev-loop-interactive for Phase 4 (griot internal restructure).",
+    "Cut substrate-cli/phase-4 branch + marked Phase 4 in-progress in manifest. Attempted whiteboard pre-step with engineers=skeptic,design-systems via /guild-whiteboard Skill call — failed with 'cannot be used with Skill tool due to disable-model-invocation'.",
+    "Diagnosed as the same trap as #102 (Phase 3 followup): the Phase 3 audit pinned `disable-model-invocation: true` on internal primitives composed via Skill by other skills. #102 fixed ev-loop-*; this discovery is the guild-* family that ev-loop composes.",
+    "Halted Phase 4 per L-002 halt-and-fork: switched back to main, rolled back phase 4 to not-started (manifest still has a stale `branch: substrate-cli/phase-4` field that bin/loom phase update couldn't clear; harmless), reverted orphan substrate writes, deleted local phase-4 branch.",
+    "Cut substrate-cli/phase-3-followup-2 from main. Edited frontmatter on guild-spawn, guild-validate, guild-whiteboard (removed `disable-model-invocation: true`; kept `user-invocable: false`). Revised PLAN.md via bin/draft revise: new followup-2 section + amended audit-rubric Decision + new Decision pin for guild-* canonical shape + Dependencies bullet placing followup-2 before Phase 4. Wrote checkin 01. Committed + pushed. Opened PR #103 via bin/loom pr open."
+  ],
+  "open_threads": [
+    "PR #103 is ready for human review. After merge + session restart, the smoke test is /ev-loop-interactive composing /guild-whiteboard via Skill — same shape as the smoke test that was pending for #102 last session.",
+    "Phase 4 (griot internal restructure) is still ready and unblocked once #103 merges; the manifest's phase-4 row has a stale `branch: substrate-cli/phase-4` field that should be cleared (or just overwritten on the next phase-4 start). Phase 4 deliverable plan was sketched into three tasks before the halt: D1 session-notes state.json sidecar + migration, D2 rollup.md → rollup.json + bin/griot use --as=llm + rollup migration, D3 /griot-load skill + /ev-run loader update.",
+    "Recurring pattern: the Phase 3 audit applied disable-model-invocation by classification intent without smoke-testing the actual composition path. Two corrections shipped from the same root cause (#102 ev-loop-*, #103 guild-*). Strong candidate for /griot-capture as 'audit verification must include actual composition smoke-test, not just intent classification.' Worth raising during the project's eventual /loom-archive retro.",
+    "Substrate observation reinforced: Claude Code's skill registry picks up SKILL.md frontmatter changes mid-session — second observation of this (first was during #102 in session c). Differs from L-004's agent-registry session-bound cache. Worth a /griot-capture candidate if it stays consistent.",
+    "Substrate findings open for sibling project (deferred manifest-vs-PLAN drift work): (a) bin/loom needs phase add verb; (b) PANEL-COMPOSITION.md's .claude/cli/**/*.ts pattern needs sibling .claude/cli/*.ts row; (c) bin/loom phase update emits duplicate transition events on idempotent state-only updates (observed in session c during #101 reconcile); (d) bin/loom pr discover emits a `unknown flag: --head` stderr line from `gh pr view` before falling back to a correct result; (e) bin/loom phase update cannot clear the `branch` field on a phase row when status is reset to not-started."
+  ],
+  "notes": [
+    "Same trap, second observation, second PR. Session-c session note already flagged this as a candidate substrate finding: 'Phase 3 was structurally lighter than Phase 1+2... no CLI port, just frontmatter + body edits across substrate skills' — but the audit's frontmatter edits had a systematic flag-mapping bug that's now surfaced twice. The corrected audit-rubric Decision in PLAN.md should prevent future recurrence at substrate-cli scope; the systemic fix is the upstream insight (audit verification = composition smoke test).",
+    "Session was unusually short: PR #103 is a 3-frontmatter-line fix + a PLAN.md revision. The user redirect ('fix and ill restart') optimized for fast turnaround on a structural blocker. Phase 4 work proper is deferred to next session, which will start cleanly with #103 merged and the composition path verified."
+  ]
+}
