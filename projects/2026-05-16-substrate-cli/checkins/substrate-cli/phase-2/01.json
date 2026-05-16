@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "number": "01",
+  "created": "2026-05-15T21:50:00.000Z",
+  "phase": {
+    "number": 2,
+    "name": "bin/guild CLI"
+  },
+  "branch": "substrate-cli/phase-2",
+  "unit": "D1: Scaffold bin/guild + port parse-and-aggregate",
+  "contract": {
+    "goal": "Scaffold bin/guild CLI with flat-verb dispatcher mirroring bin/draft and bin/griot. Port .claude/scripts/guild/parse-and-aggregate.ts to .claude/cli/verbs/guild/parse-and-aggregate.ts. Byte-equivalent behavior. Also fix an EAGAIN bug in both dispatchers (bin/griot + bin/guild) discovered during D1 smoke testing — the eager readFileSync(0) call now catches EAGAIN and treats it as empty stdin. D1 of 5 in Phase 2.",
+    "acceptance_criteria": [
+      "bin/guild shim exists, modeled on bin/griot/bin/draft.",
+      ".claude/cli/guild.ts is a flat-verb dispatcher (same shape as .claude/cli/griot.ts); registers parse-and-aggregate verb.",
+      ".claude/cli/verbs/guild/parse-and-aggregate.ts exports parseAndAggregateVerb(rest, ctx); byte-equivalent to legacy.",
+      ".claude/cli/verbs/guild/index.ts exports GUILD_VERBS, GuildCliContext, DispatchResult, GuildVerbHandler.",
+      "EAGAIN fix applied to both dispatchers (.claude/cli/griot.ts + .claude/cli/guild.ts).",
+      "32 new tests pass (14 dispatcher + 18 parse-and-aggregate).",
+      "npm run lint clean; npm test clean; byte parity confirmed via diff against legacy script.",
+      "Legacy .claude/scripts/guild/parse-and-aggregate.ts preserved (D5 deletes it)."
+    ],
+    "rules_applied": [
+      "Mirror Phase 1's bin/griot architecture (flat verb dispatcher, sibling tests, ValidationError class for cross-function flow).",
+      "Erasable TypeScript (L-001).",
+      "Sibling .test.ts.",
+      "L-002 carve-out: in-scope scope expansion declared upfront in contract (the EAGAIN fix to bin/griot) — not silent."
+    ],
+    "disqualifiers": [
+      "Modify or delete legacy .claude/scripts/guild/parse-and-aggregate.ts or .test.ts (D5's scope).",
+      "Change output shape of parse-and-aggregate.",
+      "Diverge from bin/draft/bin/griot's flat-verb dispatcher architecture.",
+      "Hand-edit substrate JSON outside CLI verbs (manifest backfill is a documented, separately-committed precursor)."
+    ],
+    "inputs": [
+      ".claude/scripts/guild/parse-and-aggregate.ts + .test.ts (legacy)",
+      ".claude/cli/griot.ts + .claude/cli/verbs/griot/index.ts (Phase 1 pattern)",
+      "bin/griot (shim pattern)",
+      "Manifest backfill precursor commit 7cbf0fd"
+    ]
+  },
+  "execution": {
+    "actions": [
+      "Cut substrate-cli/phase-2 branch from origin/main (e0facac, post #99 squash merge + a small loom-archive SKILL.md update from another author).",
+      "Hand-edit manifest backfill (precursor commit 7cbf0fd): added phases 2-6 rows with status=not-started; marked Phase 1 PR state as merged. One-time substrate workaround — bin/loom has no `phase add` verb; that's the deferred substrate-gap sibling project.",
+      "bin/loom phase update substrate-cli 2 --status=in-progress --branch=substrate-cli/phase-2 (emits phase-started event).",
+      "Wrote bin/guild shim (18 lines, chmod +x).",
+      "Wrote .claude/cli/guild.ts dispatcher (147 lines, mirror of griot.ts: VERBS map, parseInvocation, formatHelp, formatUnknownVerbError, dispatch, main, isEntryPoint).",
+      "Wrote .claude/cli/verbs/guild/index.ts (37 lines, exports GUILD_VERBS, GuildCliContext, DispatchResult, GuildVerbHandler).",
+      "Wrote .claude/cli/verbs/guild/parse-and-aggregate.ts (217 lines, ported from legacy with ValidationError class replacing the legacy fail-then-process.exit pattern).",
+      "Discovered EAGAIN bug during smoke test: bin/guild --help (and bin/griot --help) crashed when invoked in a bash compound after a prior command consumed the parent's stdin pipe. Reproduced and confirmed. Fixed both dispatchers with try/catch around the readFileSync(0) call; EAGAIN treated as empty stdin (the right interpretation for help/parseInvocation paths).",
+      "Wrote .claude/cli/verbs/guild/parse-and-aggregate.test.ts (183 lines, 18 tests adapted from legacy).",
+      "Wrote .claude/cli/guild.test.ts (156 lines, 14 dispatcher tests + spawnSync smoke tests).",
+      "Verified parity: diff <(bin/guild parse-and-aggregate < /tmp/pa-input.json) <(node .claude/scripts/guild/parse-and-aggregate.ts < /tmp/pa-input.json) → exit 0.",
+      "Verified EAGAIN fix: bin/guild --help and bin/griot --help no longer crash in compound bash contexts.",
+      "Ran npm test: 36 files / 481 tests pass (was 34/449; +2 files +32 tests).",
+      "Ran npm run lint: clean.",
+      "Spawned evaluator-contract-fit + evaluator-naming directly in parallel (panel composition per PANEL-COMPOSITION.md for .claude/cli/**/*.ts files). Both VERDICT: approved."
+    ],
+    "files_touched": [
+      "bin/guild",
+      ".claude/cli/guild.ts",
+      ".claude/cli/guild.test.ts",
+      ".claude/cli/verbs/guild/index.ts",
+      ".claude/cli/verbs/guild/parse-and-aggregate.ts",
+      ".claude/cli/verbs/guild/parse-and-aggregate.test.ts",
+      ".claude/cli/griot.ts (EAGAIN fix)"
+    ],
+    "corrections": []
+  },
+  "scope": [
+    "Scaffold bin/guild + dispatcher.",
+    "Port parse-and-aggregate verb (byte-equivalent).",
+    "Fix EAGAIN-on-empty-stdin in both dispatchers (scope expansion, declared upfront)."
+  ],
+  "changes_since_previous": "First checkin on substrate-cli/phase-2 branch. Baseline: origin/main at e0facac, post #99 merge of Phase 1 + a small loom-archive SKILL.md update from another author. Precursor commit on this branch: 7cbf0fd (manifest backfill).",
+  "verdict": {
+    "result": "approved",
+    "reasons": []
+  },
+  "notes_for_pr": [
+    "D1 of 5 in Phase 2. PR collects all 5 deliverables before review.",
+    "Precursor commit on this branch (7cbf0fd): manifest backfill for phases 2-6. One-time substrate workaround for the missing bin/loom phase add verb (the loom-side substrate gap is deferred to a sibling project per PLAN.md § Scope > Deferred). Manifest will revert to CLI-only updates once the sibling-project ships.",
+    "EAGAIN fix shipped in both bin/griot and bin/guild dispatchers. Discovered during D1 smoke testing — same bug existed in bin/griot since Phase 1's D1 (shipped in #99) but only triggers in bash compounds where a prior command consumed the parent's stdin pipe. The fix catches EAGAIN inside the eager-stdin block and treats it as empty stdin (the right interpretation for verbs that don't consume stdin like help/use; verbs that do consume stdin will fail their own downstream 'empty input' check).",
+    "Byte-for-byte parity verified for parse-and-aggregate via diff against legacy script.",
+    "Naming evaluator surfaced one observation (not a flag): the <verb>Verb suffix on handlers (parseAndAggregateVerb) is mildly redundant when paired with the verbs/ directory. This is the established Phase 1 convention; sibling-consistency wins. Worth noting for Phase 3's audit but not changing now."
+  ]
+}

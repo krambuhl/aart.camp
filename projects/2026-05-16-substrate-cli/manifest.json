@@ -22,7 +22,8 @@
     {
       "number": 2,
       "name": "bin/guild CLI",
-      "status": "not-started"
+      "status": "in-progress",
+      "branch": "substrate-cli/phase-2"
     },
     {
       "number": 3,
