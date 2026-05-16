@@ -13,7 +13,6 @@ description: >-
   auto-resolve contradictions.
 argument-hint: "engineers=<comma-separated names> brief=<text> whiteboard=<path> [round=<N>]"
 user-invocable: false
-disable-model-invocation: true
 allowed-tools: Skill, Bash
 ---
 

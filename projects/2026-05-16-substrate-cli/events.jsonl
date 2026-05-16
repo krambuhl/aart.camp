@@ -27,3 +27,4 @@
 {"at":"2026-05-16T06:05:48.546Z","event":"phase-completed","detail":{"phase":3}}
 {"at":"2026-05-16T06:07:18.885Z","event":"checkin-created","detail":{"number":"01","branch":"substrate-cli/phase-3-followup"}}
 {"at":"2026-05-16T06:08:28.133Z","event":"pr-opened","detail":{"pr":102,"url":"https://github.com/krambuhl/aart.camp/pull/102"}}
+{"at":"2026-05-16T06:42:55.377Z","event":"checkin-created","detail":{"number":"01","branch":"substrate-cli/phase-3-followup-2"}}

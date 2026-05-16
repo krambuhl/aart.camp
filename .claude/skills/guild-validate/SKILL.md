@@ -11,7 +11,6 @@ description: >-
   resolve conflicts.
 argument-hint: "agents=<comma-separated names> packet=<text> [precedence=<comma-separated names>]"
 user-invocable: false
-disable-model-invocation: true
 allowed-tools: Skill
 ---
 
