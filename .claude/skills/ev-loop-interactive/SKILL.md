@@ -8,6 +8,8 @@ description: >-
   directly; composes /guild-validate; composes no other loop. Use when
   a phase is exploratory, creative, or otherwise not a bulk transform.
 argument-hint: "<project-slug-or-path> <phase-number>"
+user-invocable: true
+disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Bash, Agent, Skill
 ---
 

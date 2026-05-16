@@ -27,13 +27,14 @@
       "pr": {
         "number": 100,
         "url": "https://github.com/krambuhl/aart.camp/pull/100",
-        "state": "open"
+        "state": "merged"
       }
     },
     {
       "number": 3,
       "name": "Skill surface cleanup (audit + grill-me)",
-      "status": "not-started"
+      "status": "in-progress",
+      "branch": "substrate-cli/phase-3"
     },
     {
       "number": 4,

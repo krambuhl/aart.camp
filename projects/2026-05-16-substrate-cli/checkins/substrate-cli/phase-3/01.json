@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "number": "01",
+  "created": "2026-05-15T22:30:00.000Z",
+  "phase": {
+    "number": 3,
+    "name": "Skill surface cleanup (audit + grill-me)"
+  },
+  "branch": "substrate-cli/phase-3",
+  "unit": "D1: Apply skill audit frontmatter flips",
+  "contract": {
+    "goal": "Audit every local skill in .claude/skills/ against the two-axis rubric (disable-model-invocation × user-invocable) and apply frontmatter flips so each is classified correctly per PLAN.md Phase 3. D1 of 3 in Phase 3 (D2 is the /loom-archive grill-me reshape).",
+    "acceptance_criteria": [
+      "Every local skill's frontmatter explicitly carries both flags after the audit — no implicit ambient skills.",
+      "Substrate primitives (guild-spawn/validate/whiteboard) → user-invocable: false + disable-model-invocation: true (rubric D).",
+      "ev-loop-* → user-invocable: true + disable-model-invocation: true (composed via Skill from /ev-run, not ambient).",
+      "User-facing synthesis skills (a11y-review-file, draft-plan, review-skill) → both true (rubric C → A).",
+      "ev-run gains explicit user-invocable: true for consistency.",
+      "griot-compact + loom-archive untouched (already correct, rubric A).",
+      "No deletions (no rubric-B candidates after Phase 1 killed griot-capture + griot-report).",
+      "Lint + tests clean."
+    ],
+    "rules_applied": [
+      "Two-axis rubric is the classification frame (PLAN.md Decision pin).",
+      "Substrate primitives pinned disable-model-invocation: true always (D).",
+      "Frontmatter-only edits; no body prose touched.",
+      "Sibling consistency: every local skill gains both flags explicitly (no implicit defaults)."
+    ],
+    "disqualifiers": [
+      "Edit any skill body prose beyond frontmatter.",
+      "Delete any skill.",
+      "Change frontmatter fields other than user-invocable / disable-model-invocation."
+    ],
+    "inputs": [
+      "11 local SKILL.md files in .claude/skills/.",
+      "PLAN.md Phase 3 rubric."
+    ]
+  },
+  "execution": {
+    "actions": [
+      "Cut substrate-cli/phase-3 branch from main (now at bf96317 post-#100).",
+      "Updated manifest: P2 PR state flipped open → merged; P3 status → in-progress on branch substrate-cli/phase-3.",
+      "Read frontmatter of all 11 local skills.",
+      "Classified each on the two-axis rubric (per the audit table in checkin notes).",
+      "Applied 9 frontmatter edits: 3 user-invocable + disable-model-invocation pairs (a11y-review-file, draft-plan, review-skill); 2 ev-loop-* gain both flags; 3 guild-* gain disable-model-invocation: true; ev-run gains explicit user-invocable: true.",
+      "Skipped: griot-compact + loom-archive (already correct).",
+      "Verified on-disk state via grep — every local skill carries explicit disable-model-invocation now.",
+      "Ran npm run lint: clean. Ran npm test: 35 files / 470 tests pass (no behavioral test impact).",
+      "Spawned evaluator-contract-fit (single-evaluator panel per PANEL-COMPOSITION.md for substrate skill bodies). VERDICT: approved."
+    ],
+    "files_touched": [
+      ".claude/skills/a11y-review-file/SKILL.md",
+      ".claude/skills/draft-plan/SKILL.md",
+      ".claude/skills/review-skill/SKILL.md",
+      ".claude/skills/ev-loop-confidence/SKILL.md",
+      ".claude/skills/ev-loop-interactive/SKILL.md",
+      ".claude/skills/ev-run/SKILL.md",
+      ".claude/skills/guild-spawn/SKILL.md",
+      ".claude/skills/guild-validate/SKILL.md",
+      ".claude/skills/guild-whiteboard/SKILL.md"
+    ],
+    "corrections": []
+  },
+  "scope": [
+    "Read every local skill's frontmatter.",
+    "Apply 2-axis rubric classifications.",
+    "9 frontmatter edits (no body prose changes)."
+  ],
+  "changes_since_previous": "First checkin on substrate-cli/phase-3 branch. Baseline: origin/main at bf96317 (post-#100 squash merge).",
+  "verdict": {
+    "result": "approved",
+    "reasons": []
+  },
+  "notes_for_pr": [
+    "D1 of 3 in Phase 3.",
+    "Audit table (per-skill classification + action):",
+    "  - ev-run: was disable-model-invocation: true only → gain explicit user-invocable: true (hygiene).",
+    "  - griot-compact, loom-archive: unchanged (already rubric A).",
+    "  - a11y-review-file, draft-plan, review-skill: were rubric C (default ambient + user-invocable) → flipped to A (both flags explicit + true).",
+    "  - ev-loop-confidence, ev-loop-interactive: were rubric C → flipped to A. They're composed via Skill tool from /ev-run; user can also manually dispatch.",
+    "  - guild-spawn, guild-validate, guild-whiteboard: were rubric D-pending (user-invocable: false but disable-model-invocation unset) → pinned disable-model-invocation: true (rubric D).",
+    "Surviving local skill count: 11 (target was ~12; we're under). The two ambient noise candidates the PLAN.md target named — /griot-capture + /griot-report — were already killed in Phase 1 D4. No rubric-B candidates remain.",
+    "Substrate-quirk observation (mirrors L-004): Claude Code caches the skills registry at session start, so this session's 'available skills' reminder still shows pre-flip state for some skills. On-disk state is correct; next session pulls the new classifications. Not blocking."
+  ]
+}

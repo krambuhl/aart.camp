@@ -9,6 +9,8 @@ description: >-
   loop for the agent-guilds substrate; reusable by any caller wanting
   a naked single-file evaluator panel.
 argument-hint: "<repo-relative .tsx path>"
+user-invocable: true
+disable-model-invocation: true
 allowed-tools: Read, Skill
 ---
 

@@ -7,6 +7,8 @@ description: >-
   auditing .claude/skills/ or .claude/agents/ files. Do NOT use for
   general code review or non-skill markdown files.
 argument-hint: "<path-to-SKILL.md-or-agent-or-command-file>"
+user-invocable: true
+disable-model-invocation: true
 context: fork
 agent: general-purpose
 allowed-tools: Read, Glob, Grep, WebFetch
