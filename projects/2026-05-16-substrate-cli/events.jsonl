@@ -49,3 +49,4 @@
 {"at":"2026-05-16T16:39:49.003Z","event":"pr-opened","detail":{"pr":107,"url":"https://github.com/krambuhl/aart.camp/pull/107"}}
 {"at":"2026-05-16T16:40:03.027Z","event":"phase-started","detail":{"phase":5,"name":"New agent families"}}
 {"at":"2026-05-16T16:41:07.712Z","event":"session-saved","detail":{"filename":"2026-05-16-i.json"}}
+{"at":"2026-05-16T17:31:41.808Z","event":"phase-completed","detail":{"phase":5}}
