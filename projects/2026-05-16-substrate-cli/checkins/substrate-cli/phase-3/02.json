@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "number": "02",
+  "created": "2026-05-15T22:34:00.000Z",
+  "phase": {
+    "number": 3,
+    "name": "Skill surface cleanup (audit + grill-me)"
+  },
+  "branch": "substrate-cli/phase-3",
+  "unit": "D2: /loom-archive grill-me pace reshape",
+  "contract": {
+    "goal": "Reshape /loom-archive's interview body to grill-me pace: corpus-first, then AskUserQuestion for each retro dimension with model-drafted recommendation + 4 discrete options. Match /draft-plan's established pattern. Skill responsibilities + downstream §4-7 unchanged. D2 of 3 in Phase 3.",
+    "acceptance_criteria": [
+      "§2 and §3 swapped: corpus-read BEFORE interview.",
+      "New §3 grill-me interview: one dimension at a time, model drafts from corpus, AskUserQuestion with 4 options (Looks right / Yes and add more / Replace with mine / Skip), recommended first.",
+      "Frontmatter allowed-tools gains AskUserQuestion.",
+      "§4-7 unchanged in numbering and content.",
+      "Rules section gains grill-me pace entry, replaces 'Interview is short' rule.",
+      "Orchestration semantics unchanged."
+    ],
+    "rules_applied": [
+      "Mirror /draft-plan's grill-me pattern (recommended answer first, AskUserQuestion for discrete options, one question at a time).",
+      "Body-only edits; no behavioral test impact.",
+      "Preserve four PLAN.md categories (kept-well, improvement, process-change, follow-up)."
+    ],
+    "disqualifiers": [
+      "Change skill orchestration semantics.",
+      "Edit downstream §4-7 (compose retro, write retro, archive, report).",
+      "Add categories beyond the four named ones."
+    ],
+    "inputs": [
+      ".claude/skills/loom-archive/SKILL.md (target)",
+      ".claude/skills/draft-plan/SKILL.md (reference pattern)",
+      "PLAN.md Phase 3 grill-me requirement"
+    ]
+  },
+  "execution": {
+    "actions": [
+      "Read /loom-archive and /draft-plan to understand the current shape + reference pattern.",
+      "Added AskUserQuestion to /loom-archive's frontmatter allowed-tools.",
+      "Swapped §2 (Interview) and §3 (Read corpus) — corpus-first per grill-me pattern (model needs context before asking).",
+      "Rewrote §3 (Grill-me interview) with: dimension-by-dimension flow; model drafts recommendation from corpus; AskUserQuestion with 4 options; one question at a time. Four dimensions covered in PLAN.md order (kept-well, improvement, process-change, follow-up).",
+      "Updated Rules section: replaced 'Interview is short' rule with grill-me pace description (corpus-first, AskUserQuestion, recommended-first).",
+      "§4-7 untouched (compose retro, write retro, archive, report).",
+      "Ran npm test: 470/470 pass. Ran npm run lint: clean.",
+      "Spawned evaluator-contract-fit. VERDICT: approved."
+    ],
+    "files_touched": [
+      ".claude/skills/loom-archive/SKILL.md"
+    ],
+    "corrections": []
+  },
+  "scope": [
+    "Frontmatter AskUserQuestion add.",
+    "§2/§3 swap + §3 body rewrite.",
+    "Rules update."
+  ],
+  "changes_since_previous": "Builds on D1 (checkin 01).",
+  "verdict": {
+    "result": "approved",
+    "reasons": []
+  },
+  "notes_for_pr": [
+    "D2 of 3 in Phase 3. D3 is phase close (PR compose + completed).",
+    "Orchestration is unchanged: pre-flight → read corpus → interview → compose retro → write retro → archive → report. The §2/§3 swap is a pacing fix (model needs corpus to draft recommendations) not a workflow change.",
+    "Contract-fit observation (not blocking): the dimension prose '\"at least 2 by the end of this dimension and the next\"' for kept-well + improvement could be clearer. Worth a follow-up prose tightening but the substance is correct."
+  ]
+}
