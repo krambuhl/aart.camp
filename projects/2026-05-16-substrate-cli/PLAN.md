@@ -514,4 +514,8 @@ them so future revisions preserve them.
 
 ## Revision log
 
+
+- 2026-05-16 — restore revision-1 log entry that was lost when revision-2 replaced PLAN.md wholesale; substrate finding: bin/draft revise REPLACES PLAN.md with the revision file then appends one log entry — revision-file authors must carry forward prior ## Revision log entries explicitly to preserve history; flagged for the revisions-folder-substrate sibling project
+
+- 2026-05-16 — post-trout-sunset close: drop the hard-dependency on trout-sunset (#91-#95 all merged), extend the Substrate compositions § pattern that #92 established for P5 ev-loop body updates, add one new Decision pinning the § extension pattern
 - 2026-05-16 — absorb trout-sunset retro themes #2 (grill-me pace audit for /loom-archive) + #3 (full skill frontmatter audit per two-axis rubric) into substrate-cli scope as new Phase 3 (skill surface cleanup); restructure phases (old P3-P5 → P4-P6); P6 extracts § Substrate compositions to shared reference BEFORE extending; add two-axis-rubric + grill-me-pace + extract-before-extend as new Decision pins; defer themes #1 (revisions folder substrate) and #4 (loom-side substrate gaps) to sibling projects
