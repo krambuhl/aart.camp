@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "title": "Substrate Cli",
+  "slug": "2026-05-16-substrate-cli",
+  "started": "2026-05-16",
+  "status": "active",
+  "current_branch": null,
+  "latest_checkin": null,
+  "strategy": "interactive",
+  "phases": [
+    {
+      "number": 1,
+      "name": "Phase 1",
+      "status": "not-started"
+    }
+  ]
+}
