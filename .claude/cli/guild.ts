@@ -16,6 +16,8 @@ export type { DispatchResult, GuildCliContext };
 // operation in the antagonist-panel substrate. Modeled on bin/draft's
 // and bin/griot's flat-verb shape.
 export const VERBS: Record<string, string> = {
+  findings:
+    'Append or count panel findings (.guild-findings.jsonl). Subverbs: append, count',
   'parse-and-aggregate':
     'Aggregate evaluator outputs into a structured verdict (JSON stdin → JSON stdout)',
 };

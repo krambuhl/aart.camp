@@ -4,6 +4,7 @@
 // parse-and-aggregate, whiteboard composition). Modeled on bin/draft
 // and bin/griot's flat-verb shape.
 
+import { findingsVerb } from './findings.ts';
 import { parseAndAggregateVerb } from './parse-and-aggregate.ts';
 
 export type GuildCliContext = {
@@ -32,5 +33,6 @@ export type GuildVerbHandler = (
 ) => DispatchResult;
 
 export const GUILD_VERBS: Record<string, GuildVerbHandler> = {
+  findings: findingsVerb,
   'parse-and-aggregate': parseAndAggregateVerb,
 };
