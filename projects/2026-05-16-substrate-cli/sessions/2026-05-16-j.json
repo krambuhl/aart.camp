@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "date": "2026-05-16",
+  "letter": "j",
+  "phases_touched": [
+    6
+  ],
+  "checkins_written": [
+    "01",
+    "02",
+    "03",
+    "04"
+  ],
+  "pr_activity": [
+    "#109 opened (substrate-cli/phase-6 → main; Phase 6 § extraction + extension + integration sweep; 2 checkins at open)",
+    "#109 updated (refreshed to include checkins 03 + 04 at phase close)"
+  ],
+  "what_happened": [
+    "/ev-run dispatched on `substrate-cli 108 is merged`. Synced local main forward to 3918484 (PR #108 phase-5-close merge). Cut substrate-cli/phase-6 off main. Surfaced substrate drifts: missing pr-merged events for #107/#108; manifest Phase 5 PR row's placeholder URL — both non-blocking, session-i gap #3 carryover.",
+    "Whiteboard Round 1 with 6 currently-registered engineers on Phase 6's 7 design questions. Strong convergence on Q1 (new file SUBSTRATE-COMPOSITIONS.md, 4 of 5 substantive voices), Q3 (preamble + bare `§ Foo` citations), Q4 (flat 11-recipe namespace), Q5/Q6 (three-category taxonomy: append-only / partitioned / single-writer-serialized; performance flagged `bin/guild whiteboard append` as the one real read-modify-write hotspot at file:line). L-004 manually dropped session-i's substrate-engineer + testing-strategy engineers.",
+    "Sweep 1: created projects/SUBSTRATE-COMPOSITIONS.md (300 lines; 8 recipes lifted verbatim from the duplicated ev-loop SKILL blocks); ev-loop bodies shrunk by ~260 lines each, replaced with stub paragraphs that pin the bare `§` namespace to the new catalog. Panel = evaluator-contract-fit only; approved first iteration. Commit 2041ef2.",
+    "Sweep 2: appended 4 griot+guild recipes (§ Load rollup, § Capture finding, § Append finding, § Derive panel; total +150 lines); trimmed 8 inline literal verb-arg code blocks across the two ev-loop bodies to use §-citations (-37 lines combined). § Load rollup deliberately not cited from ev-loop bodies — it's the /ev-run router's pathway. Approved first iteration. Commit cb55ac5. PR #109 opened with checkins 01,02 in the marker.",
+    "Sweep 3: created projects/CONVENTIONS.md (217 lines; cross-family framing — skills as interfaces vs workers + four-family taxonomy + surviving-skill count + two-axis frontmatter rubric + three-category parallel-work invariant + declared-exceptions register naming PLAN.md/manifest.json/whiteboard). Updated LOOM-CONVENTIONS.md historical note with sibling-not-replacement framing. Approved first iteration (aggregator's first parse-and-aggregate call returned parse-failure due to inline `VERDICT:` in the heredoc; second call with `\\n\\n` before the verdict line parsed correctly — surfaced as a substrate observation). Commit 9155577.",
+    "Sweep 4: created .claude/cli/parallel-work-invariant.test.ts (212 lines; 13-entry registry of every mutating verb in the four CLI families; 7 vitest tests in 2 describe blocks). First test run failed AC6 — registry uses lowercase `single-writer-serialized` but CONVENTIONS.md had title-case `Single-writer-serialized`. Normalized all three category headers in CONVENTIONS.md to lowercase. Tests now 7/7 pass; full suite 503/503 (was 496/496). L-004 manually dropped evaluator-test-unit from the panel (session-cached from session i). Approved first iteration. Commit 3a11586.",
+    "Phase 6 close: marked Phase 6 status=completed via `bin/loom phase update`; refreshed PR #109 body to include all 4 checkins (01,02,03,04) in the marker and Units table. Final commit 0bf3b7f; branch pushed to origin."
+  ],
+  "open_threads": [
+    "PR #109 (substrate-cli/phase-6 → main) is open; awaits review/merge. On merge: project is feature-complete (all 6 phases completed); next dispatch should be `/loom-archive 2026-05-16-substrate-cli`.",
+    "L-004 follow-up for next session: smoke-test the 4 session-i agents authored but not yet runtime-verified — `evaluator-test-integration`, `evaluator-test-unit`, `whiteboard-substrate-engineer`, `whiteboard-testing-strategy`. Each should be invoked once via /guild-validate (evaluators) or /guild-whiteboard (engineers) against a representative artifact to confirm the rubric fires correctly. Could fold into the Phase-5 smoke-test follow-up from session-i's open_threads (same set of agents).",
+    "Substrate gap (folds into #4 substrate-gaps sibling project): `bin/loom pr discover` returned `marker_state: new` + `pr: null` despite PR #109 being open on GitHub at the time of the call. The gh-CLI lookup path inside discover (which earlier emitted an `unknown flag: --head` warning) may be incompatible with the current gh version. Workaround used: bypass discover and call `bin/loom pr update` directly with the known PR number. Cosmetic but worth fixing.",
+    "Substrate gap (folds into #4): `bin/guild parse-and-aggregate` requires `VERDICT:` to start a line (its regex is line-anchored). Heredoc-encoded evaluator-output JSON strings need `\\n\\n` before the verdict text, not inline. First parse-and-aggregate call in Sweep 3 parse-failed because the output text put `VERDICT: approved` at the end of a paragraph. A tolerance improvement (accept VERDICT: anywhere on its own line, including end-of-string without trailing newline) would prevent this class of mistake.",
+    "Substrate gap (folds into #4, carryover from session-i): `bin/loom phase update --pr=<N>` still constructs the PR URL from the `example/example/pull/N` placeholder rather than threading through the real URL returned by `bin/loom pr open`. Manifest entry for #109 has the placeholder URL. Real URL: https://github.com/krambuhl/aart.camp/pull/109.",
+    "Documentation follow-up (low priority): rename `§ Triage PR comments + draft responses` to `§ Respond to PR feedback` per the whiteboard design-systems recommendation (verb-shape consistency with peer recipes like `§ Save session`, `§ Phase update`). Sweep 1 deferred this so the lift stayed byte-equivalent; appropriate to do in a small follow-up PR that also propagates the new name to ev-loop body citations.",
+    "Documentation follow-up (low priority): the skeptic's proposed tripwire test for `projects/*.md` duplicate `## Foo` recipe-shaped headers. Would guard the bare-§ citation form against silent ambiguation if another `projects/*.md` file ever defined a `## Compose PR` (or any other recipe name) section. Out of Phase 6 scope; small follow-up PR or fold into substrate-gaps sibling project."
+  ],
+  "notes": [
+    "Phase 6 ran the whole 4-sweep flow in one session with the loop's planned cadence: whiteboard → 4 sequential units → PR open mid-phase → PR refresh at close. No iteration loops, no scope-shift offers. Single human-paired loop session.",
+    "Whiteboard Round 1 was again highly productive — 5 of 6 engineers contributed substantive sections (only sketch-ideation carved out cleanly). The cross-question convergence on Q1+Q2+Q3 (new SUBSTRATE-COMPOSITIONS.md + new CONVENTIONS.md + preamble citation form) gave the 4 sweeps a clean spine to execute against. Whiteboard-driven design continues to pay for itself on substrate-self-design work.",
+    "The three-category parallel-work taxonomy from whiteboard (performance + design-systems + skeptic converging on the same shape) is a substantive upgrade over PLAN.md's original two-category slogan. PLAN.md had said `append-only or branch-partitioned`; the substrate's actual practice has always included read-modify-write of shared files (PLAN.md, manifest.json, whiteboard markdown) made safe by orchestration. Naming the third category honestly + maintaining a declared-exceptions register is the contract-honesty version of the invariant.",
+    "Vocabulary case-consistency observation from Sweep 4: CONVENTIONS.md category-3 header was authored in title-case but referenced from the test in lowercase. Tests caught the mismatch on first run. Future substrate-gaps idea: a project-wide lint that enforces vocabulary case-consistency across CONVENTIONS.md headers and any TypeScript string-literal that cites them.",
+    "Substrate observation worth thinking about: this phase shipped 4 sweeps as one PR (per PLAN's 'one PR' constraint) but each sweep was a clean unit-of-work boundary with its own evaluator panel, checkin, and commit. The interactive loop's per-deliverable evaluator gate worked well here — each sweep got an approved verdict before the next sweep started, so any breakage would have been localized. The 4-commit-1-PR pattern feels right for phases that are a coherent multi-part deliverable shipped together. Worth noting for future planning."
+  ]
+}

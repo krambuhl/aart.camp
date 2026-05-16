@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "number": "02",
+  "created": "2026-05-16T18:50:30.000Z",
+  "phase": {
+    "number": 6,
+    "name": "§ extraction + extension + integration sweep"
+  },
+  "branch": "substrate-cli/phase-6",
+  "unit": "Sweep 2 — § extension (Load rollup + Capture finding + Append finding + Derive panel)",
+  "contract": {
+    "goal": "Add 4 griot+guild recipes to projects/SUBSTRATE-COMPOSITIONS.md (the catalog Sweep 1 created) and trim the corresponding inline verb-detail code blocks in both ev-loop SKILL.md bodies to use § citations. The 4 new recipes: § Load rollup (`bin/griot use --as=llm`), § Capture finding (`bin/griot capture` with two arg shapes), § Append finding (`bin/guild findings append` + `count`), § Derive panel (`bin/guild derive-panel`). Catalog grows from 8 to 12 recipes total; ev-loop bodies shrink by another ~30 lines combined from citation trims.",
+    "acceptance_criteria": [
+      "projects/SUBSTRATE-COMPOSITIONS.md now has 12 flat top-level `## <Recipe>` sections: the 8 from Sweep 1 plus Load rollup, Capture finding, Append finding, Derive panel appended after Retro write.",
+      "Each new recipe has a one-sentence purpose statement, a code block with the verb's arg surface, and any relevant caveats (status-line shapes for Load rollup; two arg shapes for Capture finding; the count subverb under Append finding; L-004 session-boundary note + common-case handling for Derive panel).",
+      "The catalog's `## How citations work` section's closing paragraph is updated to reflect that the catalog now contains griot+guild recipes (no longer 'will be added in subsequent work').",
+      "ev-loop bodies' inline literal verb blocks (multi-line `bin/foo verb \\ --arg ... \\ ...` code fences for findings append, findings count, griot capture, and derive-panel) are replaced with §-citations. Loop-process prose around them (the when and why framing) stays inline.",
+      "Both ev-loop bodies still resolve every § citation to a `## <Recipe>` header in the catalog. New citations introduced this sweep: § Append finding (2 sites in interactive), § Capture finding (2 sites in interactive + 1 in confidence), § Derive panel (2 sites in each body).",
+      "`npm run lint` clean (2 pre-existing symlink warnings preserved; no new findings).",
+      "`npm run build` succeeds (58 sketch pages prerendered).",
+      "`npm test` passes (496/496, unchanged from baseline)."
+    ],
+    "rules_applied": [
+      "L-005 re-run git status fresh before evaluator: `git status --porcelain` ran immediately before the evaluator packet was composed.",
+      "L-009 dense evaluator packet: packet supplied pre-computed verification + AC→file:line mappings + trust-precomputed instruction + suggested spot-check; evaluator returned approved on a single iteration with zero spot-checks (the artifact summary alone was sufficient).",
+      "L-013 ground prose claims in execution: every verification claim (lint, build, test counts, line counts, grep results) is grounded in the command's actual output captured in this session.",
+      "Substrate-no-freestyle: no PLAN.md hand-edits; only the catalog and ev-loop bodies were touched."
+    ],
+    "disqualifiers": [
+      "Adding § Load rollup citation to ev-loop bodies (it's the /ev-run router's pathway; out of scope for ev-loop body edits this sweep).",
+      "Editing the /ev-run skill body to use § citations (separate skill; PLAN scopes Sweep 2 to ev-loop bodies).",
+      "Creating `projects/CONVENTIONS.md` or any framing-doc content (Sweep 3).",
+      "Adding the parallel-work invariant test (Sweep 4).",
+      "Editing the eight Sweep 1 recipes already in the catalog; this sweep only APPENDS 4 recipes + trims ev-loop bodies."
+    ],
+    "inputs": [
+      "Sweep 1 catalog at projects/SUBSTRATE-COMPOSITIONS.md (8 recipes pre-sweep).",
+      "bin/griot use verb source at .claude/cli/verbs/griot/use.ts (4 status-line shapes; --as=llm default).",
+      "bin/griot capture verb source at .claude/cli/verbs/griot/capture.ts (ARG_HINT block; --from-checkin and --evaluator-finding arg shapes).",
+      "bin/guild findings verb source at .claude/cli/verbs/guild/findings.ts (append + count subverbs).",
+      "bin/guild derive-panel verb source at .claude/cli/verbs/guild/derive-panel.ts (--files=<csv> and --files=- stdin paths).",
+      "Existing ev-loop bodies' inline call-site detail (the source of truth for the loop-facing arg semantics)."
+    ]
+  },
+  "execution": {
+    "actions": [
+      "Authored 4 new recipe sections appended to projects/SUBSTRATE-COMPOSITIONS.md after Retro write: § Load rollup (one-sentence purpose + verb invocation + 4 status-line shapes + format-detection error path + --as=llm note); § Capture finding (purpose + 2 arg shapes for --from-checkin and --evaluator-finding=recurring + classification note); § Append finding (append arg block + caveat about quote-safety + count subverb arg block + threshold framing); § Derive panel (purpose + --files=<csv> + --files=- stdin variant + 3 common-case handling rules + L-004 session-boundary caveat).",
+      "Updated the catalog's `## How citations work` section's closing paragraph to drop the 'will be added in subsequent work' phrasing and to name the now-present griot+guild recipes.",
+      "Trimmed ev-loop-interactive at 5 call sites: step-3 derive-panel arg-bullet → `comma-separated output of § Derive panel`; step 4.5a findings-append code block → `Append the finding per § Append finding with severity from the finding's list`; step 4.5b findings-count code block → `Query the recurring threshold ... via § Append finding (the count subverb)`; step 4.5c griot-capture code block → `§ Capture finding (recurring pathway)`; panel-auto-derivation step 2 derive-panel block → `Derive the panel per § Derive panel`; rules-section bin/griot capture --from-checkin → `§ Capture finding (from-checkin pathway)`. Net -34 lines.",
+      "Trimmed ev-loop-confidence at 3 call sites: step-3 derive-panel bullet → `§ Derive panel`; panel-auto-derivation step 2 derive-panel block → `Derive the panel per § Derive panel`; rules-section bin/griot capture --from-checkin → `§ Capture finding (from-checkin pathway)`. Net -3 lines.",
+      "Pre-evaluation fresh git status: M projects/SUBSTRATE-COMPOSITIONS.md, M .claude/skills/ev-loop-confidence/SKILL.md, M .claude/skills/ev-loop-interactive/SKILL.md (no substrate-state autowrites this unit — phase row was already in-progress).",
+      "Derived panel via bin/guild derive-panel: evaluator-contract-fit only (substrate-only .md files).",
+      "Composed dense evaluator packet (How-to-evaluate + Contract + Artifact with pre-computed verification + AC→file:line mappings + Original ask + suggested spot-check on § Derive panel). Invoked /guild-validate. evaluator-contract-fit returned VERDICT: approved on a single iteration without performing the suggested spot-check (the artifact summary's enumeration of each new recipe's shape was sufficient). bin/guild parse-and-aggregate confirmed: verdict=approved, blocking=[], advisory=[], conflicts=[].",
+      "Skipped step 4.5 (findings append) per spec: substrate-only unit with zero findings."
+    ],
+    "files_touched": [
+      "projects/SUBSTRATE-COMPOSITIONS.md",
+      ".claude/skills/ev-loop-confidence/SKILL.md",
+      ".claude/skills/ev-loop-interactive/SKILL.md"
+    ],
+    "corrections": []
+  },
+  "scope": [
+    "Append 4 griot+guild recipes to projects/SUBSTRATE-COMPOSITIONS.md (Load rollup, Capture finding, Append finding, Derive panel). Catalog grows from 8 to 12 recipes.",
+    "Update the catalog's `## How citations work` paragraph to reflect that the griot+guild recipes are now present (not future work).",
+    "Trim 8 inline literal verb blocks across the two ev-loop bodies (5 in interactive, 3 in confidence) to use §-citations. Loop-process prose around the blocks stays inline.",
+    "No changes to the 8 Sweep 1 recipes, no /ev-run skill edits, no CONVENTIONS.md, no invariant test."
+  ],
+  "changes_since_previous": "Builds on Sweep 1 (checkin 01). Catalog grew from 300 to 450 lines; ev-loop bodies shrank by 37 lines combined.",
+  "verdict": {
+    "result": "approved",
+    "reasons": []
+  },
+  "notes_for_pr": [
+    "Phase 6 Sweep 2 of 4: appended § Load rollup, § Capture finding, § Append finding, § Derive panel to the catalog. Recipes documented from the verb source (status-line shapes, arg shapes, common-case handling for derive-panel, L-004 session-boundary caveat). ev-loop bodies trimmed at 8 inline call sites to use §-citations.",
+    "§ Load rollup is the only new recipe NOT cited from any ev-loop body — it's the /ev-run router's pathway. The recipe exists in the catalog so a future /ev-run skill refactor can adopt the same §-citation pattern; Sweep 2's scope per the PLAN was limited to ev-loop bodies.",
+    "The PLAN's 'Replace any remaining `.claude/scripts/<griot,guild>/*` references in ev-loop bodies' plank is a no-op — those references were already migrated by Phase 1 (bin/griot CLI) and Phase 2 (bin/guild CLI). The substantive cleanup work this sweep did is the inline-verb-block trim, which mirrors how Sweep 1 treated the loom recipes.",
+    "Substrate observation: the citation form makes recurring-finding cleanup in step 4.5 noticeably more readable — three nested code blocks become three §-references, and the 'why' framing (when to append, when to count, when to capture) now reads as the load-bearing prose without the verb-arg detail muddying the steps."
+  ]
+}
