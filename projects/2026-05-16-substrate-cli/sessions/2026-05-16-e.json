@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "date": "2026-05-16",
+  "letter": "e",
+  "phases_touched": [
+    4
+  ],
+  "checkins_written": [
+    "01"
+  ],
+  "pr_activity": [
+    "#104 opened (substrate-cli/phase-4 — Phase 4: griot session-notes restructure)"
+  ],
+  "what_happened": [
+    "Resumed via /ev-run substrate-cli 103 merged after #103 squashed into main. Cut substrate-cli/phase-4 branch, started Phase 4 in-progress.",
+    "Ran the always-on whiteboard pre-step via /guild-whiteboard with all 6 registered whiteboard-* engineers — first successful composition of /guild-whiteboard from /ev-loop-interactive after #103's frontmatter fix landed. a11y/react-architect/sketch-ideation carved out; design-systems/performance/skeptic produced substantive contributions. Whiteboard surfaced a Phase 4 split-line (skeptic Finding 3).",
+    "Made the call to split original Phase 4 into Phase 4 (session-notes only) + Phase 4 rollup (rollup format + /griot-load + /ev-run loader) per skeptic Finding 3 + CLAUDE.md PR conventions. Applied via bin/draft revise; first revision (cea7c1e) misfired on a stale /tmp file from a prior session; recovered via Read-then-Write-then-revise; second revision (75e04b0) applied the intended structural changes. PLAN.md now describes Phase 4 + Phase 4 rollup as two PRs in one bucket.",
+    "Implemented D1 (session-notes restructure): bin/griot capture writes state.json sidecar + pure-prose learning.md in both --from-checkin and --evaluator-finding paths; /griot-compact Step pre-A reads state.json for classification routing; Step C IMPROVED reads evaluator/code from state.json. Format-detection error path added to /griot-compact (whiteboard skeptic Finding 1 — loud error on mid-flight session-across-cutover).",
+    "Authored .claude/scripts/migrate-session-notes.ts + sibling vitest (6 tests). Ran the migration on the live corpus: 24 folders converted (all bare; the existing corpus is entirely --from-checkin captures with no frontmatter). Idempotence verified by second run.",
+    "Panel approved unanimously (evaluator-contract-fit, evaluator-react-api carved out, evaluator-naming). Wrote checkin 01, committed (2fdf1fe), pushed, opened PR #104 via bin/loom pr open. Substrate state catch-up commit (cf83956) populated manifest's phase 4 pr field."
+  ],
+  "open_threads": [
+    "PR #104 is ready for human review. After merge + session restart, the next session can proceed to Phase 4 rollup (substrate-cli/phase-4-rollup branch) — D2 rollup.md → rollup.json format change + bin/griot use --as=llm + one-time conversion script + /griot-compact promotion-writer update; D3 /griot-load skill + /ev-run loader update via Bash. The /learnings-use vs /griot-load naming resolution is an open question to settle in the D2 contract.",
+    "Phase 4 manifest row stays in-progress until Phase 4 rollup also merges (the bucket isn't complete until both halves ship). Next session may want to update the row's pr field if a Phase 4 rollup PR opens before #104 merges — the manifest's pr field is single-valued and will track the latest open PR.",
+    "Substrate finding: bin/draft revise applied a stale /tmp file from a prior session unchanged (Write tool's read-first guard caught it; bin/draft revise did not). The misleading commit cea7c1e remains in history with a rationale claiming work that didn't happen until the recovery revision (75e04b0). Worth folding into the #4 substrate-gaps sibling project — perhaps a marker-line assertion (e.g., 'revision file must contain the slug as a comment') or a content-hash check that compares against current PLAN.md to confirm the revision is purposeful.",
+    "Substrate observation reinforced: Claude Code's skill registry continues to pick up SKILL.md frontmatter changes mid-session — /guild-whiteboard was composable immediately after the prior session's edits to its frontmatter landed and #103 merged. Third observation of this in-session pickup behavior. Strong /griot-capture candidate if it stays consistent.",
+    "Substrate observation: the existing learnings/session-notes/ corpus has zero folders with YAML frontmatter — every existing capture is a --from-checkin call. The --evaluator-finding code path existed in capture.ts but was never exercised on this repo. Migration's frontmatter branch is preserved with test coverage for future captures, but it's never run on real data.",
+    "AC 3 from the D1 draft contract was withdrawn during execution (capture errors-loudly-on-old-format was unreachable as framed — capture creates new folders only). Logged as a correction in the checkin and noted in the evaluator packet. Future unit contracts proposing writer-side format-detection should first check whether the writer reads existing state; if not, route detection to readers.",
+    "Whiteboard design-systems flagged an open naming question to settle in Phase 4 rollup D2: /learnings-use vs /griot-load — peers or replacement? Two skills with the same job and different names is a cohesion failure (the family vocabulary today has both learnings-* and griot-* with no documented difference). Recommendation: rename /learnings-use → /griot-load and update README skill table in the same PR.",
+    "Substrate findings open for sibling project (deferred): (a) bin/loom pr open emits pr-opened event but doesn't populate manifest's phase row pr field — required a follow-up bin/loom phase update; (b) bin/draft revise applies the revision file content unchanged without sanity-checking against current PLAN.md (the stale-/tmp issue); (c) bin/loom pr discover still emits a `unknown flag: --head` stderr line from gh pr view before falling back to a correct result (unchanged from session-d's findings); (d) manifest's phase row pr field is single-valued — for a split-phase bucket (Phase 4 + Phase 4 rollup), the field can only track the latest open PR, losing history of prior PRs in the same bucket."
+  ],
+  "notes": [
+    "First successful end-to-end smoke of /ev-loop-interactive → /guild-whiteboard composition via Skill — the trap from sessions c and d is conclusively closed by #103's frontmatter fix. Future sessions can rely on the always-on whiteboard pre-step working.",
+    "Phase 4 split decision was structurally significant — changed PLAN.md before the unit contract was written, ensuring the manifest-vs-PLAN drift didn't accumulate. The split-line at the /griot-compact body is clean: D1's reader update doesn't conflict with Phase 4 rollup's writer update; both touch /griot-compact SKILL.md in different sections.",
+    "Session-d's deliverable plan sketch (D1 session-notes + D2 rollup + D3 /griot-load + /ev-run loader) survives the split — D1 became this session's Phase 4 PR; D2 + D3 become Phase 4 rollup's PR. The split rebrands the structure but preserves the substantive plan.",
+    "/griot-load remains untouched in this PR — it's a Phase 4 rollup deliverable. The L-004 boundary for /griot-load remains: the authoring session can't invoke it; first invocation deferred to the session after Phase 4 rollup merges (via /ev-run's rollup-loading step at session start).",
+    "The migration ran cleanly on real data but the frontmatter branch went uncovered. The migration's test coverage exercises the frontmatter branch via fixtures, but no real frontmatter file was migrated — meaning a regression in the frontmatter parser could ship undetected against the live corpus. Reasonable risk given test coverage; worth keeping in mind."
+  ]
+}

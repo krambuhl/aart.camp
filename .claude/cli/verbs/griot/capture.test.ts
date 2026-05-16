@@ -145,7 +145,7 @@ test('checkin with no correction lines fails informatively', () => {
   expect(res.stderr).toMatch(/no correction: lines found/);
 });
 
-test('single-correction happy path writes 5 files in <ts>-<slug> folder', () => {
+test('single-correction happy path writes 6 files (5 MD + state.json) in <ts>-<slug> folder', () => {
   const path = writeCheckin('checkin.md', SINGLE_CORRECTION_CHECKIN);
   const res = captureVerb([`--from-checkin=${path}`], ctx);
   expect(res.exitCode).toBe(0);
@@ -153,11 +153,46 @@ test('single-correction happy path writes 5 files in <ts>-<slug> folder', () => 
   const folders = readdirSync(join(root, 'learnings', 'session-notes'));
   expect(folders.length).toBe(1);
   const folder = join(root, 'learnings', 'session-notes', folders[0]);
+  expect(existsSync(join(folder, 'state.json'))).toBe(true);
   expect(existsSync(join(folder, 'prompt.md'))).toBe(true);
   expect(existsSync(join(folder, 'wrong.md'))).toBe(true);
   expect(existsSync(join(folder, 'correction.md'))).toBe(true);
   expect(existsSync(join(folder, 'full_transcript.md'))).toBe(true);
   expect(existsSync(join(folder, 'learning.md'))).toBe(true);
+});
+
+test('from-checkin writes state.json with classification: unclassified', () => {
+  const path = writeCheckin('checkin.md', SINGLE_CORRECTION_CHECKIN);
+  const res = captureVerb([`--from-checkin=${path}`], ctx);
+  expect(res.exitCode).toBe(0);
+  const folder = readdirSync(join(root, 'learnings', 'session-notes'))[0];
+  const stateRaw = readFileSync(
+    join(root, 'learnings', 'session-notes', folder, 'state.json'),
+    'utf-8',
+  );
+  const state = JSON.parse(stateRaw);
+  expect(state).toEqual({
+    classification: 'unclassified',
+    evaluator: null,
+    code: null,
+    'frequency-count': null,
+    'file-line': null,
+    status: 'captured',
+    promoted_as: null,
+  });
+});
+
+test('from-checkin: learning.md is pure prose, no YAML frontmatter', () => {
+  const path = writeCheckin('checkin.md', SINGLE_CORRECTION_CHECKIN);
+  const res = captureVerb([`--from-checkin=${path}`], ctx);
+  expect(res.exitCode).toBe(0);
+  const folder = readdirSync(join(root, 'learnings', 'session-notes'))[0];
+  const learning = readFileSync(
+    join(root, 'learnings', 'session-notes', folder, 'learning.md'),
+    'utf-8',
+  );
+  expect(learning.startsWith('---\n')).toBe(false);
+  expect(learning).toMatch(/^# Learning draft/);
 });
 
 test('explicit --slug overrides Unit-derived slug', () => {
@@ -303,7 +338,7 @@ test('wrong.md falls back to Changes/Verdict when Execution is empty', () => {
   expect(wrong).toMatch(/approved/);
 });
 
-test('--evaluator-finding=recurring writes a session-note folder with classification frontmatter', () => {
+test('--evaluator-finding=recurring writes state.json with classification fields and pure-prose learning.md', () => {
   const res = captureVerb(
     [
       '--evaluator-finding=recurring',
@@ -320,18 +355,24 @@ test('--evaluator-finding=recurring writes a session-note folder with classifica
   const folders = readdirSync(join(root, 'learnings', 'session-notes'));
   expect(folders.length).toBe(1);
   const folder = join(root, 'learnings', 'session-notes', folders[0]);
+  const state = JSON.parse(readFileSync(join(folder, 'state.json'), 'utf-8'));
+  expect(state).toEqual({
+    classification: 'recurring',
+    evaluator: 'evaluator-tokens',
+    code: 'raw-hex',
+    'frequency-count': 3,
+    'file-line': null,
+    status: 'captured',
+    promoted_as: null,
+  });
   const learning = readFileSync(join(folder, 'learning.md'), 'utf-8');
-  expect(learning).toMatch(/^---\n/);
-  expect(learning).toMatch(/classification: recurring/);
-  expect(learning).toMatch(/evaluator: evaluator-tokens/);
-  expect(learning).toMatch(/code: raw-hex/);
-  expect(learning).toMatch(/frequency-count: 3/);
-  expect(learning).toMatch(/# Learning draft/);
+  expect(learning.startsWith('---\n')).toBe(false);
+  expect(learning).toMatch(/^# Learning draft/);
   expect(learning).toMatch(/Recurring evaluator finding/);
   expect(learning).toMatch(/#000 at Sketch.module.css:17/);
 });
 
-test('--evaluator-finding=generator-antipattern writes a session-note folder with classification frontmatter', () => {
+test('--evaluator-finding=generator-antipattern writes state.json with classification fields and pure-prose learning.md', () => {
   const res = captureVerb(
     [
       '--evaluator-finding=generator-antipattern',
@@ -345,9 +386,15 @@ test('--evaluator-finding=generator-antipattern writes a session-note folder wit
   expect(res.exitCode).toBe(0);
   const folders = readdirSync(join(root, 'learnings', 'session-notes'));
   const folder = join(root, 'learnings', 'session-notes', folders[0]);
+  const state = JSON.parse(readFileSync(join(folder, 'state.json'), 'utf-8'));
+  expect(state.classification).toBe('generator-antipattern');
+  expect(state.evaluator).toBe('evaluator-css-architecture');
+  expect(state.code).toBe('css-arch-specificity-fight');
+  expect(state['frequency-count']).toBe(null);
+  expect(state.status).toBe('captured');
+  expect(state.promoted_as).toBe(null);
   const learning = readFileSync(join(folder, 'learning.md'), 'utf-8');
-  expect(learning).toMatch(/classification: generator-antipattern/);
-  expect(learning).toMatch(/evaluator: evaluator-css-architecture/);
+  expect(learning.startsWith('---\n')).toBe(false);
   expect(learning).toMatch(/Generator antipattern/);
 });
 
@@ -453,7 +500,7 @@ test('--evaluator-finding and --from-checkin are mutually exclusive', () => {
   expect(res.stderr).toMatch(/--evaluator-finding and --from-checkin are mutually exclusive/);
 });
 
-test('--evaluator-finding=recurring with --file-line includes it in learning body', () => {
+test('--evaluator-finding=recurring with --file-line populates state.json and learning body Source line', () => {
   const res = captureVerb(
     [
       '--evaluator-finding=recurring',
@@ -469,8 +516,10 @@ test('--evaluator-finding=recurring with --file-line includes it in learning bod
   expect(res.exitCode).toBe(0);
   const folders = readdirSync(join(root, 'learnings', 'session-notes'));
   const folder = join(root, 'learnings', 'session-notes', folders[0]);
+  const state = JSON.parse(readFileSync(join(folder, 'state.json'), 'utf-8'));
+  expect(state['file-line']).toBe('components/Sketch.module.css:17');
   const learning = readFileSync(join(folder, 'learning.md'), 'utf-8');
-  expect(learning).toMatch(/file-line: components\/Sketch.module.css:17/);
+  expect(learning).toMatch(/Source: `components\/Sketch.module.css:17`/);
 });
 
 test('folder collision fails rather than overwriting', () => {

@@ -91,13 +91,28 @@ not across notes.
 
 #### Step pre-A — Classification routing
 
-Read the first 30 lines of the note's `learning.md`. If the file
-opens with a YAML frontmatter block (`---` on line 1, closing `---`
-within the first 30 lines), parse the frontmatter and read the
-`classification` field. Otherwise treat the note as **unclassified**
-(the historical correction-text capture flow has no classification
-field — those notes have always been the implicit "general learning"
-kind).
+Read the note's `state.json` sidecar via the Read tool and parse it.
+The `classification` field drives routing. The `state.json` sidecar
+was introduced in substrate-cli Phase 4; before that, classification
+lived as YAML frontmatter on `learning.md`. The migration script
+shipped with Phase 4 converts old-format folders to the new shape.
+
+**Format-detection error path** (substrate-cli Phase 4 whiteboard
+skeptic Finding 1): if `state.json` is missing in the note folder
+AND `learning.md` starts with a `---` YAML frontmatter block, this
+session predates the Phase 4 cutover and is running the old skill
+body against new on-disk state (or vice versa). Stop processing
+this note, log an intervention via `operator-checks.ts
+log-intervention` with category `format_predates_phase_4_cutover`
+(record: `{note_slug, status: "format mismatch"}`), and emit the
+error "session predates Phase 4 cutover; restart session to pick
+up new skill body and run `.claude/scripts/migrate-session-notes.ts`"
+to the user. Do NOT silently fall back to frontmatter parsing —
+silent fallback risks splitting writes across two formats.
+
+If `state.json` is missing AND `learning.md` has no frontmatter,
+this is a pre-migration folder that needs the migration script
+run; emit the same error.
 
 Branch on the classification value:
 
@@ -125,12 +140,13 @@ Branch on the classification value:
   `## Not-yet-supported classifications` so the PR-body output is
   honest about what was skipped and why.
 
-- **unclassified** (no `classification` field) → continue with the
-  historical flow (Step A + Step B + Step C as today). All
-  correction-text captures fall here.
+- **`unclassified`** → continue with the historical flow (Step A +
+  Step B + Step C as today). All correction-text captures
+  (`--from-checkin` path) record this classification in
+  `state.json`.
 
-This routing block reads frontmatter ONLY. It does not modify the
-note. The classification field is data the script authored when
+This routing block reads `state.json` ONLY. It does not modify the
+note. The classification field is data the CLI authored when
 capturing; the SKILL trusts it.
 
 #### Step A — Rubric (one-time per note)
@@ -396,11 +412,11 @@ Branch on the final verdict reached when the attempt loop exited.
      Promoted: <today's date in YYYY-MM-DD>
      Origin: <note's slug>
      Classification: generator-antipattern
-     Evaluator: <evaluator name from frontmatter>
-     Code: <code from frontmatter>
+     Evaluator: <state.json `evaluator` field>
+     Code: <state.json `code` field>
 
-     <full contents of note's learning.md, with the frontmatter
-     block stripped>
+     <full contents of note's learning.md, verbatim — post-Phase 4,
+     learning.md is pure prose with no frontmatter to strip>
      ```
 
   4. Move the session-note folder to `archived/` (same as the
@@ -428,8 +444,8 @@ Branch on the final verdict reached when the attempt loop exited.
 
      ### Learning
 
-     <full contents of note's learning.md (frontmatter stripped
-     for `recurring` notes; verbatim for unclassified notes)>
+     <full contents of note's learning.md, verbatim — post-Phase 4,
+     learning.md is pure prose with no frontmatter to strip>
 
      ### Rubric
 

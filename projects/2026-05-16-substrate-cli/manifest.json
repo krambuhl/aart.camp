@@ -44,7 +44,13 @@
     {
       "number": 4,
       "name": "griot internal restructure",
-      "status": "not-started"
+      "status": "in-progress",
+      "branch": "substrate-cli/phase-4",
+      "pr": {
+        "number": 104,
+        "url": "https://github.com/krambuhl/aart.camp/pull/104",
+        "state": "open"
+      }
     },
     {
       "number": 5,
