@@ -219,7 +219,8 @@ Next: run /trout-plan <slug> to add the execution substrate (MANIFEST.md, config
   just do the work directly. Stop without shelling to the CLI.
 - Slug collides with an existing project (the CLI returns
   `plan-exists-committed`): surface the error and stop. Suggest the
-  user pick a different slug OR use `/draft-revise <existing-slug>`
+  user pick a different slug OR edit `PLAN.md` directly and run
+  `bin/draft revise <existing-slug> --revision-file=<path> --rationale=<why>`
   if the intent was to update.
 - Interview drags past ~20 questions without resolving: propose a
   checkpoint. Either commit what's resolved (with open questions
