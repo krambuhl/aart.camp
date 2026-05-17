@@ -12,7 +12,6 @@
     "check": "biome check --write .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:agentic": "vitest run .claude/cli",
     "test:e2e": "npm run build-storybook && playwright test",
     "test:a11y": "playwright test --config=playwright.config.a11y.ts",
     "storybook": "storybook dev -p 6006",
