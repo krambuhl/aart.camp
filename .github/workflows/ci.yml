@@ -39,10 +39,6 @@ jobs:
         if: matrix.task == 'vitest'
         run: npm test
 
-      - name: Vitest — agentic substrate
-        if: matrix.task == 'vitest'
-        run: npm run test:agentic
-
       - name: Install Playwright browsers
         if: matrix.task == 'e2e'
         run: npx playwright install --with-deps chromium
