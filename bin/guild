@@ -1,17 +1,13 @@
 #!/usr/bin/env bash
 # guild — entry shim for the guild antagonist-substrate CLI.
-# Resolves the repo's .claude/cli/guild.ts relative to this shim, then
-# execs node with the original args. Run from anywhere; bin/guild does
-# not depend on the caller's cwd.
 
 set -euo pipefail
 
-SHIM_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SHIM_DIR/.." && pwd)"
-ENTRY="$REPO_ROOT/.claude/cli/guild.ts"
+ENTRY="$HOME/.agents/cli/guild.ts"
 
 if [[ ! -f "$ENTRY" ]]; then
   echo "guild-shim-error: entry not found at $ENTRY" >&2
+  echo "  has the marketplace been installed? run: ~/Sites/local-dev/.bin/install-marketplace.sh" >&2
   exit 2
 fi
 
