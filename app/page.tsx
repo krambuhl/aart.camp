@@ -3,13 +3,13 @@ import { AppLayout } from '@/components/shared/AppLayout';
 import { Stack } from '@/components/shared/Stack';
 import { HeadingText } from '@/components/shared/Text';
 import { TopBar } from '@/components/shared/TopBar';
-import { registry } from '@/sketches/registry';
+import { manifest } from '@/sketches/manifest';
 import { tokens } from '@/tokens';
 
-const files = registry.map(({ slug, meta }) => ({
+const files = manifest.map(({ slug, title, date }) => ({
   name: slug,
-  title: meta.title,
-  date: meta.date,
+  title,
+  date,
   url: `/sketch/${slug}`,
 }));
 

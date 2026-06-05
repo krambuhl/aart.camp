@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { constants } from '@/data';
+import { manifest } from '@/sketches/manifest';
 import { registry } from '@/sketches/registry';
 
 interface Props {
@@ -10,16 +11,16 @@ interface Props {
 }
 
 export function generateStaticParams() {
-  return registry.map(({ slug }) => ({ slug }));
+  return manifest.map(({ slug }) => ({ slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const entry = registry.find((s) => s.slug === slug);
+  const entry = manifest.find((s) => s.slug === slug);
   if (!entry) return {};
 
   return {
-    title: `${entry.meta.title} — ${constants.SITE_NAME}`,
+    title: `${entry.title} — ${constants.SITE_NAME}`,
   };
 }
 
