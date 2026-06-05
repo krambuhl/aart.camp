@@ -24,9 +24,11 @@ No Tailwind, no CSS-in-JS. Deployed on Vercel.
    prefix (e.g., `53-name.tsx`). Each sketch is a `'use client'` component
    that exports `meta` (title, date) and a default component wrapping
    `<Area>` + `<Sketch setup={...} draw={...} />`.
-2. Add an entry to `sketches/registry.ts` — this is the single source of
-   truth for all sketches. The page shell (`app/sketch/[slug]/page.tsx`)
-   handles layout, metadata, and `PageHeader` automatically.
+2. Add an entry to `sketches/manifest.ts` — this is the single source of
+   truth for all sketches. The slug must match the filename (the registry
+   derives each component via `import(`./${slug}`)`, and the build fails
+   if they drift). The page shell (`app/sketch/[slug]/page.tsx`) handles
+   layout, metadata, and `PageHeader` automatically.
 
 ## Design tokens
 
