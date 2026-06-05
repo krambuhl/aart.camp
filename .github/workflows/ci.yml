@@ -13,6 +13,10 @@ jobs:
   ci:
     name: ${{ matrix.task }}
     runs-on: ubuntu-latest
+    # Successful runs finish in a few minutes; without a timeout a stalled
+    # step (e.g. the Playwright browser download) squats a runner for the
+    # 6-hour GitHub default.
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
@@ -39,9 +43,21 @@ jobs:
         if: matrix.task == 'vitest'
         run: npm test
 
-      - name: Install Playwright browsers
+      - name: Cache Playwright browsers
         if: matrix.task == 'e2e'
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Playwright browsers
+        if: matrix.task == 'e2e' && steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium
+
+      - name: Install Playwright system deps (browser cached)
+        if: matrix.task == 'e2e' && steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
 
       - name: Build Storybook
         if: matrix.task == 'e2e'
